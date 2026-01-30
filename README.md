@@ -57,3 +57,37 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Hostinger Deployment Guide
+
+### 1. SSH Access
+Connect to your terminal using the credentials from your dashboard.
+
+### 2. Setup Commands
+Run these commands in your project root (usually `public_html`):
+```bash
+# Install dependencies
+composer install --optimize-autoloader --no-dev
+
+# Setup Environment
+cp .env.example .env
+nano .env  # Update DB credentials and APP_URL
+php artisan key:generate
+php artisan migrate --force
+```
+
+### 3. Fix Storage Link (Important)
+Hostinger disables the `exec` function, which breaks `php artisan storage:link`. Run this manual command instead:
+```bash
+cd public
+ln -s ../storage/app/public storage
+```
+
+### 4. Public Folder Setup
+If your domain points to `public_html` instead of `public_html/public`, create a `.htaccess` file in your root folder:
+```apache
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+```
