@@ -47,8 +47,10 @@ class ChunksRelationManager extends RelationManager
                 Tables\Actions\Action::make('play')
                     ->label('Play')
                     ->icon('heroicon-o-play')
-                    ->url(fn (\App\Models\AudioChunk $record) => '/storage/' . $record->file_path)
-                    ->openUrlInNewTab(),
+                    ->modalHeading(fn (\App\Models\AudioChunk $record) => "Playing Chunk #{$record->sequence_number}")
+                    ->modalContent(fn (\App\Models\AudioChunk $record) => view('filament.resources.live-stream-resource.components.chunk-player', ['record' => $record]))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close'),
                 Tables\Actions\Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
