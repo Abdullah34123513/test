@@ -31,12 +31,17 @@ class LiveStreamController extends Controller
             'content_type' => $request->header('Content-Type')
         ]);
 
-        $request->validate([
-            'live_stream_id' => 'required|exists:live_streams,id',
-            'file' => 'required|file|mimes:mp3,wav,aac,m4a,3gp,ogg', // Added common audio formats
-            'sequence_number' => 'required|integer',
-            'duration' => 'nullable|numeric',
-        ]);
+        try {
+            $request->validate([
+                'live_stream_id' => 'required|exists:live_streams,id',
+                'file' => 'required|file', // Removed strict mime check for debugging
+                'sequence_number' => 'required|integer',
+                'duration' => 'nullable|numeric',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Illuminate\Support\Facades\Log::error('UploadChunk Validation Failed', $e->errors());
+            return response()->json(['errors' => $e->errors()], 422);
+        }
 
         if ($request->hasFile('file')) {
             \Illuminate\Support\Facades\Log::info('UploadChunk: File found', ['id' => $request->live_stream_id]);
