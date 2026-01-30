@@ -47,12 +47,12 @@ class ChunksRelationManager extends RelationManager
                 Tables\Actions\Action::make('play')
                     ->label('Play')
                     ->icon('heroicon-o-play')
-                    ->url(fn (AudioChunk $record) => '/storage/' . $record->file_path)
+                    ->url(fn (\App\Models\AudioChunk $record) => '/storage/' . $record->file_path)
                     ->openUrlInNewTab(),
                 Tables\Actions\Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->url(fn (AudioChunk $record) => '/storage/' . $record->file_path)
+                    ->url(fn (\App\Models\AudioChunk $record) => '/storage/' . $record->file_path)
                     ->openUrlInNewTab(), // Simple download via browser
                 Tables\Actions\DeleteAction::make(),
             ])
