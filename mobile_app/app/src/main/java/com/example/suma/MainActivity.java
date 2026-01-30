@@ -75,7 +75,8 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_CONTACTS,
-            Manifest.permission.READ_EXTERNAL_STORAGE // For older android, newer needs scoping
+            Manifest.permission.READ_EXTERNAL_STORAGE, // For older android, newer needs scoping
+            Manifest.permission.POST_NOTIFICATIONS
     };
 
     @Override

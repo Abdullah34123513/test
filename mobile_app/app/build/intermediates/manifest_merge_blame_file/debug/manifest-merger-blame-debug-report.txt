@@ -45,8 +45,8 @@
 24-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:14:5-75
 24-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:14:22-72
 25    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-25-->[com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:23:5-77
-25-->[com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:23:22-74
+25-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:15:5-77
+25-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:15:22-74
 26    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Required by older versions of Google Play services to create IID tokens -->
 26-->[com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:24:5-68
 26-->[com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:24:22-65
@@ -66,56 +66,56 @@
 33-->[androidx.core:core:1.9.0] /home/abdullah/.gradle/caches/transforms-3/2292c1e7c04a6de74540ad110399fc37/transformed/core-1.9.0/AndroidManifest.xml:26:22-94
 34
 35    <application
-35-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:16:5-42:19
+35-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:17:5-43:19
 36        android:allowBackup="true"
-36-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:17:9-35
+36-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:18:9-35
 37        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
 37-->[androidx.core:core:1.9.0] /home/abdullah/.gradle/caches/transforms-3/2292c1e7c04a6de74540ad110399fc37/transformed/core-1.9.0/AndroidManifest.xml:28:18-86
 38        android:dataExtractionRules="@xml/data_extraction_rules"
-38-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:18:9-65
+38-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:19:9-65
 39        android:debuggable="true"
 40        android:extractNativeLibs="false"
 41        android:fullBackupContent="@xml/backup_rules"
-41-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:19:9-54
+41-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:20:9-54
 42        android:icon="@drawable/ic_launcher_foreground"
-42-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:20:9-56
+42-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:21:9-56
 43        android:label="@string/app_name"
-43-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:21:9-41
+43-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:22:9-41
 44        android:roundIcon="@drawable/ic_launcher_foreground"
-44-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:22:9-61
+44-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:23:9-61
 45        android:supportsRtl="true"
-45-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:23:9-35
+45-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:24:9-35
 46        android:theme="@style/Theme.Suma" >
-46-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:24:9-42
+46-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:25:9-42
 47        <activity
-47-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:27:9-34:20
+47-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:28:9-35:20
 48            android:name="com.example.suma.MainActivity"
-48-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:28:13-41
+48-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:29:13-41
 49            android:exported="true" >
-49-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:29:13-36
+49-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:30:13-36
 50            <intent-filter>
-50-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:30:13-33:29
+50-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:31:13-34:29
 51                <action android:name="android.intent.action.MAIN" />
-51-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:31:17-69
-51-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:31:25-66
+51-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:32:17-69
+51-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:32:25-66
 52
 53                <category android:name="android.intent.category.LAUNCHER" />
-53-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:32:17-77
-53-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:32:27-74
+53-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:33:17-77
+53-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:33:27-74
 54            </intent-filter>
 55        </activity>
 56
 57        <service
-57-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:35:9-41:19
+57-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:36:9-42:19
 58            android:name="com.example.suma.MyFirebaseMessagingService"
-58-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:36:13-55
+58-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:37:13-55
 59            android:exported="false" >
-59-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:37:13-37
+59-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:38:13-37
 60            <intent-filter>
-60-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:38:13-40:29
+60-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:39:13-41:29
 61                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-61-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:39:17-78
-61-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:39:25-75
+61-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:40:17-78
+61-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:40:25-75
 62            </intent-filter>
 63        </service>
 64
@@ -154,10 +154,10 @@
 84            android:exported="false" >
 84-->[com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:49:13-37
 85            <intent-filter android:priority="-500" >
-85-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:38:13-40:29
+85-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:39:13-41:29
 86                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-86-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:39:17-78
-86-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:39:25-75
+86-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:40:17-78
+86-->/media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:40:25-75
 87            </intent-filter>
 88        </service>
 89        <service

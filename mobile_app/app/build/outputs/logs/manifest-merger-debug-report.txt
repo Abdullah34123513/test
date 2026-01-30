@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-44:12
-INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-44:12
-INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-44:12
-INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-44:12
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-45:12
+INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-45:12
+INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-45:12
+INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-45:12
 MERGED from [com.google.android.material:material:1.11.0] /home/abdullah/.gradle/caches/transforms-3/f15d2c0eb8ac5def7f55e7e1b501fcf2/transformed/material-1.11.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/abdullah/.gradle/caches/transforms-3/9ff6fb5bc56b7d0a6be6366399681536/transformed/constraintlayout-2.1.4/AndroidManifest.xml:2:1-11:12
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/abdullah/.gradle/caches/transforms-3/a120eac9841d1ab6c4b61aa72250fe5d/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:17:1-22:12
@@ -133,9 +133,15 @@ uses-permission#android.permission.READ_MEDIA_AUDIO
 ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:14:5-75
 	android:name
 		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:14:22-72
+uses-permission#android.permission.POST_NOTIFICATIONS
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:15:5-77
+MERGED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:23:5-77
+MERGED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:23:5-77
+	android:name
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:15:22-74
 application
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:16:5-42:19
-INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:16:5-42:19
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:17:5-43:19
+INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:17:5-43:19
 MERGED from [com.google.android.material:material:1.11.0] /home/abdullah/.gradle/caches/transforms-3/f15d2c0eb8ac5def7f55e7e1b501fcf2/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] /home/abdullah/.gradle/caches/transforms-3/f15d2c0eb8ac5def7f55e7e1b501fcf2/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/abdullah/.gradle/caches/transforms-3/9ff6fb5bc56b7d0a6be6366399681536/transformed/constraintlayout-2.1.4/AndroidManifest.xml:9:5-20
@@ -183,51 +189,51 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] /home/abdullah/.gradle/cach
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.9.0] /home/abdullah/.gradle/caches/transforms-3/2292c1e7c04a6de74540ad110399fc37/transformed/core-1.9.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:23:9-35
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:24:9-35
 	android:label
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:21:9-41
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:22:9-41
 	android:fullBackupContent
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:19:9-54
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:20:9-54
 	android:roundIcon
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:22:9-61
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:23:9-61
 	tools:targetApi
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:25:9-29
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:26:9-29
 	android:icon
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:20:9-56
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:21:9-56
 	android:allowBackup
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:17:9-35
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:18:9-35
 	android:theme
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:24:9-42
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:25:9-42
 	android:dataExtractionRules
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:18:9-65
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:19:9-65
 activity#com.example.suma.MainActivity
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:27:9-34:20
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:28:9-35:20
 	android:exported
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:29:13-36
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:30:13-36
 	android:name
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:28:13-41
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:29:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:30:13-33:29
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:31:13-34:29
 action#android.intent.action.MAIN
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:31:17-69
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:32:17-69
 	android:name
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:31:25-66
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:32:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:32:17-77
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:33:17-77
 	android:name
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:32:27-74
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:33:27-74
 service#com.example.suma.MyFirebaseMessagingService
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:35:9-41:19
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:36:9-42:19
 	android:exported
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:37:13-37
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:38:13-37
 	android:name
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:36:13-55
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:37:13-55
 intent-filter#action:name:com.google.firebase.MESSAGING_EVENT
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:38:13-40:29
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:39:13-41:29
 action#com.google.firebase.MESSAGING_EVENT
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:39:17-78
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:40:17-78
 	android:name
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:39:25-75
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:40:25-75
 uses-sdk
 INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml
@@ -354,10 +360,6 @@ MERGED from [androidx.annotation:annotation-experimental:1.3.0] /home/abdullah/.
 		INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml
 	android:minSdkVersion
 		INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml
-uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:23:5-77
-	android:name
-		ADDED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:23:22-74
 uses-permission#android.permission.WAKE_LOCK
 ADDED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:24:5-68
 MERGED from [com.google.android.gms:play-services-cloud-messaging:17.1.0] /home/abdullah/.gradle/caches/transforms-3/f89c332c01b0ce4fd29b67cb2f5404a9/transformed/jetified-play-services-cloud-messaging-17.1.0/AndroidManifest.xml:9:5-68
