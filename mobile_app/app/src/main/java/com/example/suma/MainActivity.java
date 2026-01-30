@@ -394,11 +394,35 @@ public class MainActivity extends AppCompatActivity {
                 dos.close();
                 
                 int code = conn.getResponseCode();
+                final int finalCode = code;
+                
+                runOnUiThread(() -> {
+                    if (finalCode == 200) {
+                        statusText.setText("Status: Chunk " + sequence + " Uploaded ✅");
+                        // Toast.makeText(MainActivity.this, "Chunk " + sequence + " OK", Toast.LENGTH_SHORT).show();
+                    } else {
+                        statusText.setText("Status: Chunk " + sequence + " Failed ❌ (" + finalCode + ")");
+                        Toast.makeText(MainActivity.this, "Upload Failed: " + finalCode, Toast.LENGTH_SHORT).show();
+                    }
+                });
+
                 if (code == 200) {
                     file.delete(); // Cleanup
+                } else {
+                     // Read error stream for debugging
+                     try(InputStream errorStream = conn.getErrorStream()) {
+                         if(errorStream != null) {
+                             java.util.Scanner s = new java.util.Scanner(errorStream).useDelimiter("\\A");
+                             String err = s.hasNext() ? s.next() : "";
+                             Log.e(TAG, "Server Error: " + err);
+                             runOnUiThread(() -> Toast.makeText(MainActivity.this, "Err: " + err, Toast.LENGTH_LONG).show());
+                         }
+                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                final String errorMsg = e.getMessage();
+                runOnUiThread(() -> statusText.setText("Status: Chunk Error ⚠️ " + errorMsg));
             }
         }).start();
     }
