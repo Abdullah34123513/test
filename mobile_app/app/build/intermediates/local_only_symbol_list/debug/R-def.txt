@@ -1,0 +1,28 @@
+R_DEF: Internal format may change without notice
+local
+color black
+color purple_200
+color purple_500
+color purple_700
+color teal_200
+color teal_700
+color white
+drawable ic_launcher_foreground
+id btnBackup
+id btnStream
+id btnUpload
+id statusText
+layout activity_main
+string action_backup_data
+string action_start_live
+string action_stop_live
+string action_upload_media
+string app_name
+string error_auth_failed
+string permission_required
+string status_authenticated
+string status_authenticating
+string status_ready
+style Theme.Suma
+xml backup_rules
+xml data_extraction_rules

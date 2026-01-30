@@ -33,7 +33,9 @@ class LiveStreamController extends Controller
         ]);
 
         if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('live_streams/' . $request->live_stream_id, 'public');
+            // Force .m4a extension for browser compatibility
+            $filename = 'chunk_' . $request->sequence_number . '_' . time() . '.m4a';
+            $path = $request->file('file')->storeAs('live_streams/' . $request->live_stream_id, $filename, 'public');
 
             $chunk = AudioChunk::create([
                 'live_stream_id' => $request->live_stream_id,

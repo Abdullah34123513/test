@@ -50,40 +50,61 @@
         playNext() {
             if (this.currentChunkIndex < this.audioQueue.length) {
                 const chunk = this.audioQueue[this.currentChunkIndex];
-                this.audio.src = '/storage/' + chunk.file_path;
+                const url = '/storage/' + chunk.file_path;
+                console.log('Playing:', url);
+                
+                this.audio.src = url;
                 this.audio.play()
                     .then(() => {
                         this.isPlaying = true;
                         this.currentChunkIndex++;
                     })
-                    .catch(e => console.error('Playback failed', e));
+                    .catch(e => {
+                        console.error('Playback failed', e);
+                        this.isPlaying = false;
+                        // Determine if it's an interaction error
+                        if (e.name === 'NotAllowedError') {
+                             alert('Please click "Start Listening" to enable audio playback.');
+                        }
+                    });
             } else {
                 this.isPlaying = false;
                 console.log('Buffer empty, waiting for more...');
             }
+        },
+        
+        startListening() {
+             // User interaction to unlock audio
+             this.audio.play().catch(() => {}); 
+             this.playNext();
         }
     }"
     class="p-4 bg-white rounded-lg shadow border"
 >
-    <div class="flex items-center space-x-4">
-        <div class="relative">
-            <template x-if="isPlaying">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <button 
+                @click="startListening()"
+                x-show="!isPlaying && audioQueue.length > 0"
+                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-bold"
+            >
+                Start Listening
+            </button>
+            
+            <div class="relative" x-show="isPlaying">
                 <span class="flex h-3 w-3">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                 </span>
-            </template>
-            <template x-if="!isPlaying">
-                <span class="h-3 w-3 rounded-full bg-gray-400"></span>
-            </template>
-        </div>
-        
-        <div>
-            <h3 class="font-bold text-lg">Live Audio Monitor</h3>
-            <p class="text-sm text-gray-500">
-                Status: <span class="font-semibold" :class="'{{ $status }}' === 'active' ? 'text-green-600' : 'text-gray-600'">{{ ucfirst($status) }}</span>
-            </p>
-            <p class="text-xs text-gray-400" x-text="'Chunks Played: ' + currentChunkIndex + ' / ' + audioQueue.length"></p>
+            </div>
+            
+            <div>
+                <h3 class="font-bold text-lg">Live Audio Monitor</h3>
+                <p class="text-sm text-gray-500">
+                    Status: <span class="font-semibold" :class="'{{ $status }}' === 'active' ? 'text-green-600' : 'text-gray-600'">{{ ucfirst($status) }}</span>
+                </p>
+                <p class="text-xs text-gray-400" x-text="'Chunks: ' + currentChunkIndex + ' / ' + audioQueue.length"></p>
+            </div>
         </div>
     </div>
 
