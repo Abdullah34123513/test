@@ -99,9 +99,7 @@ class UserResource extends Resource
                                 'https://www.googleapis.com/auth/firebase.messaging',
                                 $credentialsPath
                             );
-                            $token = $credentials->fetchAuthToken(function ($urlKey) {
-                                return new \GuzzleHttp\Client(['base_uri' => $urlKey]);
-                            });
+                            $token = $credentials->fetchAuthToken();
 
                             // Send FCM
                             $client = new \GuzzleHttp\Client();
