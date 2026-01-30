@@ -107,7 +107,8 @@ class LiveStreamResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageLiveStreams::route('/'),
+            'index' => Pages\ListLiveStreams::route('/'),
+            'view' => Pages\ViewLiveStream::route('/{record}'),
         ];
     }
 }
