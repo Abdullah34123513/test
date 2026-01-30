@@ -25,6 +25,12 @@ class LiveStreamController extends Controller
 
     public function uploadChunk(Request $request)
     {
+        \Illuminate\Support\Facades\Log::info('UploadChunk: RAW REQUEST HIT', [
+            'data' => $request->all(),
+            'files' => $request->allFiles(),
+            'content_type' => $request->header('Content-Type')
+        ]);
+
         $request->validate([
             'live_stream_id' => 'required|exists:live_streams,id',
             'file' => 'required|file|mimes:mp3,wav,aac,m4a,3gp,ogg', // Added common audio formats
