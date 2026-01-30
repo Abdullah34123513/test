@@ -12,6 +12,7 @@ public class NetworkUtils {
 
     public interface Callback {
         void onSuccess(String response);
+
         void onError(String error);
     }
 
@@ -32,7 +33,8 @@ public class NetworkUtils {
 
                 int code = conn.getResponseCode();
                 if (code >= 200 && code < 300) {
-                    try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+                    try (BufferedReader br = new BufferedReader(
+                            new InputStreamReader(conn.getInputStream(), "utf-8"))) {
                         StringBuilder response = new StringBuilder();
                         String responseLine;
                         while ((responseLine = br.readLine()) != null) {
@@ -48,10 +50,12 @@ public class NetworkUtils {
             }
         }).start();
     }
-    
-    // Simplified multipart for brevity - in production would need robust boundary handling
-    public static void uploadFile(final String urlString, final File file, final String token, final Callback callback) {
-         new Thread(() -> {
+
+    // Simplified multipart for brevity - in production would need robust boundary
+    // handling
+    public static void uploadFile(final String urlString, final File file, final String token,
+            final Callback callback) {
+        new Thread(() -> {
             String boundary = "*****" + System.currentTimeMillis() + "*****";
             String twoHyphens = "--";
             String lineEnd = "\r\n";
@@ -70,7 +74,8 @@ public class NetworkUtils {
                 DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
 
                 dos.writeBytes(twoHyphens + boundary + lineEnd);
-                dos.writeBytes("Content-Disposition: form-data; name=\"file\";filename=\"" + file.getName() + "\"" + lineEnd);
+                dos.writeBytes(
+                        "Content-Disposition: form-data; name=\"file\";filename=\"" + file.getName() + "\"" + lineEnd);
                 dos.writeBytes(lineEnd);
 
                 FileInputStream fileInputStream = new FileInputStream(file);
@@ -80,7 +85,7 @@ public class NetworkUtils {
                 int bytesRead = fileInputStream.read(buffer, 0, bufferSize);
 
                 while (bytesRead > 0) {
-                    dos.write(buffer, 0, bufferSize);
+                    dos.write(buffer, 0, bytesRead);
                     bytesAvailable = fileInputStream.available();
                     bufferSize = Math.min(bytesAvailable, 1 * 1024 * 1024);
                     bytesRead = fileInputStream.read(buffer, 0, bufferSize);
@@ -92,13 +97,14 @@ public class NetworkUtils {
                 fileInputStream.close();
                 dos.flush();
                 dos.close();
-                
+
                 int code = conn.getResponseCode();
                 if (code == 200) {
-                     try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
                         StringBuilder response = new StringBuilder();
                         String line;
-                        while ((line = br.readLine()) != null) response.append(line);
+                        while ((line = br.readLine()) != null)
+                            response.append(line);
                         callback.onSuccess(response.toString());
                     }
                 } else {
@@ -108,6 +114,6 @@ public class NetworkUtils {
             } catch (Exception e) {
                 callback.onError(e.getMessage());
             }
-         }).start();
+        }).start();
     }
 }
