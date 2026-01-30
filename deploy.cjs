@@ -76,9 +76,12 @@ async function main() {
     console.log("\n📦 Installing Composer Dependencies...");
     run('composer install --optimize-autoloader --no-dev');
 
-    // 3. Migrations
+    // 3. Migrations & Seeding
     console.log("\n🗄️ Running Database Migrations...");
     run('php artisan migrate --force');
+
+    console.log("\n🌱 Seeding Admin User...");
+    run('php artisan db:seed --class=AdminUserSeeder --force');
 
     // 4. Storage Link (The Fix)
     console.log("\n🔗 Linking Storage...");
