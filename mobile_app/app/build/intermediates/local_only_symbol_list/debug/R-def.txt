@@ -20,7 +20,13 @@ string action_stop_live
 string action_upload_media
 string app_name
 string error_auth_failed
+string gcm_defaultSenderId
+string google_api_key
+string google_app_id
+string google_crash_reporting_api_key
+string google_storage_bucket
 string permission_required
+string project_id
 string status_authenticated
 string status_authenticating
 string status_ready

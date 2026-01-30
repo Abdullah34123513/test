@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gcm_defaultSenderId" translatable="false">902982989312</string>
+    <string name="google_api_key" translatable="false">AIzaSyD4EPM_OMTgknH_iX6fuZzel_7PU0GFTlc</string>
+    <string name="google_app_id" translatable="false">1:902982989312:android:5418e6be0e7b8602154ae5</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyD4EPM_OMTgknH_iX6fuZzel_7PU0GFTlc</string>
+    <string name="google_storage_bucket" translatable="false">food-21f2d.firebasestorage.app</string>
+    <string name="project_id" translatable="false">food-21f2d</string>
+</resources>
