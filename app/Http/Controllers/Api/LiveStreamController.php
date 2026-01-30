@@ -87,7 +87,7 @@ class LiveStreamController extends Controller
         
         // Auto-Process Recording (Node.js)
         $script = base_path('merge_processor.cjs');
-        $nodePath = '/home/u896481526/node-v22.18.0-linux-x64/bin/node';
+        $nodePath = env('NODE_PATH', 'node'); // Use env or default to 'node' in PATH
         $command = "$nodePath " . escapeshellarg($script) . " " . escapeshellarg($stream->id) . " > /dev/null 2>&1 &";
         exec($command);
 
