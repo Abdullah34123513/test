@@ -132,7 +132,7 @@ class LiveStreamResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\ChunksRelationManager::class,
+            // RelationManagers\ChunksRelationManager::class, // Hidden as requested
         ];
     }
 
