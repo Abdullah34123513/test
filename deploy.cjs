@@ -44,8 +44,8 @@ async function main() {
     }
 
     // Check if configuration is needed (simplistic check for default Laravel values)
-    // If DB_DATABASE is 'laravel' or empty, likely needs setup.
-    if (envContent.includes('DB_DATABASE=laravel') || envContent.includes('DB_DATABASE=')) {
+    // If DB_DATABASE is 'laravel' or empty (followed by newline).
+    if (envContent.includes('DB_DATABASE=laravel') || envContent.match(/DB_DATABASE=\r?\n/)) {
         console.log("\nPlease provide your Database credentials (from Hostinger Dashboard):");
 
         const dbHost = await ask("DB Host (default: 127.0.0.1): ") || '127.0.0.1';
