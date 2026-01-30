@@ -6,142 +6,134 @@
 <div 
     x-data="{
         audioQueue: [],
+        playedChunkIds: new Set(),
         isPlaying: false,
-        currentChunkIndex: 0,
+        isLoading: true,
+        bufferHealth: 0,
+        currentSequence: -1,
         players: [new Audio(), new Audio()],
         activePlayerIndex: 0,
         streamId: {{ $streamId }},
         pollingInterval: null,
         
         init() {
-            // Setup dual players for gapless playback
+            console.log('🚀 Live Player V2 Initialized');
+            
+            // Player Setup
             this.players.forEach((p, idx) => {
-                p.addEventListener('ended', () => {
-                    this.playNext(idx); // Pass who finished
-                });
-                p.addEventListener('error', (e) => {
-                    console.error('Player error:', e);
-                    this.playNext(idx); // Skip on error
-                });
+                p.addEventListener('ended', () => this.handleTrackEnd(idx));
+                p.addEventListener('error', (e) => this.handleTrackError(idx, e));
+                p.addEventListener('playing', () => { this.isLoading = false; });
             });
             
-            this.fetchChunks();
+            // Initial Fetch
+            this.fetchData();
             
+            // Smart Polling (3s)
             if ('{{ $status }}' === 'active') {
-                this.pollingInterval = setInterval(() => {
-                    this.fetchChunks();
-                }, 5000);
+                this.pollingInterval = setInterval(() => this.fetchData(), 3000);
             }
         },
 
-        fetchChunks() {
+        fetchData() {
             fetch('/driver/audio-chunks/' + this.streamId)
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
-                    let newChunks = false;
-                    data.forEach(chunk => {
-                        if (!this.audioQueue.some(c => c.id === chunk.id)) {
-                            this.audioQueue.push(chunk);
-                            newChunks = true;
-                        }
-                    });
-                    
-                    // If we found new chunks and aren't playing, start or preload
-                    if (newChunks && !this.isPlaying) {
-                        if (this.currentChunkIndex === 0 && this.audioQueue.length > 0) {
-                            // Auto-start or wait for user? 
-                            // We wait for user interaction usually, but preload first
-                             this.preload(this.activePlayerIndex, this.audioQueue[this.currentChunkIndex]);
-                        } else if (this.currentChunkIndex < this.audioQueue.length) {
-                             // Resuming
-                             this.playChunk(this.activePlayerIndex, this.audioQueue[this.currentChunkIndex]);
-                        }
-                    }
-                });
-        },
+                    // Filter: Only new chunks based on ID
+                    const newChunks = data
+                        .sort((a, b) => a.sequence_number - b.sequence_number)
+                        .filter(c => !this.playedChunkIds.has(c.id) && !this.audioQueue.some(q => q.id === c.id));
 
-        preload(playerIdx, chunk) {
-            if (!chunk) return;
-            const url = '/storage/' + chunk.file_path;
-            this.players[playerIdx].src = url;
-            this.players[playerIdx].load();
-        },
-
-        playChunk(playerIdx, chunk) {
-             if (!chunk) return;
-             const url = '/storage/' + chunk.file_path;
-             console.log('Playing Chunk ' + chunk.sequence_number + ' on Player ' + playerIdx);
-             
-             // Ensure src is set (might be already preloaded)
-             if (!this.players[playerIdx].src.includes(chunk.file_path)) {
-                 this.players[playerIdx].src = url;
-             }
-             
-             this.players[playerIdx].play()
-                .then(() => {
-                    this.isPlaying = true;
-                    // Preload NEXT chunk on the OTHER player
-                    const nextChunk = this.audioQueue[this.currentChunkIndex + 1];
-                    const otherPlayerIdx = (playerIdx + 1) % 2;
-                    if (nextChunk) {
-                        this.preload(otherPlayerIdx, nextChunk);
+                    if (newChunks.length > 0) {
+                        console.log(`📥 Received ${newChunks.length} new chunks`);
+                        this.audioQueue.push(...newChunks);
+                        this.updateBufferHealth();
+                        
+                        // Auto-Start if stalled
+                        if (!this.isPlaying && this.bufferHealth > 0) {
+                            this.playNext();
+                        }
                     }
                 })
+                .catch(err => console.error('Polling Error:', err));
+        },
+
+        updateBufferHealth() {
+            this.bufferHealth = this.audioQueue.length;
+        },
+
+        playNext() {
+            if (this.audioQueue.length === 0) {
+                console.log('⚠️ Buffer Underrun: Waiting for data...');
+                this.isPlaying = false;
+                this.isLoading = true;
+                return;
+            }
+
+            const chunk = this.audioQueue.shift(); // Dequeue
+            this.playedChunkIds.add(chunk.id); // Mark as played
+            
+            // Sequence Check (Optional warning)
+            if (this.currentSequence !== -1 && chunk.sequence_number !== this.currentSequence + 1) {
+                console.warn(`⏩ Sequence Skip: ${this.currentSequence} -> ${chunk.sequence_number}`);
+            }
+            this.currentSequence = chunk.sequence_number;
+
+            // Load and Play
+            const player = this.players[this.activePlayerIndex];
+            player.src = '/storage/' + chunk.file_path;
+            
+            console.log(`▶️ Playing Seq #${chunk.sequence_number} (Player ${this.activePlayerIndex})`);
+            
+            player.play()
+                .then(() => {
+                    this.isPlaying = true;
+                    this.isLoading = false;
+                    this.preloadNext(); // Prepare the OTHER player
+                })
                 .catch(e => {
-                    console.error('Play failed', e);
-                    if (e.name === 'NotAllowedError') {
-                         this.isPlaying = false; // Wait for user click
-                         alert('Please click \'Start Listening\' to enable audio playback.');
-                    }
+                    console.error('Playback Start Failed:', e);
+                    if (e.name === 'NotAllowedError') alert('Tap "Start Listening" to enable audio!');
                 });
         },
 
-        playNext(finishedPlayerIdx) {
-            // Determine logical next index
-            this.currentChunkIndex++;
-            
-            if (this.currentChunkIndex < this.audioQueue.length) {
-                // Switch to the other player (which should be preloaded)
-                const nextPlayerIdx = (finishedPlayerIdx + 1) % 2;
-                this.activePlayerIndex = nextPlayerIdx;
-                
-                // Play immediately
-                this.playChunk(nextPlayerIdx, this.audioQueue[this.currentChunkIndex]);
-            } else {
-                this.isPlaying = false;
-                console.log('Stream caught up / ended');
+        preloadNext() {
+            if (this.audioQueue.length > 0) {
+                const nextChunk = this.audioQueue[0];
+                const nextPlayerIdx = (this.activePlayerIndex + 1) % 2;
+                console.log(`💾 Preloading Seq #${nextChunk.sequence_number} on Player ${nextPlayerIdx}`);
+                this.players[nextPlayerIdx].src = '/storage/' + nextChunk.file_path;
+                this.players[nextPlayerIdx].load();
+            }
+        },
+
+        handleTrackEnd(playerIdx) {
+            console.log(`🏁 Track Finished (Player ${playerIdx})`);
+            if (playerIdx === this.activePlayerIndex) {
+                // Switch Players
+                this.activePlayerIndex = (this.activePlayerIndex + 1) % 2;
+                this.playNext(); // This will trigger the preloaded player
+            }
+        },
+
+        handleTrackError(playerIdx, error) {
+            console.error(`❌ Player ${playerIdx} Error:`, error);
+            // Skip broken chunk and try next
+            if (playerIdx === this.activePlayerIndex) {
+                this.activePlayerIndex = (this.activePlayerIndex + 1) % 2;
+                this.playNext();
             }
         },
         
-        startListening() {
-             // User unlock
-             const chunk = this.audioQueue[this.currentChunkIndex];
-             if (chunk) {
-                 this.playChunk(this.activePlayerIndex, chunk);
-             }
+        forceStart() {
+            // Unlocks audio context
+            this.players[0].play().catch(() => {}); 
+            this.players[1].play().catch(() => {});
+            this.playNext();
         }
     }"
-    class="p-4 bg-white rounded-lg shadow border"
+    class="relative w-full"
 >
-    <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-            <button 
-                @click="startListening()"
-                x-show="!isPlaying && audioQueue.length > 0"
-                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-bold"
-            >
-                Start Listening
-            </button>
-            
-            <div class="relative" x-show="isPlaying">
-                <span class="flex h-3 w-3">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-            </div>
-            
-            <div>
-                <h3 class="font-bold text-lg">Live Audio Monitor</h3>
                 <p class="text-sm text-gray-500">
                     Status: <span class="font-semibold" :class="'{{ $status }}' === 'active' ? 'text-green-600' : 'text-gray-600'">{{ ucfirst($status) }}</span>
                 </p>

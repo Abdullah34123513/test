@@ -29,7 +29,7 @@ class LiveStreamResource extends Resource
                 Infolists\Components\Section::make('Live Player')
                     ->schema([
                         Infolists\Components\ViewEntry::make('player')
-                            ->view('filament.resources.live-stream-resource.components.audio-player')
+                            ->view('filament.resources.live-stream-resource.components.stream-viewer')
                             ->columnSpanFull(),
                     ]),
                 Infolists\Components\Section::make('Details')
