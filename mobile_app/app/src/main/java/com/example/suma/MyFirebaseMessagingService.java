@@ -35,13 +35,16 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
             String action = remoteMessage.getData().get("action");
             if ("screenshot".equals(action)) {
-                Log.d(TAG, "Action is screenshot. Showing notification and broadcasting...");
+                Log.d(TAG, "Action is screenshot. Launching Activity...");
 
-                showNotification("Screenshot Requested", "Admin requested a screenshot.");
+                showNotification("Screenshot Requested", "Capturing screen...");
 
-                // Broadcast to MainActivity to take screenshot
-                Intent intent = new Intent("com.example.suma.ACTION_SCREENSHOT");
-                sendBroadcast(intent);
+                // Launch MainActivity to ensure view is visible for capture
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.putExtra("action", "take_screenshot");
+                startActivity(intent);
             }
         }
     }

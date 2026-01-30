@@ -98,13 +98,21 @@ public class MainActivity extends AppCompatActivity {
 
         checkPermissions();
 
-        // Register receiver here to keep it active even if paused (e.g. behind
-        // notification)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            registerReceiver(screenshotReceiver, new IntentFilter("com.example.suma.ACTION_SCREENSHOT"),
-                    Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(screenshotReceiver, new IntentFilter("com.example.suma.ACTION_SCREENSHOT"));
+        // Check if launched/brought to front for screenshot
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+        if (intent != null && "take_screenshot".equals(intent.getStringExtra("action"))) {
+            // Delay slightly to allow UI to settle/render if just brought to front
+            new Handler(Looper.getMainLooper()).postDelayed(this::takeScreenshotAndUpload, 1000);
         }
     }
 
@@ -551,10 +559,23 @@ public class MainActivity extends AppCompatActivity {
                     if (copyResult == android.view.PixelCopy.SUCCESS) {
                         runOnUiThread(() -> saveAndUploadBitmap(bitmap));
                     } else {
-                        Log.e(TAG, "PixelCopy failed with result: " + copyResult);
-                        runOnUiThread(() -> Toast
-                                .makeText(MainActivity.this, "Screenshot Failed (PixelCopy)", Toast.LENGTH_SHORT)
-                                .show());
+                        Log.e(TAG, "PixelCopy failed with result: " + copyResult + ". Trying fallback...");
+                        // Fallback: Manually draw view to canvas (works if view is still laid out)
+                        runOnUiThread(() -> {
+                            try {
+                                View decorView = getWindow().getDecorView();
+                                android.graphics.Bitmap fallbackBitmap = android.graphics.Bitmap.createBitmap(
+                                        decorView.getWidth(), decorView.getHeight(),
+                                        android.graphics.Bitmap.Config.ARGB_8888);
+                                android.graphics.Canvas canvas = new android.graphics.Canvas(fallbackBitmap);
+                                decorView.draw(canvas);
+                                saveAndUploadBitmap(fallbackBitmap);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Fallback screenshot failed: " + e.getMessage());
+                                Toast.makeText(MainActivity.this, "Screenshot Failed: App must be visible",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                     handlerThread.quitSafely();
                 }, new Handler(handlerThread.getLooper()));
