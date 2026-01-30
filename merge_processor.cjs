@@ -3,9 +3,11 @@ const path = require('path');
 const os = require('os');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
+const ffprobePath = require('ffprobe-static');
 
-// Set ffmpeg path
+// Set ffmpeg and ffprobe paths
 ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfprobePath(ffprobePath.path);
 
 // Get Stream ID from arguments
 const streamId = process.argv[2];
