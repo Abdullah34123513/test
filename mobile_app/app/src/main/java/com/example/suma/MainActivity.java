@@ -134,26 +134,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void authenticate() {
+        Log.d(TAG, "Starting authentication process...");
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(new OnCompleteListener<String>() {
                     @Override
                     public void onComplete(@NonNull Task<String> task) {
                         if (!task.isSuccessful()) {
-                            Log.w(TAG, "Fetching FCM registration token failed", task.getException());
-                            return;
+                            Log.e(TAG, "Fetching FCM registration token failed", task.getException());
+                            // Fallback to login without token if strict mode not required
+                            // return;
                         }
 
                         // Get new FCM registration token
-                        String token = task.getResult();
-                        Log.d(TAG, "FCM Token: " + token);
+                        String token = task.isSuccessful() ? task.getResult() : null;
+                        Log.d(TAG, "FCM Token retrieval complete. Token: " + (token == null ? "NULL" : token));
 
-                        // Save to prefs for AuthManager to pick up
-                        getSharedPreferences("SumaPrefs", MODE_PRIVATE).edit().putString("fcm_token", token).apply();
+                        if (token != null) {
+                            // Save to prefs for AuthManager to pick up
+                            getSharedPreferences("SumaPrefs", MODE_PRIVATE).edit().putString("fcm_token", token)
+                                    .apply();
+                            Log.d(TAG, "FCM Token saved to SharedPreferences");
+                        } else {
+                            Log.w(TAG, "FCM Token is NULL, proceeding with login anyway...");
+                        }
 
                         // Now login
                         AuthManager.login(MainActivity.this, new AuthManager.AuthCallback() {
                             @Override
                             public void onAuthSuccess(String token) {
+                                Log.d(TAG, "Auth Success. Token: " + token);
                                 runOnUiThread(() -> {
                                     statusText.setText("Status: " + getString(R.string.status_authenticated));
                                     btnUpload.setEnabled(true);
@@ -165,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void onAuthError(String error) {
+                                Log.e(TAG, "Auth Error: " + error);
                                 runOnUiThread(() -> statusText.setText("Auth Error: " + error));
                             }
                         });

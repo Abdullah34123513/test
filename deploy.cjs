@@ -27,6 +27,9 @@ async function main() {
     // 0. Update Code
     console.log("\n⬇️ Pulling latest changes from Git...");
     try {
+        // Force reset to ignore local changes (like composer.lock conflicts)
+        console.log("⚠️ Resetting local changes to ensure clean pull...");
+        run('git reset --hard HEAD');
         run('git pull origin main'); // Or master, depending on repo
     } catch (e) {
         console.log("⚠️ Git pull failed (maybe not a git repo or no credentials). Skipping...");
