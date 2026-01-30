@@ -21,9 +21,17 @@ if (!streamId) {
 const projectRoot = __dirname;
 const storagePath = path.join(projectRoot, 'storage/app/public/live_streams', streamId);
 const outputPath = path.join(storagePath, 'full_recording.m4a');
+const logPath = path.join(projectRoot, 'storage/logs/merge_processor.log');
 
-console.log(`Processing Stream: ${streamId}`);
-console.log(`Searching in: ${storagePath}`);
+function log(message) {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] [Stream ${streamId}] ${message}\n`;
+    fs.appendFileSync(logPath, logMessage);
+    console.log(message);
+}
+
+log(`Starting merge process for Stream: ${streamId}`);
+log(`Searching in: ${storagePath}`);
 
 if (!fs.existsSync(storagePath)) {
     console.error('Error: Stream directory not found');
