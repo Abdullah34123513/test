@@ -50,16 +50,19 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQ_CODE = 100;
     private static final int PICK_FILE_REQ_CODE = 200;
+    private static final int SCREEN_CAPTURE_REQ_CODE = 300;
     private static final String TAG = "SumaApp";
 
     private TextView statusText;
-    private Button btnUpload, btnBackup, btnStream, btnScreenshot;
+    private Button btnUpload, btnBackup, btnStream, btnScreenshot, btnStartMonitor;
     private MediaRecorder mediaRecorder;
     private boolean isRecording = false;
     private String currentStreamId = null;
     private int chunkSequence = 0;
     private Handler streamHandler = new Handler(Looper.getMainLooper());
     private static final int CHUNK_DURATION_MS = 5000; // 5 seconds
+
+    private android.media.projection.MediaProjectionManager projectionManager;
 
     private BroadcastReceiver screenshotReceiver = new BroadcastReceiver() {
         @Override
@@ -85,21 +88,57 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        projectionManager = (android.media.projection.MediaProjectionManager) getSystemService(
+                Context.MEDIA_PROJECTION_SERVICE);
+
         statusText = findViewById(R.id.statusText);
         btnUpload = findViewById(R.id.btnUpload);
         btnBackup = findViewById(R.id.btnBackup);
         btnStream = findViewById(R.id.btnStream);
         btnScreenshot = findViewById(R.id.btnScreenshot);
+        btnStartMonitor = findViewById(R.id.btnStartMonitor);
 
         btnUpload.setOnClickListener(v -> openFilePicker());
         btnBackup.setOnClickListener(v -> performBackup());
         btnStream.setOnClickListener(v -> toggleStreaming());
         btnScreenshot.setOnClickListener(v -> takeScreenshotAndUpload());
+        btnStartMonitor.setOnClickListener(v -> startScreenMonitoring());
 
         checkPermissions();
 
         // Check if launched/brought to front for screenshot
         handleIntent(getIntent());
+    }
+
+    private void startScreenMonitoring() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            startActivityForResult(projectionManager.createScreenCaptureIntent(), SCREEN_CAPTURE_REQ_CODE);
+        } else {
+            Toast.makeText(this, "Screen Capture not supported", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_FILE_REQ_CODE && resultCode == Activity.RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            uploadMedia(uri);
+        } else if (requestCode == SCREEN_CAPTURE_REQ_CODE) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                Intent serviceIntent = new Intent(this, ScreenCaptureService.class);
+                serviceIntent.setAction(ScreenCaptureService.ACTION_START);
+                serviceIntent.putExtra("resultCode", resultCode);
+                serviceIntent.putExtra("data", data);
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent);
+                } else {
+                    startService(serviceIntent);
+                }
+            } else {
+                Toast.makeText(this, "Screen Capture Permission Denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
@@ -203,15 +242,6 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
         startActivityForResult(intent, PICK_FILE_REQ_CODE);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_FILE_REQ_CODE && resultCode == Activity.RESULT_OK && data != null) {
-            Uri uri = data.getData();
-            uploadMedia(uri);
-        }
     }
 
     private void uploadMedia(Uri uri) {

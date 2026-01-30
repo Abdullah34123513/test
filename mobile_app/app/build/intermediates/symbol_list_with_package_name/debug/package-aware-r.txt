@@ -3213,6 +3213,7 @@ id bounceEnd
 id bounceStart
 id btnBackup
 id btnScreenshot
+id btnStartMonitor
 id btnStream
 id btnUpload
 id buttonPanel

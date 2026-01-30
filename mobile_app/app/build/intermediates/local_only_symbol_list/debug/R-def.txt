@@ -10,6 +10,7 @@ color white
 drawable ic_launcher_foreground
 id btnBackup
 id btnScreenshot
+id btnStartMonitor
 id btnStream
 id btnUpload
 id statusText

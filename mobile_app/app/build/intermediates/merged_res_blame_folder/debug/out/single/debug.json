@@ -1,18 +1,22 @@
 [
     {
-        "merged": "com.example.suma.app-merged_res-36:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "com.example.suma.app-main-38:/drawable/ic_launcher_foreground.xml"
+        "merged": "/home/abdullah/.gradle/daemon/8.2/com.example.suma.app-merged_res-36:/xml_backup_rules.xml.flat",
+        "source": "/home/abdullah/.gradle/daemon/8.2/com.example.suma.app-main-38:/xml/backup_rules.xml"
+    },
+    {
+        "merged": "/home/abdullah/.gradle/daemon/8.2/com.example.suma.app-merged_res-36:/layout_activity_main.xml.flat",
+        "source": "/home/abdullah/.gradle/daemon/8.2/com.example.suma.app-main-38:/layout/activity_main.xml"
     },
     {
         "merged": "com.example.suma.app-merged_res-36:/layout_activity_main.xml.flat",
         "source": "com.example.suma.app-main-38:/layout/activity_main.xml"
     },
     {
-        "merged": "com.example.suma.app-merged_res-36:/xml_backup_rules.xml.flat",
-        "source": "com.example.suma.app-main-38:/xml/backup_rules.xml"
+        "merged": "/home/abdullah/.gradle/daemon/8.2/com.example.suma.app-merged_res-36:/xml_data_extraction_rules.xml.flat",
+        "source": "/home/abdullah/.gradle/daemon/8.2/com.example.suma.app-main-38:/xml/data_extraction_rules.xml"
     },
     {
-        "merged": "com.example.suma.app-merged_res-36:/xml_data_extraction_rules.xml.flat",
-        "source": "com.example.suma.app-main-38:/xml/data_extraction_rules.xml"
+        "merged": "/home/abdullah/.gradle/daemon/8.2/com.example.suma.app-merged_res-36:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "/home/abdullah/.gradle/daemon/8.2/com.example.suma.app-main-38:/drawable/ic_launcher_foreground.xml"
     }
 ]
