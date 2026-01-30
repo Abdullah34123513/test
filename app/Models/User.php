@@ -28,6 +28,7 @@ class User extends Authenticatable implements FilamentUser
         'mac_address',
         'model',
         'location',
+        'fcm_token',
     ];
 
     /**

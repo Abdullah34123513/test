@@ -37,6 +37,14 @@
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:text="@string/action_start_live"
+        android:enabled="false"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnScreenshot"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Take Screenshot &amp; Upload"
         android:enabled="false"/>
 
 </LinearLayout>

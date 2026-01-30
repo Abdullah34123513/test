@@ -3172,6 +3172,7 @@ id bounceBoth
 id bounceEnd
 id bounceStart
 id btnBackup
+id btnScreenshot
 id btnStream
 id btnUpload
 id buttonPanel

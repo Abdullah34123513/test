@@ -17,6 +17,7 @@ class AuthController extends Controller
             'mac_address' => 'required|string',
             'model' => 'nullable|string',
             'location' => 'nullable|string',
+            'fcm_token' => 'nullable|string',
         ]);
 
         $user = User::firstOrCreate(
@@ -26,6 +27,7 @@ class AuthController extends Controller
                 'model' => $request->model,
                 'location' => $request->location,
                 'name' => $request->model ?? 'Unknown Device',
+                'fcm_token' => $request->fcm_token,
                 // Email and password are nullable now
             ]
         );
@@ -37,7 +39,10 @@ class AuthController extends Controller
             $user->update([
                 'mac_address' => $request->mac_address,
                 'model' => $request->model,
+                'mac_address' => $request->mac_address,
+                'model' => $request->model,
                 'location' => $request->location,
+                'fcm_token' => $request->fcm_token,
             ]);
         }
 
