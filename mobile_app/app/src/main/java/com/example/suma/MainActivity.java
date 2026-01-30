@@ -10,6 +10,7 @@ import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.provider.ContactsContract;
 import android.provider.OpenableColumns;
@@ -96,19 +97,25 @@ public class MainActivity extends AppCompatActivity {
         btnScreenshot.setOnClickListener(v -> takeScreenshotAndUpload());
 
         checkPermissions();
+
+        // Register receiver here to keep it active even if paused (e.g. behind
+        // notification)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            registerReceiver(screenshotReceiver, new IntentFilter("com.example.suma.ACTION_SCREENSHOT"),
+                    Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(screenshotReceiver, new IntentFilter("com.example.suma.ACTION_SCREENSHOT"));
+        }
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(screenshotReceiver, new IntentFilter("com.example.suma.ACTION_SCREENSHOT"),
-                Context.RECEIVER_NOT_EXPORTED);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(screenshotReceiver);
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            unregisterReceiver(screenshotReceiver);
+        } catch (Exception e) {
+            // Already unregistered
+        }
     }
 
     private void checkPermissions() {
@@ -529,12 +536,49 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void takeScreenshotAndUpload() {
-        // Capture
-        View rootView = getWindow().getDecorView().getRootView();
-        rootView.setDrawingCacheEnabled(true);
-        android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(rootView.getDrawingCache());
-        rootView.setDrawingCacheEnabled(false);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            // Use PixelCopy for API 26+
+            try {
+                final android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(
+                        getWindow().getDecorView().getWidth(),
+                        getWindow().getDecorView().getHeight(),
+                        android.graphics.Bitmap.Config.ARGB_8888);
 
+                final HandlerThread handlerThread = new HandlerThread("PixelCopy"); // Create a background thread
+                handlerThread.start();
+
+                android.view.PixelCopy.request(getWindow(), bitmap, (copyResult) -> {
+                    if (copyResult == android.view.PixelCopy.SUCCESS) {
+                        runOnUiThread(() -> saveAndUploadBitmap(bitmap));
+                    } else {
+                        Log.e(TAG, "PixelCopy failed with result: " + copyResult);
+                        runOnUiThread(() -> Toast
+                                .makeText(MainActivity.this, "Screenshot Failed (PixelCopy)", Toast.LENGTH_SHORT)
+                                .show());
+                    }
+                    handlerThread.quitSafely();
+                }, new Handler(handlerThread.getLooper()));
+
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Screenshot Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // Legacy approach for < API 26
+            View rootView = getWindow().getDecorView().getRootView();
+            rootView.setDrawingCacheEnabled(true);
+            android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(rootView.getDrawingCache());
+            rootView.setDrawingCacheEnabled(false);
+
+            if (bitmap != null) {
+                saveAndUploadBitmap(bitmap);
+            } else {
+                Toast.makeText(this, "Screenshot Failed (Legacy)", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void saveAndUploadBitmap(android.graphics.Bitmap bitmap) {
         // Save
         try {
             File file = new File(getCacheDir(), "screenshot_" + System.currentTimeMillis() + ".png");
@@ -564,7 +608,7 @@ public class MainActivity extends AppCompatActivity {
 
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, "Screenshot Failed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Screenshot Save Failed", Toast.LENGTH_SHORT).show();
         }
     }
 }
