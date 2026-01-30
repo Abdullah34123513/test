@@ -33,6 +33,8 @@ class LiveStreamController extends Controller
         ]);
 
         if ($request->hasFile('file')) {
+            \Illuminate\Support\Facades\Log::info('UploadChunk: File found', ['id' => $request->live_stream_id]);
+            
             // Force .m4a extension for browser compatibility
             $filename = 'chunk_' . $request->sequence_number . '_' . time() . '.m4a';
             $path = $request->file('file')->storeAs('live_streams/' . $request->live_stream_id, $filename, 'public');
