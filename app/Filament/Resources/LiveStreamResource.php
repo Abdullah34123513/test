@@ -97,6 +97,13 @@ class LiveStreamResource extends Resource
             ]);
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\ChunksRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
