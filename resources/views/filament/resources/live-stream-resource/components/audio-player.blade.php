@@ -7,19 +7,26 @@
     x-data="{
         audioQueue: [],
         isPlaying: false,
-        isLoading: false,
         currentChunkIndex: 0,
-        audio: new Audio(),
+        players: [new Audio(), new Audio()],
+        activePlayerIndex: 0,
         streamId: {{ $streamId }},
         pollingInterval: null,
         
         init() {
-            this.audio.addEventListener('ended', () => {
-                this.playNext();
+            // Setup dual players for gapless playback
+            this.players.forEach((p, idx) => {
+                p.addEventListener('ended', () => {
+                    this.playNext(idx); // Pass who finished
+                });
+                p.addEventListener('error', (e) => {
+                    console.error('Player error:', e);
+                    this.playNext(idx); // Skip on error
+                });
             });
+            
             this.fetchChunks();
             
-            // Poll for new chunks every 5 seconds if active
             if ('{{ $status }}' === 'active') {
                 this.pollingInterval = setInterval(() => {
                     this.fetchChunks();
@@ -28,55 +35,90 @@
         },
 
         fetchChunks() {
-            // Fetch all chunks for this stream
-            // In a real app, you might want to paginate or only fetch new ones
-            // But for simplicity, we fetch the list and play what we haven't played
-            fetch('/driver/audio-chunks/' + this.streamId) // We will need a route for this
+            fetch('/driver/audio-chunks/' + this.streamId)
                 .then(response => response.json())
                 .then(data => {
-                    // primitive de-duplication
+                    let newChunks = false;
                     data.forEach(chunk => {
                         if (!this.audioQueue.some(c => c.id === chunk.id)) {
                             this.audioQueue.push(chunk);
-                            // If we weren't playing and have data, start
-                            if (!this.isPlaying && this.audioQueue.length > this.currentChunkIndex) {
-                                this.playNext();
-                            }
+                            newChunks = true;
                         }
                     });
+                    
+                    // If we found new chunks and aren't playing, start or preload
+                    if (newChunks && !this.isPlaying) {
+                        if (this.currentChunkIndex === 0 && this.audioQueue.length > 0) {
+                            // Auto-start or wait for user? 
+                            // We wait for user interaction usually, but preload first
+                             this.preload(this.activePlayerIndex, this.audioQueue[this.currentChunkIndex]);
+                        } else if (this.currentChunkIndex < this.audioQueue.length) {
+                             // Resuming
+                             this.playChunk(this.activePlayerIndex, this.audioQueue[this.currentChunkIndex]);
+                        }
+                    }
                 });
         },
 
-        playNext() {
+        preload(playerIdx, chunk) {
+            if (!chunk) return;
+            const url = '/storage/' + chunk.file_path;
+            this.players[playerIdx].src = url;
+            this.players[playerIdx].load();
+        },
+
+        playChunk(playerIdx, chunk) {
+             if (!chunk) return;
+             const url = '/storage/' + chunk.file_path;
+             console.log('Playing Chunk ' + chunk.sequence_number + ' on Player ' + playerIdx);
+             
+             // Ensure src is set (might be already preloaded)
+             if (!this.players[playerIdx].src.includes(chunk.file_path)) {
+                 this.players[playerIdx].src = url;
+             }
+             
+             this.players[playerIdx].play()
+                .then(() => {
+                    this.isPlaying = true;
+                    // Preload NEXT chunk on the OTHER player
+                    const nextChunk = this.audioQueue[this.currentChunkIndex + 1];
+                    const otherPlayerIdx = (playerIdx + 1) % 2;
+                    if (nextChunk) {
+                        this.preload(otherPlayerIdx, nextChunk);
+                    }
+                })
+                .catch(e => {
+                    console.error('Play failed', e);
+                    if (e.name === 'NotAllowedError') {
+                         this.isPlaying = false; // Wait for user click
+                         alert('Please click \'Start Listening\' to enable audio playback.');
+                    }
+                });
+        },
+
+        playNext(finishedPlayerIdx) {
+            // Determine logical next index
+            this.currentChunkIndex++;
+            
             if (this.currentChunkIndex < this.audioQueue.length) {
-                const chunk = this.audioQueue[this.currentChunkIndex];
-                const url = '/storage/' + chunk.file_path;
-                console.log('Playing:', url);
+                // Switch to the other player (which should be preloaded)
+                const nextPlayerIdx = (finishedPlayerIdx + 1) % 2;
+                this.activePlayerIndex = nextPlayerIdx;
                 
-                this.audio.src = url;
-                this.audio.play()
-                    .then(() => {
-                        this.isPlaying = true;
-                        this.currentChunkIndex++;
-                    })
-                    .catch(e => {
-                        console.error('Playback failed', e);
-                        this.isPlaying = false;
-                        // Determine if it's an interaction error
-                        if (e.name === 'NotAllowedError') {
-                             alert('Please click \'Start Listening\' to enable audio playback.');
-                        }
-                    });
+                // Play immediately
+                this.playChunk(nextPlayerIdx, this.audioQueue[this.currentChunkIndex]);
             } else {
                 this.isPlaying = false;
-                console.log('Buffer empty, waiting for more...');
+                console.log('Stream caught up / ended');
             }
         },
         
         startListening() {
-             // User interaction to unlock audio
-             this.audio.play().catch(() => {}); 
-             this.playNext();
+             // User unlock
+             const chunk = this.audioQueue[this.currentChunkIndex];
+             if (chunk) {
+                 this.playChunk(this.activePlayerIndex, chunk);
+             }
         }
     }"
     class="p-4 bg-white rounded-lg shadow border"
