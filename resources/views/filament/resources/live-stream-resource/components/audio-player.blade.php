@@ -64,7 +64,7 @@
                         this.isPlaying = false;
                         // Determine if it's an interaction error
                         if (e.name === 'NotAllowedError') {
-                             alert('Please click "Start Listening" to enable audio playback.');
+                             alert('Please click \'Start Listening\' to enable audio playback.');
                         }
                     });
             } else {
