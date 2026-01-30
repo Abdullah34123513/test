@@ -8,6 +8,8 @@ use Filament\Resources\Pages\ViewRecord;
 
 class ViewLiveStream extends ViewRecord
 {
+    protected static string $resource = LiveStreamResource::class;
+
     protected function getHeaderActions(): array
     {
         return [
