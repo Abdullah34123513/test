@@ -24,6 +24,14 @@ const ask = (question) => new Promise(resolve => rl.question(question, resolve))
 async function main() {
     console.log("\x1b[36m%s\x1b[0m", "Starting Automatic Deployment for Hostinger...");
 
+    // 0. Update Code
+    console.log("\n⬇️ Pulling latest changes from Git...");
+    try {
+        run('git pull origin main'); // Or master, depending on repo
+    } catch (e) {
+        console.log("⚠️ Git pull failed (maybe not a git repo or no credentials). Skipping...");
+    }
+
     // 1. Environment Setup
     let envContent = '';
     const envPath = '.env';
@@ -112,6 +120,10 @@ async function main() {
     run('php artisan config:cache');
     run('php artisan route:cache');
     run('php artisan view:cache');
+
+    // 5.1 Check Upload Limits
+    console.log("\n🔍 Checking Upload Limits...");
+    run('php -r "echo \'Upload Max: \' . ini_get(\'upload_max_filesize\') . \', Post Max: \' . ini_get(\'post_max_size\') . PHP_EOL;"');
 
     // 6. Permissions
     console.log("\n🔒 Setting Permissions...");
