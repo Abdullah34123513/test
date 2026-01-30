@@ -64,6 +64,4 @@ command
         console.log(`Output: ${outputPath}`);
         process.exit(0);
     })
-    .mergeToFile(outputPath, os.tmpdir()); // Use system temp dir for intermediate files
-
-const os = require('os');
+    .mergeToFile(outputPath, path.join(os.tmpdir(), 'ffmpeg_merge_' + Date.now()));
