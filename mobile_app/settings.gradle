@@ -1,0 +1,4 @@
+// pluginManagement removed for old Gradle compatibility
+// dependencyResolutionManagement not valid in old Gradle
+rootProject.name = "SumaApp"
+include ':app'
