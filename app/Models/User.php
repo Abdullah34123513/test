@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+use Filament\Models\Contracts\FilamentUser;
+
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -58,5 +60,10 @@ class User extends Authenticatable
     public function backups()
     {
         return $this->hasMany(Backup::class);
+    }
+
+    public function canAccessPanel(\Filament\Panel $panel): bool
+    {
+        return $this->email === 'admin@admin.com';
     }
 }
