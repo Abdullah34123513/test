@@ -7,31 +7,53 @@ $response = $kernel->handle(
     $request = Illuminate\Http\Request::capture()
 );
 
-// 1. Test Logging
+echo "<h1>🔍 Deep Diagnostic Tool 🔍</h1>";
+
+// 1. Database Check
 try {
-    Illuminate\Support\Facades\Log::info('WEB_DEBUG_TEST: Logging works from Browser!');
-    echo "✅ Logging triggered (check logs).<br>";
+    $countStreams = \App\Models\LiveStream::count();
+    $countChunks = \App\Models\AudioChunk::count();
+    $lastChunk = \App\Models\AudioChunk::latest()->first();
+    
+    echo "<h2>📊 Database (MySQL)</h2>";
+    echo "<b>Live Streams Count:</b> $countStreams<br>";
+    echo "<b>Audio Chunks Count:</b> $countChunks<br>";
+    
+    if ($lastChunk) {
+        echo "<b>Last Chunk ID:</b> " . $lastChunk->id . "<br>";
+        echo "<b>Last Chunk Stream ID:</b> " . $lastChunk->live_stream_id . "<br>";
+        echo "<b>Last Chunk Path:</b> " . $lastChunk->file_path . "<br>";
+        echo "<b>Last Chunk Created:</b> " . $lastChunk->created_at . "<br>";
+    } else {
+        echo "⚠️ No chunks found in DB.<br>";
+    }
 } catch (\Exception $e) {
-    echo "❌ Logging Failed: " . $e->getMessage() . "<br>";
+    echo "❌ DB Error: " . $e->getMessage() . "<br>";
 }
 
-// 2. Check Upload Limit
-echo "Upload Limit: " . ini_get('upload_max_filesize') . "<br>";
-echo "Post Limit: " . ini_get('post_max_size') . "<br>";
+// 2. Storage Check
+echo "<h2>📂 Storage Filesystem</h2>";
+$basePath = storage_path('app/public/live_streams');
+echo "<b>Scanning:</b> $basePath<br>";
 
-// 3. Check Storage Write
-try {
-    Illuminate\Support\Facades\Storage::disk('public')->put('web_test.txt', 'Hello from Web');
-    echo "✅ Storage Write Success: " . Illuminate\Support\Facades\Storage::disk('public')->path('web_test.txt') . "<br>";
-} catch (\Exception $e) {
-    echo "❌ Storage Write Failed: " . $e->getMessage() . "<br>";
-}
-
-// 4. Check folder being uploaded to
-$targetDir = storage_path('app/public/live_streams');
-if (!file_exists($targetDir)) {
-    mkdir($targetDir, 0755, true);
-    echo "Created missing dir: $targetDir<br>";
+if (is_dir($basePath)) {
+    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($basePath));
+    $foundFiles = 0;
+    echo "<ul>";
+    foreach ($files as $file) {
+        if ($file->isFile()) {
+            echo "<li>" . $file->getFilename() . " (Size: " . $file->getSize() . ")</li>";
+            $foundFiles++;
+        }
+    }
+    echo "</ul>";
+    if ($foundFiles == 0) echo "⚠️ Directory is empty.<br>";
 } else {
-    echo "Target dir exists: $targetDir<br>";
+    echo "❌ Directory does not exist!<br>";
 }
+
+// 3. Config Check
+echo "<h2>⚙️ Configuration</h2>";
+echo "<b>Storage Path:</b> " . storage_path() . "<br>";
+echo "<b>Public Path:</b> " . public_path() . "<br>";
+echo "<b>Asset URL:</b> " . asset('storage/test.txt') . "<br>";
