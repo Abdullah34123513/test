@@ -86,6 +86,38 @@ class LiveStreamResource extends Resource
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('merge')
+                    ->label('Process Recording')
+                    ->icon('heroicon-o-cpu-chip')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->action(function (LiveStream $record) {
+                        $script = base_path('merge_processor.cjs');
+                        // Ensure we use the full path to node if possible, or just 'node'
+                        $command = "node " . escapeshellarg($script) . " " . escapeshellarg($record->id) . " 2>&1";
+                        
+                        exec($command, $output, $returnVar);
+                        
+                        if ($returnVar === 0) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Audio Merged Successfully')
+                                ->success()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Merge Failed')
+                                ->body(implode("\n", $output))
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+                Tables\Actions\Action::make('download_full')
+                    ->label('Download Full')
+                    ->icon('heroicon-o-musical-note')
+                    ->color('success')
+                    ->url(fn (LiveStream $record) => \Illuminate\Support\Facades\Storage::url("live_streams/{$record->id}/full_recording.m4a"))
+                    ->openUrlInNewTab()
+                    ->visible(fn (LiveStream $record) => \Illuminate\Support\Facades\Storage::disk('public')->exists("live_streams/{$record->id}/full_recording.m4a")),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

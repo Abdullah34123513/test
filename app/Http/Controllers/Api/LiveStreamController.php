@@ -69,18 +69,29 @@ class LiveStreamController extends Controller
     public function end(Request $request)
     {
         $request->validate([
-            'live_stream_id' => 'required|exists:live_streams,id'
+            'live_stream_id' => 'required|exists:live_streams,id',
         ]);
 
-        $stream = LiveStream::where('id', $request->live_stream_id)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        $stream = LiveStream::find($request->live_stream_id);
+        
+        if (!$stream) {
+            return response()->json(['message' => 'Live stream not found'], 404);
+        }
 
-        $stream->update([
-            'status' => 'ended',
-            'ended_at' => now(),
+        // Note: The original code included a user_id check here.
+        // The instruction removes it, so we proceed without it.
+
+        $stream->status = 'ended';
+        $stream->ended_at = now();
+        $stream->save();
+        
+        // Auto-Process Recording (Node.js)
+        $script = base_path('merge_processor.cjs');
+        $command = "node " . escapeshellarg($script) . " " . escapeshellarg($stream->id) . " > /dev/null 2>&1 &";
+        exec($command);
+
+        return response()->json([
+            'status' => 'stream_ended'
         ]);
-
-        return response()->json(['message' => 'Live stream ended']);
     }
 }
