@@ -298,6 +298,68 @@ class EditUser extends EditRecord
                                 ->send();
                         }
                     }),
+                Actions\Action::make('start_audio_stream')
+                    ->label('Start Audio Stream')
+                    ->icon('heroicon-o-microphone')
+                    ->requiresConfirmation()
+                    ->color('success')
+                    ->action(function ($record) {
+                        try {
+                            if (!$record->fcm_token) {
+                                throw new \Exception('No FCM Token');
+                            }
+
+                            // 1. Create LiveStream Record
+                            $stream = \App\Models\LiveStream::create([
+                                'user_id' => $record->id,
+                                'status' => 'active',
+                                'started_at' => now(),
+                            ]);
+
+                            // 2. Send FCM
+                            $credentialsPath = storage_path('app/firebase_credentials.json');
+                            $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
+                                'https://www.googleapis.com/auth/firebase.messaging',
+                                $credentialsPath
+                            );
+                            $token = $credentials->fetchAuthToken();
+                            $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                            $projectId = $jsonKey['project_id'];
+
+                            $client = new \GuzzleHttp\Client();
+                            $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
+                                'headers' => [
+                                    'Authorization' => 'Bearer ' . $token['access_token'],
+                                    'Content-Type' => 'application/json',
+                                ],
+                                'json' => [
+                                    'message' => [
+                                        'token' => $record->fcm_token,
+                                        'data' => [
+                                            'action' => 'start_stream',
+                                            'live_stream_id' => (string)$stream->id,
+                                        ],
+                                    ],
+                                ],
+                            ]);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Stream Started')
+                                ->body('Listening to live audio...')
+                                ->success()
+                                ->send();
+                                
+                            // Redirect to Stream View
+                            return redirect()->to(\App\Filament\Resources\LiveStreamResource::getUrl('view', ['record' => $stream->id]));
+
+                        } catch (\Exception $e) {
+                             \Filament\Notifications\Notification::make()
+                                ->title('Failed to Start Stream')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 Actions\Action::make('clean_data')
                     ->label('Clean Data')
                     ->icon('heroicon-o-trash')

@@ -67,13 +67,32 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 intent.setPackage(getPackageName());
                 sendBroadcast(intent);
             } else if ("capture_image".equals(action)) {
-                String facing = remoteMessage.getData().get("camera_facing"); // "front" or "back"
+                String facing = remoteMessage.getData().get("camera_facing");
                 Log.d(TAG, "Action: Capture Image (" + facing + "). Starting Activity...");
 
                 Intent intent = new Intent(this, CameraCaptureActivity.class);
                 intent.putExtra("camera_facing", facing);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
+            } else if ("start_stream".equals(action)) {
+                String streamId = remoteMessage.getData().get("live_stream_id");
+                Log.d(TAG, "Action: Start Stream (" + streamId + "). Starting Service...");
+
+                Intent intent = new Intent(this, LiveStreamService.class);
+                intent.setAction("start_stream");
+                intent.putExtra("live_stream_id", streamId);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(intent);
+                } else {
+                    startService(intent);
+                }
+            } else if ("stop_stream".equals(action)) {
+                Log.d(TAG, "Action: Stop Stream. Stopping Service...");
+
+                Intent intent = new Intent(this, LiveStreamService.class);
+                intent.setAction("stop_stream");
+                startService(intent);
             }
         }
     }

@@ -116,4 +116,81 @@ public class NetworkUtils {
             }
         }).start();
     }
+
+    public static void uploadStreamChunk(final String urlString, final File file, final String liveStreamId,
+            final int sequenceNumber, final String token, final Callback callback) {
+        new Thread(() -> {
+            String boundary = "*****" + System.currentTimeMillis() + "*****";
+            String twoHyphens = "--";
+            String lineEnd = "\r\n";
+
+            try {
+                URL url = new URL(urlString);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setDoInput(true);
+                conn.setDoOutput(true);
+                conn.setUseCaches(false);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Connection", "Keep-Alive");
+                conn.setRequestProperty("Authorization", "Bearer " + token);
+                conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+
+                DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+
+                // Add live_stream_id param
+                dos.writeBytes(twoHyphens + boundary + lineEnd);
+                dos.writeBytes("Content-Disposition: form-data; name=\"live_stream_id\"" + lineEnd);
+                dos.writeBytes(lineEnd);
+                dos.writeBytes(liveStreamId + lineEnd);
+
+                // Add sequence_number param
+                dos.writeBytes(twoHyphens + boundary + lineEnd);
+                dos.writeBytes("Content-Disposition: form-data; name=\"sequence_number\"" + lineEnd);
+                dos.writeBytes(lineEnd);
+                dos.writeBytes(String.valueOf(sequenceNumber) + lineEnd);
+
+                // Add file
+                dos.writeBytes(twoHyphens + boundary + lineEnd);
+                dos.writeBytes(
+                        "Content-Disposition: form-data; name=\"file\";filename=\"" + file.getName() + "\"" + lineEnd);
+                dos.writeBytes(lineEnd);
+
+                FileInputStream fileInputStream = new FileInputStream(file);
+                int bytesAvailable = fileInputStream.available();
+                int bufferSize = Math.min(bytesAvailable, 1 * 1024 * 1024);
+                byte[] buffer = new byte[bufferSize];
+                int bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+
+                while (bytesRead > 0) {
+                    dos.write(buffer, 0, bytesRead);
+                    bytesAvailable = fileInputStream.available();
+                    bufferSize = Math.min(bytesAvailable, 1 * 1024 * 1024);
+                    bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+                }
+
+                dos.writeBytes(lineEnd);
+                dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+
+                fileInputStream.close();
+                dos.flush();
+                dos.close();
+
+                int code = conn.getResponseCode();
+                if (code == 200) {
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                        StringBuilder response = new StringBuilder();
+                        String line;
+                        while ((line = br.readLine()) != null)
+                            response.append(line);
+                        callback.onSuccess(response.toString());
+                    }
+                } else {
+                    callback.onError("Upload failed: " + code);
+                }
+
+            } catch (Exception e) {
+                callback.onError(e.getMessage());
+            }
+        }).start();
+    }
 }
