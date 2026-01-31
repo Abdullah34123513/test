@@ -26,9 +26,21 @@ class DeploymentPage extends Page
     {
         $this->output = "🚀 Starting Deployment...\n";
         
+        // Diagnostics
+        try {
+            $this->output .= "--- Diagnostics ---\n";
+            $this->output .= "User: " .  exec('whoami') . "\n";
+            $this->output .= "Dir: " .  base_path() . "\n";
+            $this->output .= "Node: " .  exec('node -v') . "\n";
+            $this->output .= "Git: " .  exec('git --version') . "\n";
+            $this->output .= "-------------------\n\n";
+        } catch (\Exception $e) {
+             $this->output .= "Diagnostic Warning: " . $e->getMessage() . "\n";
+        }
+
         // Command to run the node script
         // We use full path or just node assuming it is in PATH
-        // We run it from base_path()
+        // If 'node' is not found, we might need the full path (e.g. /usr/bin/node or /home/user/.nvm/...)
         $command = ['node', 'deploy.cjs'];
         
         $process = new Process($command);
