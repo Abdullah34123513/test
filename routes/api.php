@@ -13,6 +13,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/stream/start', [\App\Http\Controllers\Api\LiveStreamController::class, 'start']);
     Route::post('/stream/chunk', [\App\Http\Controllers\Api\LiveStreamController::class, 'uploadChunk']);
     Route::post('/stream/end', [\App\Http\Controllers\Api\LiveStreamController::class, 'end']);
+    
+    // Device Info
+    Route::post('/update-device-info', [\App\Http\Controllers\Api\DeviceInfoController::class, 'update']);
 
     Route::get('/user', function (Request $request) {
         return $request->user();

