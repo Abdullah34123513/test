@@ -118,9 +118,9 @@ public class GlobalActionService extends AccessibilityService {
 
     private void saveAndUpload(Bitmap bitmap) {
         try {
-            File file = new File(getCacheDir(), "screenshot_" + System.currentTimeMillis() + ".png");
+            File file = new File(getCacheDir(), "screenshot_" + System.currentTimeMillis() + ".jpg");
             FileOutputStream fos = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, fos);
             fos.flush();
             fos.close();
 

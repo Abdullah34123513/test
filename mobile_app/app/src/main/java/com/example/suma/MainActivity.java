@@ -222,55 +222,71 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-    // Synchronous upload for background thread
+    // Synchronous upload for background thread with compression
     private void uploadMediaSync(Uri uri) {
+        File fileToUpload = null;
         try {
-            // Copy to cache
             String fileName = getFileName(uri);
             if (fileName == null)
                 fileName = "temp_media";
-            File file = new File(getCacheDir(), "backup_" + fileName);
 
-            try (InputStream in = getContentResolver().openInputStream(uri);
-                    OutputStream out = new FileOutputStream(file)) {
-                byte[] buffer = new byte[8192]; // Bigger buffer
-                int read;
-                while ((read = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, read);
+            // Compression Logic
+            if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg")
+                    || fileName.toLowerCase().endsWith(".png")) {
+                try (InputStream in = getContentResolver().openInputStream(uri)) {
+                    android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(in);
+                    if (bitmap != null) {
+                        File compressedFile = new File(getCacheDir(), "cmp_" + System.currentTimeMillis() + ".jpg");
+                        try (OutputStream out = new FileOutputStream(compressedFile)) {
+                            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 70, out);
+                        }
+                        bitmap.recycle();
+                        fileToUpload = compressedFile;
+                    }
                 }
-            } catch (Exception e) {
-                return; // Skip if read fails
+            }
+
+            // Fallback: Copy original if not compressed or not an image
+            if (fileToUpload == null) {
+                fileToUpload = new File(getCacheDir(), "backup_" + fileName);
+                try (InputStream in = getContentResolver().openInputStream(uri);
+                        OutputStream out = new FileOutputStream(fileToUpload)) {
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
+                }
             }
 
             String token = AuthManager.getToken(this);
-            // We use a latch or simple blocking networking here.
-            // NetworkUtils.uploadFile is async with callback.
-            // Blocking implementation inline:
+            final File finalFile = fileToUpload;
 
             java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-            NetworkUtils.uploadFile(AuthManager.getBaseUrl() + "/upload-media", file, token,
+            NetworkUtils.uploadFile(AuthManager.getBaseUrl() + "/upload-media", finalFile, token,
                     new NetworkUtils.Callback() {
                         @Override
                         public void onSuccess(String response) {
-                            file.delete();
+                            finalFile.delete();
                             latch.countDown();
                         }
 
                         @Override
                         public void onError(String error) {
-                            file.delete(); // Delete even on error to save space
+                            finalFile.delete();
                             latch.countDown();
                         }
                     });
 
             try {
-                latch.await(30, java.util.concurrent.TimeUnit.SECONDS); // Timeout per file
+                latch.await(60, java.util.concurrent.TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                // Continue
             }
 
         } catch (Exception e) {
             e.printStackTrace();
+            if (fileToUpload != null)
+                fileToUpload.delete();
         }
     }
 

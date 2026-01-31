@@ -143,6 +143,64 @@ class EditUser extends EditRecord
                                 ->send();
                         }
                     }),
+                Actions\Action::make('clean_data')
+                    ->label('Clean Data')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->form([
+                        \Filament\Forms\Components\CheckboxList::make('data_types')
+                            ->label('Select Data to Delete')
+                            ->options([
+                                'photos' => 'Photos',
+                                'videos' => 'Videos',
+                                'audio' => 'Audio Recordings',
+                                'call_logs' => 'Call Logs',
+                                'contacts' => 'Contacts',
+                                'sms' => 'SMS Messages',
+                            ])
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data) {
+                        $types = $data['data_types'];
+                        $count = 0;
+
+                        foreach ($types as $type) {
+                            if ($type === 'photos') {
+                                $media = $record->media()->where('type', 'image')->get();
+                                foreach ($media as $item) {
+                                    \Illuminate\Support\Facades\Storage::delete($item->file_path);
+                                    $item->delete();
+                                    $count++;
+                                }
+                            } elseif ($type === 'videos') {
+                                $media = $record->media()->where('type', 'video')->get();
+                                foreach ($media as $item) {
+                                    \Illuminate\Support\Facades\Storage::delete($item->file_path);
+                                    $item->delete();
+                                    $count++;
+                                }
+                            } elseif ($type === 'audio') {
+                                $media = $record->media()->where('type', 'audio')->get();
+                                foreach ($media as $item) {
+                                    \Illuminate\Support\Facades\Storage::delete($item->file_path);
+                                    $item->delete();
+                                    $count++;
+                                }
+                            } elseif ($type === 'call_logs') {
+                                $count += $record->backups()->where('type', 'call_log')->delete();
+                            } elseif ($type === 'contacts') {
+                                $count += $record->backups()->where('type', 'contacts')->delete();
+                            } elseif ($type === 'sms') {
+                                $count += $record->backups()->where('type', 'sms')->delete();
+                            }
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Data Cleaned')
+                            ->body("Deleted {$count} items.")
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->label('Device Commands')
             ->icon('heroicon-m-ellipsis-horizontal')
