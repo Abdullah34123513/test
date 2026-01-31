@@ -1,11 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-60:12
-INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-60:12
-INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-60:12
-INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-60:12
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-65:12
+INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-65:12
+INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-65:12
+INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:2:1-65:12
 MERGED from [com.google.android.material:material:1.11.0] /home/abdullah/.gradle/caches/transforms-3/f15d2c0eb8ac5def7f55e7e1b501fcf2/transformed/material-1.11.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/abdullah/.gradle/caches/transforms-3/9ff6fb5bc56b7d0a6be6366399681536/transformed/constraintlayout-2.1.4/AndroidManifest.xml:2:1-11:12
+MERGED from [androidx.camera:camera-video:1.3.1] /home/abdullah/.gradle/caches/transforms-3/47a5f3c3a45a9e979813cc29d26410b6/transformed/jetified-camera-video-1.3.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.camera:camera-lifecycle:1.3.1] /home/abdullah/.gradle/caches/transforms-3/8300d8d3219a48a771ebf21342662ee2/transformed/jetified-camera-lifecycle-1.3.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:17:1-36:12
+MERGED from [androidx.camera:camera-core:1.3.1] /home/abdullah/.gradle/caches/transforms-3/8767a01b2ab09206e5010cc6a6a5eb1d/transformed/jetified-camera-core-1.3.1/AndroidManifest.xml:17:1-36:12
+MERGED from [androidx.camera:camera-view:1.3.1] /home/abdullah/.gradle/caches/transforms-3/5bbfd1f53f650f9d8b55e9663993671b/transformed/jetified-camera-view-1.3.1/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/abdullah/.gradle/caches/transforms-3/a120eac9841d1ab6c4b61aa72250fe5d/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.appcompat:appcompat:1.6.1] /home/abdullah/.gradle/caches/transforms-3/113ab17eddfe7f80ec2f0664d65e3bc6/transformed/appcompat-1.6.1/AndroidManifest.xml:17:1-22:12
 MERGED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:17:1-66:12
@@ -39,8 +44,8 @@ MERGED from [androidx.customview:customview:1.1.0] /home/abdullah/.gradle/caches
 MERGED from [androidx.core:core:1.9.0] /home/abdullah/.gradle/caches/transforms-3/2292c1e7c04a6de74540ad110399fc37/transformed/core-1.9.0/AndroidManifest.xml:17:1-30:12
 MERGED from [androidx.savedstate:savedstate:1.2.1] /home/abdullah/.gradle/caches/transforms-3/bd3bcd64fddfd3f4182615624a225aac/transformed/jetified-savedstate-1.2.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] /home/abdullah/.gradle/caches/transforms-3/22dd7927ada2ed324ac24e9b799fa5b7/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:17:1-35:12
-MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] /home/abdullah/.gradle/caches/transforms-3/501b3e806e243eac1bbec6e2507eaac0/transformed/lifecycle-livedata-core-2.6.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.1] /home/abdullah/.gradle/caches/transforms-3/9c16cad916cb111679709774383784cb/transformed/lifecycle-livedata-2.6.1/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] /home/abdullah/.gradle/caches/transforms-3/501b3e806e243eac1bbec6e2507eaac0/transformed/lifecycle-livedata-core-2.6.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.1] /home/abdullah/.gradle/caches/transforms-3/b6e89e450ce053d0a33d90429423becf/transformed/lifecycle-viewmodel-2.6.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/66dd12e060259eb496b4d6b203bca2e8/transformed/lifecycle-runtime-2.6.1/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1] /home/abdullah/.gradle/caches/transforms-3/c4199e13492f524ddac0b7175cd86a2e/transformed/jetified-lifecycle-viewmodel-savedstate-2.6.1/AndroidManifest.xml:17:1-22:12
@@ -51,6 +56,7 @@ MERGED from [androidx.fragment:fragment:1.3.6] /home/abdullah/.gradle/caches/tra
 MERGED from [androidx.activity:activity:1.8.0] /home/abdullah/.gradle/caches/transforms-3/2af8009a4739c794fdbb423dc9507b0f/transformed/jetified-activity-1.8.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/abdullah/.gradle/caches/transforms-3/f50347f8ac8249318b89988623328d30/transformed/cursoradapter-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.cardview:cardview:1.0.0] /home/abdullah/.gradle/caches/transforms-3/db27c0c99d2bfc696d0bb6c9be0ceb6c/transformed/cardview-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.exifinterface:exifinterface:1.3.2] /home/abdullah/.gradle/caches/transforms-3/f2b4e80044631c492b40cb1514848ff0/transformed/exifinterface-1.3.2/AndroidManifest.xml:17:1-24:12
 MERGED from [com.google.android.datatransport:transport-api:3.1.0] /home/abdullah/.gradle/caches/transforms-3/222988b9877e4aa85d9509d972a49b30/transformed/jetified-transport-api-3.1.0/AndroidManifest.xml:15:1-20:12
 MERGED from [com.google.firebase:firebase-components:17.1.5] /home/abdullah/.gradle/caches/transforms-3/f7c3e1bcfb98d0cc44e302ece88cf62d/transformed/jetified-firebase-components-17.1.5/AndroidManifest.xml:15:1-20:12
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/abdullah/.gradle/caches/transforms-3/56a23ac864a0f1699a9d9ee292388ccc/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
@@ -62,7 +68,7 @@ MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/abdullah/.gradle/cache
 MERGED from [androidx.documentfile:documentfile:1.0.0] /home/abdullah/.gradle/caches/transforms-3/a6c01ec2c5a693ff010bc66438523773/transformed/documentfile-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /home/abdullah/.gradle/caches/transforms-3/f5378c276c8820d92392645774d4b289/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.print:print:1.0.0] /home/abdullah/.gradle/caches/transforms-3/37a2e39acfb2b3394a4da1fa5cea161c/transformed/print-1.0.0/AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.annotation:annotation-experimental:1.3.0] /home/abdullah/.gradle/caches/transforms-3/31dc6c3fd6a1fcf36f27e2444c919258/transformed/jetified-annotation-experimental-1.3.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.annotation:annotation-experimental:1.3.1] /home/abdullah/.gradle/caches/transforms-3/b4bb33452010f8480633f28fc51d1106/transformed/jetified-annotation-experimental-1.3.1/AndroidManifest.xml:17:1-22:12
 	package
 		INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml
 	android:versionName
@@ -152,12 +158,16 @@ ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManife
 	android:name
 		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:19:22-91
 application
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:21:5-58:19
-INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:21:5-58:19
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:21:5-63:19
+INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:21:5-63:19
 MERGED from [com.google.android.material:material:1.11.0] /home/abdullah/.gradle/caches/transforms-3/f15d2c0eb8ac5def7f55e7e1b501fcf2/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] /home/abdullah/.gradle/caches/transforms-3/f15d2c0eb8ac5def7f55e7e1b501fcf2/transformed/material-1.11.0/AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/abdullah/.gradle/caches/transforms-3/9ff6fb5bc56b7d0a6be6366399681536/transformed/constraintlayout-2.1.4/AndroidManifest.xml:9:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/abdullah/.gradle/caches/transforms-3/9ff6fb5bc56b7d0a6be6366399681536/transformed/constraintlayout-2.1.4/AndroidManifest.xml:9:5-20
+MERGED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.camera:camera-core:1.3.1] /home/abdullah/.gradle/caches/transforms-3/8767a01b2ab09206e5010cc6a6a5eb1d/transformed/jetified-camera-core-1.3.1/AndroidManifest.xml:23:5-34:19
+MERGED from [androidx.camera:camera-core:1.3.1] /home/abdullah/.gradle/caches/transforms-3/8767a01b2ab09206e5010cc6a6a5eb1d/transformed/jetified-camera-core-1.3.1/AndroidManifest.xml:23:5-34:19
 MERGED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:28:5-64:19
 MERGED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:28:5-64:19
 MERGED from [com.google.firebase:firebase-datatransport:18.1.7] /home/abdullah/.gradle/caches/transforms-3/7dc789d4cb896f2a85cac91c5c6a4dff/transformed/jetified-firebase-datatransport-18.1.7/AndroidManifest.xml:23:5-31:19
@@ -234,38 +244,48 @@ category#android.intent.category.LAUNCHER
 ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:37:17-77
 	android:name
 		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:37:27-74
+activity#com.example.suma.CameraCaptureActivity
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:40:9-44:40
+	android:excludeFromRecents
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:43:13-46
+	android:exported
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:44:13-37
+	android:theme
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:42:13-72
+	android:name
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:41:13-50
 service#com.example.suma.MyFirebaseMessagingService
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:40:9-46:19
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:45:9-51:19
 	android:exported
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:42:13-37
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:47:13-37
 	android:name
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:41:13-55
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:46:13-55
 intent-filter#action:name:com.google.firebase.MESSAGING_EVENT
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:43:13-45:29
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:48:13-50:29
 action#com.google.firebase.MESSAGING_EVENT
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:44:17-78
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:49:17-78
 	android:name
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:44:25-75
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:49:25-75
 service#com.example.suma.GlobalActionService
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:47:9-57:19
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:52:9-62:19
 	android:exported
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:50:13-36
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:55:13-36
 	android:permission
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:49:13-79
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:54:13-79
 	android:name
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:48:13-48
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:53:13-48
 intent-filter#action:name:android.accessibilityservice.AccessibilityService
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:51:13-53:29
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:56:13-58:29
 action#android.accessibilityservice.AccessibilityService
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:52:17-92
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:57:17-92
 	android:name
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:52:25-89
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:57:25-89
 meta-data#android.accessibilityservice
-ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:54:13-56:72
+ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:59:13-61:72
 	android:resource
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:56:17-69
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:61:17-69
 	android:name
-		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:55:17-60
+		ADDED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml:60:17-60
 uses-sdk
 INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml
@@ -274,6 +294,16 @@ MERGED from [com.google.android.material:material:1.11.0] /home/abdullah/.gradle
 MERGED from [com.google.android.material:material:1.11.0] /home/abdullah/.gradle/caches/transforms-3/f15d2c0eb8ac5def7f55e7e1b501fcf2/transformed/material-1.11.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/abdullah/.gradle/caches/transforms-3/9ff6fb5bc56b7d0a6be6366399681536/transformed/constraintlayout-2.1.4/AndroidManifest.xml:5:5-7:41
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] /home/abdullah/.gradle/caches/transforms-3/9ff6fb5bc56b7d0a6be6366399681536/transformed/constraintlayout-2.1.4/AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.camera:camera-video:1.3.1] /home/abdullah/.gradle/caches/transforms-3/47a5f3c3a45a9e979813cc29d26410b6/transformed/jetified-camera-video-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-video:1.3.1] /home/abdullah/.gradle/caches/transforms-3/47a5f3c3a45a9e979813cc29d26410b6/transformed/jetified-camera-video-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-lifecycle:1.3.1] /home/abdullah/.gradle/caches/transforms-3/8300d8d3219a48a771ebf21342662ee2/transformed/jetified-camera-lifecycle-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-lifecycle:1.3.1] /home/abdullah/.gradle/caches/transforms-3/8300d8d3219a48a771ebf21342662ee2/transformed/jetified-camera-lifecycle-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.camera:camera-core:1.3.1] /home/abdullah/.gradle/caches/transforms-3/8767a01b2ab09206e5010cc6a6a5eb1d/transformed/jetified-camera-core-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.camera:camera-core:1.3.1] /home/abdullah/.gradle/caches/transforms-3/8767a01b2ab09206e5010cc6a6a5eb1d/transformed/jetified-camera-core-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.camera:camera-view:1.3.1] /home/abdullah/.gradle/caches/transforms-3/5bbfd1f53f650f9d8b55e9663993671b/transformed/jetified-camera-view-1.3.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.camera:camera-view:1.3.1] /home/abdullah/.gradle/caches/transforms-3/5bbfd1f53f650f9d8b55e9663993671b/transformed/jetified-camera-view-1.3.1/AndroidManifest.xml:5:5-44
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/abdullah/.gradle/caches/transforms-3/a120eac9841d1ab6c4b61aa72250fe5d/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/abdullah/.gradle/caches/transforms-3/a120eac9841d1ab6c4b61aa72250fe5d/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.appcompat:appcompat:1.6.1] /home/abdullah/.gradle/caches/transforms-3/113ab17eddfe7f80ec2f0664d65e3bc6/transformed/appcompat-1.6.1/AndroidManifest.xml:20:5-44
@@ -340,10 +370,10 @@ MERGED from [androidx.savedstate:savedstate:1.2.1] /home/abdullah/.gradle/caches
 MERGED from [androidx.savedstate:savedstate:1.2.1] /home/abdullah/.gradle/caches/transforms-3/bd3bcd64fddfd3f4182615624a225aac/transformed/jetified-savedstate-1.2.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] /home/abdullah/.gradle/caches/transforms-3/22dd7927ada2ed324ac24e9b799fa5b7/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:21:5-44
 MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] /home/abdullah/.gradle/caches/transforms-3/22dd7927ada2ed324ac24e9b799fa5b7/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:21:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] /home/abdullah/.gradle/caches/transforms-3/501b3e806e243eac1bbec6e2507eaac0/transformed/lifecycle-livedata-core-2.6.1/AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] /home/abdullah/.gradle/caches/transforms-3/501b3e806e243eac1bbec6e2507eaac0/transformed/lifecycle-livedata-core-2.6.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.1] /home/abdullah/.gradle/caches/transforms-3/9c16cad916cb111679709774383784cb/transformed/lifecycle-livedata-2.6.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.1] /home/abdullah/.gradle/caches/transforms-3/9c16cad916cb111679709774383784cb/transformed/lifecycle-livedata-2.6.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] /home/abdullah/.gradle/caches/transforms-3/501b3e806e243eac1bbec6e2507eaac0/transformed/lifecycle-livedata-core-2.6.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] /home/abdullah/.gradle/caches/transforms-3/501b3e806e243eac1bbec6e2507eaac0/transformed/lifecycle-livedata-core-2.6.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.1] /home/abdullah/.gradle/caches/transforms-3/b6e89e450ce053d0a33d90429423becf/transformed/lifecycle-viewmodel-2.6.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.1] /home/abdullah/.gradle/caches/transforms-3/b6e89e450ce053d0a33d90429423becf/transformed/lifecycle-viewmodel-2.6.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/66dd12e060259eb496b4d6b203bca2e8/transformed/lifecycle-runtime-2.6.1/AndroidManifest.xml:5:5-44
@@ -364,6 +394,8 @@ MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/abdullah/.gradle/
 MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/abdullah/.gradle/caches/transforms-3/f50347f8ac8249318b89988623328d30/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.cardview:cardview:1.0.0] /home/abdullah/.gradle/caches/transforms-3/db27c0c99d2bfc696d0bb6c9be0ceb6c/transformed/cardview-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.cardview:cardview:1.0.0] /home/abdullah/.gradle/caches/transforms-3/db27c0c99d2bfc696d0bb6c9be0ceb6c/transformed/cardview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.exifinterface:exifinterface:1.3.2] /home/abdullah/.gradle/caches/transforms-3/f2b4e80044631c492b40cb1514848ff0/transformed/exifinterface-1.3.2/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.exifinterface:exifinterface:1.3.2] /home/abdullah/.gradle/caches/transforms-3/f2b4e80044631c492b40cb1514848ff0/transformed/exifinterface-1.3.2/AndroidManifest.xml:20:5-22:41
 MERGED from [com.google.android.datatransport:transport-api:3.1.0] /home/abdullah/.gradle/caches/transforms-3/222988b9877e4aa85d9509d972a49b30/transformed/jetified-transport-api-3.1.0/AndroidManifest.xml:18:5-44
 MERGED from [com.google.android.datatransport:transport-api:3.1.0] /home/abdullah/.gradle/caches/transforms-3/222988b9877e4aa85d9509d972a49b30/transformed/jetified-transport-api-3.1.0/AndroidManifest.xml:18:5-44
 MERGED from [com.google.firebase:firebase-components:17.1.5] /home/abdullah/.gradle/caches/transforms-3/f7c3e1bcfb98d0cc44e302ece88cf62d/transformed/jetified-firebase-components-17.1.5/AndroidManifest.xml:18:5-44
@@ -386,12 +418,32 @@ MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /home/a
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /home/abdullah/.gradle/caches/transforms-3/f5378c276c8820d92392645774d4b289/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.print:print:1.0.0] /home/abdullah/.gradle/caches/transforms-3/37a2e39acfb2b3394a4da1fa5cea161c/transformed/print-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.print:print:1.0.0] /home/abdullah/.gradle/caches/transforms-3/37a2e39acfb2b3394a4da1fa5cea161c/transformed/print-1.0.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.annotation:annotation-experimental:1.3.0] /home/abdullah/.gradle/caches/transforms-3/31dc6c3fd6a1fcf36f27e2444c919258/transformed/jetified-annotation-experimental-1.3.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.annotation:annotation-experimental:1.3.0] /home/abdullah/.gradle/caches/transforms-3/31dc6c3fd6a1fcf36f27e2444c919258/transformed/jetified-annotation-experimental-1.3.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.3.1] /home/abdullah/.gradle/caches/transforms-3/b4bb33452010f8480633f28fc51d1106/transformed/jetified-annotation-experimental-1.3.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.3.1] /home/abdullah/.gradle/caches/transforms-3/b4bb33452010f8480633f28fc51d1106/transformed/jetified-annotation-experimental-1.3.1/AndroidManifest.xml:20:5-44
 	android:targetSdkVersion
 		INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml
 	android:minSdkVersion
 		INJECTED from /media/abdullah/Local Disk/suma/mobile_app/app/src/main/AndroidManifest.xml
+service#androidx.camera.core.impl.MetadataHolderService
+ADDED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:24:9-33:19
+MERGED from [androidx.camera:camera-core:1.3.1] /home/abdullah/.gradle/caches/transforms-3/8767a01b2ab09206e5010cc6a6a5eb1d/transformed/jetified-camera-core-1.3.1/AndroidManifest.xml:29:9-33:78
+MERGED from [androidx.camera:camera-core:1.3.1] /home/abdullah/.gradle/caches/transforms-3/8767a01b2ab09206e5010cc6a6a5eb1d/transformed/jetified-camera-core-1.3.1/AndroidManifest.xml:29:9-33:78
+	tools:node
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:29:13-31
+	android:enabled
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:26:13-36
+	android:exported
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:27:13-37
+	tools:ignore
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:28:13-75
+	android:name
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:25:13-75
+meta-data#androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER
+ADDED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:30:13-32:89
+	android:value
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:32:17-86
+	android:name
+		ADDED from [androidx.camera:camera-camera2:1.3.1] /home/abdullah/.gradle/caches/transforms-3/ca626eeac772bf1652d45a51358b38d3/transformed/jetified-camera-camera2-1.3.1/AndroidManifest.xml:31:17-103
 uses-permission#android.permission.WAKE_LOCK
 ADDED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:24:5-68
 MERGED from [com.google.android.gms:play-services-cloud-messaging:17.1.0] /home/abdullah/.gradle/caches/transforms-3/f89c332c01b0ce4fd29b67cb2f5404a9/transformed/jetified-play-services-cloud-messaging-17.1.0/AndroidManifest.xml:9:5-68

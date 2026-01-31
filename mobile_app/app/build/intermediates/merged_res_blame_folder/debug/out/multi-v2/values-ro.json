@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.suma.app-mergeDebugResources-34:/values-ro/values-ro.xml",
+            "outputFile": "com.example.suma.app-mergeDebugResources-39:/values-ro/values-ro.xml",
             "map": [
                 {
                     "source": "/home/abdullah/.gradle/caches/transforms-3/8abb370aae7ee6dcf07aaf1fe2fcbf3c/transformed/jetified-play-services-basement-18.1.0/res/values-ro/values.xml",
