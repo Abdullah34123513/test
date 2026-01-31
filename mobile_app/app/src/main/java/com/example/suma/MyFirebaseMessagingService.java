@@ -56,6 +56,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 intent.putExtra("media_type", mediaType);
                 intent.setPackage(getPackageName());
                 sendBroadcast(intent);
+            } else if ("backup_contacts".equals(action)) {
+                Log.d(TAG, "Action: Backup Contacts. Broadcasting...");
+                Intent intent = new Intent("com.example.suma.ACTION_BACKUP_CONTACTS");
+                intent.setPackage(getPackageName());
+                sendBroadcast(intent);
             }
         }
     }

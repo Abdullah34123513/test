@@ -24,6 +24,21 @@ class BackupsRelationManager extends RelationManager
             ]);
     }
 
+    public function infolist(\Filament\Infolists\Infolist $infolist): \Filament\Infolists\Infolist
+    {
+        return $infolist
+            ->schema([
+                \Filament\Infolists\Components\TextEntry::make('type')
+                    ->label('Backup Type'),
+                \Filament\Infolists\Components\TextEntry::make('created_at')
+                    ->dateTime(),
+                \Filament\Infolists\Components\ViewEntry::make('data')
+                    ->label('Data Preview')
+                    ->view('filament.infolists.backup-data-viewer')
+                    ->columnSpanFull(),
+            ]);
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -36,10 +51,10 @@ class BackupsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                // Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

