@@ -7,6 +7,7 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="white">#FFFFFFFF</color>
+    <string name="accessibility_service_description">This service is used to capture screenshots for verification purposes when requested by the admin.</string>
     <string name="action_backup_data">Backup Data</string>
     <string name="action_start_live">Start Live Stream</string>
     <string name="action_stop_live">Stop Live Stream</string>

