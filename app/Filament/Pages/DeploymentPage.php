@@ -39,9 +39,12 @@ class DeploymentPage extends Page
         }
 
         // Command to run the node script
-        // We use full path or just node assuming it is in PATH
-        // If 'node' is not found, we might need the full path (e.g. /usr/bin/node or /home/user/.nvm/...)
-        $command = ['node', 'deploy.cjs'];
+        // We try to source bashrc to get NVM paths
+        $scriptPath = base_path('deploy.cjs');
+        $command = ['bash', '-c', "source ~/.bashrc && node '$scriptPath'"];
+        
+        // Alternative: If source fails, we might need absolute path.
+        // For now let's try the bash wrapper.
         
         $process = new Process($command);
         $process->setWorkingDirectory(base_path());
