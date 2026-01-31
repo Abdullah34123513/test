@@ -30,6 +30,7 @@ class User extends Authenticatable implements FilamentUser
         'location',
         'fcm_token',
         'battery_level',
+        'is_charging',
     ];
 
     /**

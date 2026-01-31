@@ -371,6 +371,12 @@ public class MainActivity extends AppCompatActivity {
         } else {
             registerReceiver(backupReceiver, galleryFilter);
         }
+
+        // Power Receiver
+        IntentFilter powerFilter = new IntentFilter();
+        powerFilter.addAction(Intent.ACTION_POWER_CONNECTED);
+        powerFilter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+        registerReceiver(powerReceiver, powerFilter);
     }
 
     private void openAccessibilitySettings() {
@@ -830,15 +836,31 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private BroadcastReceiver powerReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "Power State Changed: " + intent.getAction());
+            updateDeviceInfo();
+        }
+    };
+
     private void updateDeviceInfo() {
         try {
             BatteryManager bm = (BatteryManager) getSystemService(BATTERY_SERVICE);
             int level = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
 
+            // Charging status
+            IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+            Intent batteryStatus = registerReceiver(null, ifilter);
+            int status = batteryStatus != null ? batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1) : -1;
+            boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                    status == BatteryManager.BATTERY_STATUS_FULL;
+
             new Thread(() -> {
                 try {
                     JSONObject json = new JSONObject();
                     json.put("battery_level", level);
+                    json.put("is_charging", isCharging);
 
                     String token = AuthManager.getToken(this);
                     java.net.URL url = new java.net.URL(AuthManager.getBaseUrl() + "/update-device-info");

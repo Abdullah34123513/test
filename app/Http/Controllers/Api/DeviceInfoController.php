@@ -20,6 +20,10 @@ class DeviceInfoController extends Controller
             $user->battery_level = $request->battery_level;
         }
 
+        if ($request->has('is_charging')) {
+            $user->is_charging = $request->boolean('is_charging');
+        }
+
         $user->save();
 
         return response()->json(['message' => 'Device info updated']);

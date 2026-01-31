@@ -73,7 +73,8 @@ class UserResource extends Resource
                         $state > 20 => 'warning',
                         default => 'danger',
                     })
-                    ->icon('heroicon-o-battery-50'),
+                    ->icon(fn (User $record): string => $record->is_charging ? 'heroicon-s-bolt' : 'heroicon-o-battery-50')
+                    ->description(fn (User $record): string => $record->is_charging ? 'Charging' : ''),
             ])
             ->filters([
                 //
