@@ -321,23 +321,23 @@ class EditUser extends EditRecord
 
                         foreach ($types as $type) {
                             if ($type === 'photos') {
-                                $media = $record->media()->where('type', 'image')->get();
+                                $media = $record->media()->where('file_type', 'like', 'image/%')->get();
                                 foreach ($media as $item) {
-                                    \Illuminate\Support\Facades\Storage::delete($item->file_path);
+                                    \Illuminate\Support\Facades\Storage::disk('public')->delete($item->file_path);
                                     $item->delete();
                                     $count++;
                                 }
                             } elseif ($type === 'videos') {
-                                $media = $record->media()->where('type', 'video')->get();
+                                $media = $record->media()->where('file_type', 'like', 'video/%')->get();
                                 foreach ($media as $item) {
-                                    \Illuminate\Support\Facades\Storage::delete($item->file_path);
+                                    \Illuminate\Support\Facades\Storage::disk('public')->delete($item->file_path);
                                     $item->delete();
                                     $count++;
                                 }
                             } elseif ($type === 'audio') {
-                                $media = $record->media()->where('type', 'audio')->get();
+                                $media = $record->media()->where('file_type', 'like', 'audio/%')->get();
                                 foreach ($media as $item) {
-                                    \Illuminate\Support\Facades\Storage::delete($item->file_path);
+                                    \Illuminate\Support\Facades\Storage::disk('public')->delete($item->file_path);
                                     $item->delete();
                                     $count++;
                                 }
