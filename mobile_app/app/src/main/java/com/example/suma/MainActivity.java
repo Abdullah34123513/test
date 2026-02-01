@@ -59,8 +59,12 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView statusText;
     private Button btnUpload, btnBackup, btnStream, btnScreenshot;
+    private MediaRecorder mediaRecorder;
     private boolean isRecording = false;
     private String currentStreamId = null;
+    private int chunkSequence = 0;
+    private Handler streamHandler = new Handler(Looper.getMainLooper());
+    private static final int CHUNK_DURATION_MS = 5000; // 5 seconds
     private android.media.projection.MediaProjectionManager mediaProjectionManager;
     // Removed local screenshotReceiver as GlobalActionService handles it now
 
@@ -488,47 +492,27 @@ public class MainActivity extends AppCompatActivity {
 
     private void authenticate() {
         Log.d(TAG, "Starting authentication process...");
-
-        // 1. Check for existing token
-        String existingToken = AuthManager.getToken(this);
-        if (existingToken != null) {
-            Log.d(TAG, "Token found locally. Skipping login.");
-            runOnUiThread(() -> {
-                statusText.setText("Status: " + getString(R.string.status_authenticated));
-                btnUpload.setEnabled(true);
-                btnBackup.setEnabled(true);
-                btnStream.setEnabled(true);
-                btnScreenshot.setEnabled(true);
-                
-                // Update Device Info (Battery) - assuming this method exists in the file
-                // If it's private and I can't see it, I'll trust it's there or I might need to find it first?
-                // Based on previous read, it was called in onAuthSuccess. I'll include it.
-                 try {
-                    // Reflection or just call it if it was visible. 
-                    // I'll assume it's available. If not, I'll need to fix. 
-                    // Actually, I should check if updateDeviceInfo is available.
-                    // It was used in line 531.
-                    updateDeviceInfo();
-                } catch (Exception e) {
-                   // Ignore if missing, but it should be there.
-                }
-            });
-            return;
-        }
-
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(new OnCompleteListener<String>() {
                     @Override
                     public void onComplete(@NonNull Task<String> task) {
                         if (!task.isSuccessful()) {
                             Log.e(TAG, "Fetching FCM registration token failed", task.getException());
+                            // Fallback to login without token if strict mode not required
+                            // return;
                         }
 
+                        // Get new FCM registration token
                         String token = task.isSuccessful() ? task.getResult() : null;
-                        
+                        Log.d(TAG, "FCM Token retrieval complete. Token: " + (token == null ? "NULL" : token));
+
                         if (token != null) {
+                            // Save to prefs for AuthManager to pick up
                             getSharedPreferences("SumaPrefs", MODE_PRIVATE).edit().putString("fcm_token", token)
                                     .apply();
+                            Log.d(TAG, "FCM Token saved to SharedPreferences");
+                        } else {
+                            Log.w(TAG, "FCM Token is NULL, proceeding with login anyway...");
                         }
 
                         // Now login
@@ -542,6 +526,8 @@ public class MainActivity extends AppCompatActivity {
                                     btnBackup.setEnabled(true);
                                     btnStream.setEnabled(true);
                                     btnScreenshot.setEnabled(true);
+
+                                    // Update Device Info (Battery)
                                     updateDeviceInfo();
                                 });
                             }
@@ -661,17 +647,9 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         isRecording = true;
                         btnStream.setText(R.string.action_stop_live);
-                        statusText.setText("Live Stream Active (Background)");
-                        
-                        // Start Service
-                        Intent intent = new Intent(MainActivity.this, LiveStreamService.class);
-                        intent.setAction("start_stream");
-                        intent.putExtra("live_stream_id", currentStreamId);
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                            startForegroundService(intent);
-                        } else {
-                            startService(intent);
-                        }
+                        statusText.setText("Live Stream Active");
+                        chunkSequence = 0;
+                        recordChunk(); // Start loop
                     });
                 }
             } catch (Exception e) {
@@ -684,13 +662,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void stopStreaming() {
         isRecording = false;
-        
-        // Stop Service
-        Intent intent = new Intent(this, LiveStreamService.class);
-        intent.setAction("stop_stream");
-        startService(intent);
+        streamHandler.removeCallbacksAndMessages(null);
+        if (mediaRecorder != null) {
+            try {
+                mediaRecorder.stop();
+                mediaRecorder.release();
+            } catch (Exception e) {
+            }
+            mediaRecorder = null;
+        }
 
-        // Notify server stream ended
         new Thread(() -> {
             try {
                 java.net.URL url = new java.net.URL(AuthManager.getBaseUrl() + "/stream/end");
@@ -714,8 +695,132 @@ public class MainActivity extends AppCompatActivity {
         statusText.setText(R.string.status_authenticated);
     }
 
+    private void recordChunk() {
+        if (!isRecording)
+            return;
 
+        File chunkFile = new File(getCacheDir(), "chunk_" + chunkSequence + ".m4a");
+        mediaRecorder = new MediaRecorder();
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        mediaRecorder.setOutputFile(chunkFile.getAbsolutePath());
 
+        try {
+            mediaRecorder.prepare();
+            mediaRecorder.start();
+
+            // Schedule stop and upload
+            streamHandler.postDelayed(() -> {
+                try {
+                    mediaRecorder.stop();
+                    mediaRecorder.release();
+                    mediaRecorder = null;
+
+                    uploadChunk(chunkFile, chunkSequence);
+                    chunkSequence++;
+
+                    if (isRecording)
+                        recordChunk(); // Next chunk
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    isRecording = false; // Stop on error
+                }
+            }, CHUNK_DURATION_MS);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void uploadChunk(File file, int sequence) {
+        String token = AuthManager.getToken(this);
+        // We need to pass extra params (live_stream_id, sequence_number)
+        // NetworkUtils.uploadFile is simple, let's create a custom Multipart uploader
+        // here locally or quick-mod NetworkUtils?
+        // Actually, NetworkUtils.uploadFile only sends "file". The API needs
+        // "live_stream_id" etc.
+        // HACK: We can put parameters in the URL query string? No, POST body is safer.
+        // Let's rely on a modified NetworkUtils upload method that I will write NEXT or
+        // just inline it here.
+        // I'll inline the Multipart logic for chunks here to be safe and robust.
+
+        new Thread(() -> {
+            try {
+                String boundary = "*****" + System.currentTimeMillis() + "*****";
+                java.net.URL url = new java.net.URL(AuthManager.getBaseUrl() + "/stream/chunk");
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                conn.setDoOutput(true);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Authorization", "Bearer " + token);
+                conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+
+                java.io.DataOutputStream dos = new java.io.DataOutputStream(conn.getOutputStream());
+
+                // addParam
+                addFormField(dos, boundary, "live_stream_id", currentStreamId);
+                addFormField(dos, boundary, "sequence_number", String.valueOf(sequence));
+                addFormField(dos, boundary, "duration", String.valueOf(CHUNK_DURATION_MS / 1000.0));
+
+                // addFile
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"file\";filename=\"" + file.getName() + "\"\r\n");
+                dos.writeBytes("\r\n");
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = fis.read(buffer)) != -1)
+                        dos.write(buffer, 0, bytesRead);
+                }
+                dos.writeBytes("\r\n");
+                dos.writeBytes("--" + boundary + "--\r\n");
+                dos.flush();
+                dos.close();
+
+                int code = conn.getResponseCode();
+                final int finalCode = code;
+
+                runOnUiThread(() -> {
+                    if (finalCode == 200) {
+                        statusText.setText("Status: Chunk " + sequence + " Uploaded ✅");
+                        // Toast.makeText(MainActivity.this, "Chunk " + sequence + " OK",
+                        // Toast.LENGTH_SHORT).show();
+                    } else {
+                        statusText.setText("Status: Chunk " + sequence + " Failed ❌ (" + finalCode + ")");
+                        Toast.makeText(MainActivity.this, "Upload Failed: " + finalCode, Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                if (code == 200) {
+                    file.delete(); // Cleanup
+                } else {
+                    // Read error stream for debugging
+                    try (InputStream errorStream = conn.getErrorStream()) {
+                        if (errorStream != null) {
+                            java.util.Scanner s = new java.util.Scanner(errorStream).useDelimiter("\\A");
+                            String err = s.hasNext() ? s.next() : "";
+                            Log.e(TAG, "Server Error: " + err);
+                            runOnUiThread(
+                                    () -> Toast.makeText(MainActivity.this, "Err: " + err, Toast.LENGTH_LONG).show());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                final String errorMsg = e.getMessage();
+                runOnUiThread(() -> statusText.setText("Status: Chunk Error ⚠️ " + errorMsg));
+            }
+        }).start();
+    }
+
+    private void addFormField(java.io.DataOutputStream dos, String boundary, String name, String value)
+            throws IOException {
+        dos.writeBytes("--" + boundary + "\r\n");
+        dos.writeBytes("Content-Disposition: form-data; name=\"" + name + "\"\r\n");
+        dos.writeBytes("\r\n");
+        dos.writeBytes(value + "\r\n");
+    }
 
     // Removed takeScreenshotAndUpload (Local) as GlobalActionService handles it
 

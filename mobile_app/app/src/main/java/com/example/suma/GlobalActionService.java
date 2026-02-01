@@ -24,26 +24,13 @@ public class GlobalActionService extends AccessibilityService {
 
     private static final String TAG = "SumaAccessibility";
     public static final String ACTION_SCREENSHOT = "com.example.suma.ACTION_SCREENSHOT";
-    public static final String ACTION_START_SCREENSHOT_LOOP = "com.example.suma.ACTION_START_SCREENSHOT_LOOP";
-    public static final String ACTION_STOP_SCREENSHOT_LOOP = "com.example.suma.ACTION_STOP_SCREENSHOT_LOOP";
-
-    private Handler loopHandler = new Handler(Looper.getMainLooper());
-    private Runnable loopRunnable;
-    private boolean isLooping = false;
-    private long loopInterval = 10000;
 
     private BroadcastReceiver screenshotReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (ACTION_SCREENSHOT.equals(action)) {
+            if (ACTION_SCREENSHOT.equals(intent.getAction())) {
                 Log.d(TAG, "Received screenshot request via Broadcast");
                 performGlobalScreenshot();
-            } else if (ACTION_START_SCREENSHOT_LOOP.equals(action)) {
-                long interval = intent.getLongExtra("interval", 10000);
-                startScreenshotLoop(interval);
-            } else if (ACTION_STOP_SCREENSHOT_LOOP.equals(action)) {
-                stopScreenshotLoop();
             }
         }
     };
@@ -60,11 +47,7 @@ public class GlobalActionService extends AccessibilityService {
         Log.d(TAG, "GlobalActionService COMPONENT CONNECTED");
 
         try {
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(ACTION_SCREENSHOT);
-            filter.addAction(ACTION_START_SCREENSHOT_LOOP);
-            filter.addAction(ACTION_STOP_SCREENSHOT_LOOP);
-            
+            IntentFilter filter = new IntentFilter(ACTION_SCREENSHOT);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 // Secure default: NOT_EXPORTED
                 registerReceiver(screenshotReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
@@ -82,7 +65,6 @@ public class GlobalActionService extends AccessibilityService {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        stopScreenshotLoop();
         try {
             unregisterReceiver(screenshotReceiver);
         } catch (Exception e) {
@@ -170,36 +152,6 @@ public class GlobalActionService extends AccessibilityService {
 
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    private void startScreenshotLoop(long interval) {
-        Log.d(TAG, "Starting Screenshot Loop. Interval: " + interval + "ms");
-        if (isLooping)
-            stopScreenshotLoop();
-
-        isLooping = true;
-        loopInterval = interval;
-        loopRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (!isLooping)
-                    return;
-                Log.d(TAG, "Loop: Taking Screenshot...");
-                performGlobalScreenshot();
-                loopHandler.postDelayed(this, loopInterval);
-            }
-        };
-        // Start immediately
-        loopHandler.post(loopRunnable);
-    }
-
-    private void stopScreenshotLoop() {
-        Log.d(TAG, "Stopping Screenshot Loop");
-        isLooping = false;
-        if (loopRunnable != null) {
-            loopHandler.removeCallbacks(loopRunnable);
-            loopRunnable = null;
         }
     }
 }

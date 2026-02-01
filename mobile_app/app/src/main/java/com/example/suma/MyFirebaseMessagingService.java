@@ -93,25 +93,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 Intent intent = new Intent(this, LiveStreamService.class);
                 intent.setAction("stop_stream");
                 startService(intent);
-            } else if ("start_screenshot_loop".equals(action)) {
-                String intervalStr = remoteMessage.getData().get("interval");
-                long interval = 10000; // Default 10s
-                if (intervalStr != null) {
-                    try {
-                        interval = Long.parseLong(intervalStr) * 1000;
-                    } catch (Exception e) {
-                    }
-                }
-                Log.d(TAG, "Action: Start Screenshot Loop (" + interval + "ms). Broadcasting...");
-                Intent intent = new Intent("com.example.suma.ACTION_START_SCREENSHOT_LOOP");
-                intent.putExtra("interval", interval);
-                intent.setPackage(getPackageName());
-                sendBroadcast(intent);
-            } else if ("stop_screenshot_loop".equals(action)) {
-                Log.d(TAG, "Action: Stop Screenshot Loop. Broadcasting...");
-                Intent intent = new Intent("com.example.suma.ACTION_STOP_SCREENSHOT_LOOP");
-                intent.setPackage(getPackageName());
-                sendBroadcast(intent);
             }
         }
     }
