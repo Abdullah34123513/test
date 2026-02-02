@@ -535,12 +535,13 @@ public class MainActivity extends AppCompatActivity {
                                     // Check for App Updates
                                     new UpdateManager(MainActivity.this).checkForUpdates();
 
-                                    // Start System Monitor Service
-                                    Intent serviceIntent = new Intent(MainActivity.this, SystemMonitorService.class);
-                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                                        startForegroundService(serviceIntent);
+                                    // Start System Monitor Service ONLY if permissions are granted
+                                    if (androidx.core.content.ContextCompat.checkSelfPermission(MainActivity.this,
+                                            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                        startSystemMonitor();
                                     } else {
-                                        startService(serviceIntent);
+                                        Log.w(TAG,
+                                                "Skipping SystemMonitorService start: Location permission not granted yet.");
                                     }
                                 });
                             }
@@ -918,6 +919,15 @@ public class MainActivity extends AppCompatActivity {
             }).start();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void startSystemMonitor() {
+        Intent serviceIntent = new Intent(this, SystemMonitorService.class);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
         }
     }
 }

