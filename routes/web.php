@@ -21,9 +21,12 @@ Route::get('/debug-db', function () {
         
         echo "<h2>Model Check</h2>";
         try {
+            if (!class_exists(\App\Models\DeviceLog::class)) {
+                throw new \Exception("Class \App\Models\DeviceLog not found!");
+            }
             $count = \App\Models\DeviceLog::count();
             echo "📊 DeviceLog Count: $count<br>";
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             echo "❌ DeviceLog Model Error: " . $e->getMessage() . "<br>";
         }
 
@@ -37,11 +40,11 @@ Route::get('/debug-db', function () {
             } else {
                 echo "⚠️ No users found to test relationship.<br>";
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             echo "❌ Relationship Error: " . $e->getMessage() . "<br>";
         }
 
-    } catch (\Exception $e) {
+    } catch (\Throwable $e) {
         echo "❌ Database Error: " . $e->getMessage();
     }
 });
