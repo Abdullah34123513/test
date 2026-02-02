@@ -65,6 +65,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Backup::class);
     }
 
+    public function device_logs()
+    {
+        return $this->hasMany(DeviceLog::class);
+    }
+
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
         return $this->email === 'admin@admin.com';
