@@ -120,6 +120,7 @@ async function main() {
 
     // 5. Caching for Production
     console.log("\n🚀 Optimizing Caches...");
+    run('php artisan optimize:clear');
     run('php artisan config:cache');
     run('php artisan route:cache');
     run('php artisan view:cache');
