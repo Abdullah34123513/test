@@ -23,4 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // App Update
     Route::get('/app/check-update', [\App\Http\Controllers\Api\AppVersionController::class, 'checkUpdate']);
+
+    // Command Logging
+    Route::post('/command/status', [\App\Http\Controllers\Api\CommandLogController::class, 'updateStatus']);
 });

