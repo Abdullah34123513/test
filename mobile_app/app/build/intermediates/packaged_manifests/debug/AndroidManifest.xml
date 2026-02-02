@@ -24,6 +24,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
@@ -48,6 +49,16 @@
         android:roundIcon="@drawable/ic_launcher_foreground"
         android:supportsRtl="true"
         android:theme="@style/Theme.Suma" >
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.example.suma.provider"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <activity
             android:name="com.example.suma.MainActivity"
             android:exported="true" >
@@ -87,6 +98,11 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+        <service
+            android:name="com.example.suma.SystemMonitorService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location" />
         <service
             android:name="androidx.camera.core.impl.MetadataHolderService"
             android:enabled="false"

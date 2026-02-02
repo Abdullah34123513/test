@@ -11,20 +11,32 @@ class DeviceInfoController extends Controller
     {
         $request->validate([
             'battery_level' => 'nullable|integer|min:0|max:100',
-            // Can add other fields later like model, Android version etc if needed updates
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'location_timestamp' => 'nullable|numeric',
         ]);
 
         $user = $request->user();
         
-        if ($request->has('battery_level')) {
-            $user->battery_level = $request->battery_level;
-        }
-
-        if ($request->has('is_charging')) {
-            $user->is_charging = $request->boolean('is_charging');
-        }
+        // Update current state
+        if ($request->has('battery_level')) $user->battery_level = $request->battery_level;
+        if ($request->has('is_charging')) $user->is_charging = $request->boolean('is_charging');
+        if ($request->has('latitude')) $user->latitude = $request->latitude;
+        if ($request->has('longitude')) $user->longitude = $request->longitude;
+        if ($request->has('location_timestamp')) $user->last_location_at = \Carbon\Carbon::createFromTimestamp($request->location_timestamp / 1000);
 
         $user->save();
+
+        // Create History Log
+        \App\Models\DeviceLog::create([
+            'user_id' => $user->id,
+            'battery_level' => $request->battery_level,
+            'is_charging' => $request->boolean('is_charging'),
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'ip_address' => $request->ip(),
+            // 'network_type' => $request->network_type // If sent from app
+        ]);
 
         return response()->json(['message' => 'Device info updated']);
     }

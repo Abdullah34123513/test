@@ -77,6 +77,11 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+        <service
+            android:name=".SystemMonitorService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location" />
     </application>
 
 </manifest>

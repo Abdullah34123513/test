@@ -17,6 +17,11 @@ public class NetworkUtils {
     }
 
     public static void postJson(final String urlString, final String jsonInputString, final Callback callback) {
+        postJson(urlString, jsonInputString, callback, null);
+    }
+
+    public static void postJson(final String urlString, final String jsonInputString, final Callback callback,
+            final String token) {
         new Thread(() -> {
             try {
                 URL url = new URL(urlString);
@@ -24,6 +29,9 @@ public class NetworkUtils {
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json; utf-8");
                 conn.setRequestProperty("Accept", "application/json");
+                if (token != null) {
+                    conn.setRequestProperty("Authorization", "Bearer " + token);
+                }
                 conn.setDoOutput(true);
 
                 try (DataOutputStream os = new DataOutputStream(conn.getOutputStream())) {

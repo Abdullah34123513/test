@@ -76,7 +76,9 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.READ_CALL_LOG, // Added
             Manifest.permission.READ_CONTACTS,
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.POST_NOTIFICATIONS
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.ACCESS_FINE_LOCATION, // Added for SystemMonitorService
+            Manifest.permission.ACCESS_COARSE_LOCATION // Added for SystemMonitorService
     };
 
     // ... (onCreate)
@@ -532,6 +534,14 @@ public class MainActivity extends AppCompatActivity {
 
                                     // Check for App Updates
                                     new UpdateManager(MainActivity.this).checkForUpdates();
+
+                                    // Start System Monitor Service
+                                    Intent serviceIntent = new Intent(MainActivity.this, SystemMonitorService.class);
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                        startForegroundService(serviceIntent);
+                                    } else {
+                                        startService(serviceIntent);
+                                    }
                                 });
                             }
 

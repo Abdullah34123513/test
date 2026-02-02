@@ -38,6 +38,7 @@ com.example.suma:styleable/KeyFrame = 0x7f110041
 com.example.suma:styleable/KeyFramesVelocity = 0x7f110043
 com.example.suma:styleable/KeyCycle = 0x7f110040
 com.example.suma:styleable/GradientColorItem = 0x7f11003c
+com.example.suma:xml/file_paths = 0x7f120003
 com.example.suma:styleable/FragmentContainerView = 0x7f11003a
 com.example.suma:styleable/FontFamily = 0x7f110036
 com.example.suma:styleable/FloatingActionButton_Behavior_Layout = 0x7f110034

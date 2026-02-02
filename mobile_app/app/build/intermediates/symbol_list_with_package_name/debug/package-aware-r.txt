@@ -5289,3 +5289,4 @@ styleable include constraintSet
 xml accessibility_service_config
 xml backup_rules
 xml data_extraction_rules
+xml file_paths
