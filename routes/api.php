@@ -20,4 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    // App Update
+    Route::get('/app/check-update', [\App\Http\Controllers\Api\AppVersionController::class, 'checkUpdate']);
 });

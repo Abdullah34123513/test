@@ -10,6 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        jcenter() // Required for some older dependencies including WebRTC
     }
 }
 rootProject.name = "SumaApp"

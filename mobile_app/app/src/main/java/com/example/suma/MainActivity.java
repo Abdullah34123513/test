@@ -529,6 +529,9 @@ public class MainActivity extends AppCompatActivity {
 
                                     // Update Device Info (Battery)
                                     updateDeviceInfo();
+
+                                    // Check for App Updates
+                                    new UpdateManager(MainActivity.this).checkForUpdates();
                                 });
                             }
 
