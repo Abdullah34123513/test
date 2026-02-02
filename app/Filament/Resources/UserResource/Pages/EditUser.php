@@ -14,8 +14,7 @@ class EditUser extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
-            Actions\ActionGroup::make([
-                Actions\Action::make('request_screenshot')
+            Actions\Action::make('request_screenshot')
                     ->label('Request Screenshot')
                     ->icon('heroicon-o-camera')
                     ->action(function ($record) {
@@ -414,10 +413,7 @@ class EditUser extends EditRecord
                             ->success()
                             ->send();
                     }),
-            ])
-            ->label('Device Commands')
-            ->icon('heroicon-m-ellipsis-horizontal')
-            ->tooltip('Manage Device'),
+
         ];
     }
 }
