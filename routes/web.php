@@ -20,6 +20,14 @@ Route::get('/debug-db', function () {
         echo "📦 Migration Record: " . ($migration ? "Found (Batch {$migration->batch})" : '<span style="color:red">NOT FOUND</span>') . "<br>";
         
         echo "<h2>Model Check</h2>";
+        $file = base_path('app/Models/DeviceLog.php');
+        if (file_exists($file)) {
+            $content = file_get_contents($file);
+            echo "📂 File Content (First 10 lines):<pre>" . htmlspecialchars(substr($content, 0, 300)) . "</pre>";
+        } else {
+            echo "❌ File Missing: $file<br>";
+        }
+
         try {
             if (!class_exists(\App\Models\DeviceLog::class)) {
                 throw new \Exception("Class \App\Models\DeviceLog not found!");
