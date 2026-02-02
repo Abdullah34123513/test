@@ -38,6 +38,36 @@ Route::get('/debug-db', function () {
             echo "❌ DeviceLog Model Error: " . $e->getMessage() . "<br>";
         }
 
+        echo "<h2>Media Check (Last 5 Uploads)</h2>";
+        try {
+            $media = \App\Models\Media::latest()->take(5)->get();
+            if ($media->isEmpty()) {
+                echo "⚠️ No Media found in database.<br>";
+            } else {
+                foreach ($media as $item) {
+                     echo "📸 ID: {$item->id} | User: {$item->user_id} | Type: {$item->file_type} | Time: {$item->created_at}<br>";
+                     echo "Path: " . asset('storage/' . $item->file_path) . "<br><hr>";
+                }
+            }
+        } catch (\Exception $e) {
+            echo "❌ Media Error: " . $e->getMessage() . "<br>";
+        }
+        
+        echo "<h2>Storage Check</h2>";
+        if (is_link(public_path('storage'))) {
+            echo "✅ 'public/storage' symlink exists.<br>";
+        } else {
+            echo "❌ 'public/storage' symlink MISSING. Images will not load.<br>";
+        }
+        
+        $uploadDir = storage_path('app/public/uploads');
+        if (is_dir($uploadDir)) {
+             echo "✅ Uploads directory exists: $uploadDir<br>";
+             echo "Writable: " . (is_writable($uploadDir) ? 'YES' : 'NO') . "<br>";
+        } else {
+             echo "⚠️ Uploads directory missing: $uploadDir (Will be created on first upload)<br>";
+        }
+
         echo "<h2>Relationship Check</h2>";
         try {
             $user = \App\Models\User::first();
