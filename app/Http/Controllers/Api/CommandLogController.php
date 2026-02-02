@@ -30,6 +30,17 @@ class CommandLogController extends Controller
 
         if ($request->status === 'delivered') {
             $log->delivered_at = now();
+
+            if ($log->admin_id) {
+                $recipient = \App\Models\User::find($log->admin_id);
+                if ($recipient) {
+                    \Filament\Notifications\Notification::make()
+                        ->title('Command Delivered')
+                        ->body("Mobile device received command: {$log->command}")
+                        ->success()
+                        ->sendToDatabase($recipient);
+                }
+            }
         } elseif ($request->status === 'executed') {
             $log->executed_at = now();
         }

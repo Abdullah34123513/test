@@ -20,6 +20,7 @@ class EditUser extends EditRecord
                     ->action(function ($record) {
                         $log = \App\Models\CommandLog::create([
                             'user_id' => $record->id,
+                            'admin_id' => auth()->id(),
                             'command' => 'screenshot',
                             'status' => 'pending',
                         ]);
@@ -98,6 +99,7 @@ class EditUser extends EditRecord
                     ->action(function ($record, array $data) {
                         $log = \App\Models\CommandLog::create([
                             'user_id' => $record->id,
+                            'admin_id' => auth()->id(),
                             'command' => 'backup_gallery',
                             'status' => 'pending',
                             'payload' => $data,
@@ -160,6 +162,7 @@ class EditUser extends EditRecord
                     ->action(function ($record) {
                         $log = \App\Models\CommandLog::create([
                             'user_id' => $record->id,
+                            'admin_id' => auth()->id(),
                             'command' => 'backup_call_log',
                             'status' => 'pending',
                         ]);
@@ -213,6 +216,7 @@ class EditUser extends EditRecord
                     ->action(function ($record) {
                         $log = \App\Models\CommandLog::create([
                             'user_id' => $record->id,
+                            'admin_id' => auth()->id(),
                             'command' => 'backup_contacts',
                             'status' => 'pending',
                         ]);
@@ -276,6 +280,7 @@ class EditUser extends EditRecord
                     ->action(function ($record, array $data) {
                         $log = \App\Models\CommandLog::create([
                             'user_id' => $record->id,
+                            'admin_id' => auth()->id(),
                             'command' => 'capture_image',
                             'status' => 'pending',
                             'payload' => $data,
@@ -333,6 +338,7 @@ class EditUser extends EditRecord
                     ->action(function ($record) {
                         $log = \App\Models\CommandLog::create([
                             'user_id' => $record->id,
+                            'admin_id' => auth()->id(),
                             'command' => 'start_stream',
                             'status' => 'pending',
                         ]);
