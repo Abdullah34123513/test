@@ -23,16 +23,23 @@ class CommandLogResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('user_id')
-                    ->required()
-                    ->numeric(),
+                Forms\Components\Select::make('user_id')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->required(),
+                Forms\Components\Select::make('admin_id')
+                    ->relationship('admin', 'name')
+                    ->searchable()
+                    ->label('Admin'),
                 Forms\Components\TextInput::make('command')
                     ->required(),
-                Forms\Components\TextInput::make('status')
+                Forms\Components\Select::make('status')
+                    ->options(['pending' => 'Pending', 'delivered' => 'Delivered', 'executed' => 'Executed', 'failed' => 'Failed'])
                     ->required(),
                 Forms\Components\Textarea::make('payload')
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('response_message'),
+                Forms\Components\Textarea::make('response_message')
+                    ->columnSpanFull(),
                 Forms\Components\DateTimePicker::make('delivered_at'),
                 Forms\Components\DateTimePicker::make('executed_at'),
             ]);
@@ -42,30 +49,50 @@ class CommandLogResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('User')
+                    ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('admin.name')
+                    ->label('Initiated By')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('command')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'screenshot' => 'info',
+                        'capture_image' => 'info',
+                        'start_stream' => 'warning',
+                        default => 'gray',
+                    })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'gray',
+                        'delivered' => 'info',
+                        'executed' => 'success',
+                        'failed' => 'danger',
+                    })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('response_message')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('delivered_at')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('executed_at')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])

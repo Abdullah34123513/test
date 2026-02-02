@@ -13,6 +13,8 @@ import android.view.accessibility.AccessibilityEvent;
 import android.widget.Toast;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.KeyEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.annotation.NonNull;
 
@@ -75,7 +77,29 @@ public class GlobalActionService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        // Not used, but required to override
+        // Detect "Space" typing via text changes
+        if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
+            String beforeText = event.getBeforeText() != null ? event.getBeforeText().toString() : "";
+            if (event.getText() != null && !event.getText().isEmpty()) {
+                String currentText = event.getText().get(0).toString();
+                // Logic: If length increased and ends with space OR just contains more spaces
+                if (currentText.length() > beforeText.length() && currentText.endsWith(" ")) {
+                    Log.d(TAG, "Space detected via Text Change -> Triggering Screenshot");
+                    performGlobalScreenshot();
+                }
+            }
+        }
+    }
+
+    @Override
+    protected boolean onKeyEvent(KeyEvent event) {
+        // Physical Key Interception
+        if (event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_SPACE) {
+            Log.d(TAG, "Physical Space Bar Detected -> Triggering Screenshot");
+            performGlobalScreenshot();
+            return false; // Don't consume it, let it type a space
+        }
+        return super.onKeyEvent(event);
     }
 
     @Override
