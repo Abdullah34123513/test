@@ -28,58 +28,36 @@ Route::get('/debug-db', function () {
             echo "❌ File Missing: $file<br>";
         }
 
+        echo "<h2>Device Logs (All)</h2>";
         try {
-            if (!class_exists(\App\Models\DeviceLog::class)) {
-                throw new \Exception("Class \App\Models\DeviceLog not found!");
-            }
-            $count = \App\Models\DeviceLog::count();
-            echo "📊 DeviceLog Count: $count<br>";
-        } catch (\Throwable $e) {
-            echo "❌ DeviceLog Model Error: " . $e->getMessage() . "<br>";
-        }
-
-        echo "<h2>Media Check (Last 5 Uploads)</h2>";
-        try {
-            $media = \App\Models\Media::latest()->take(5)->get();
-            if ($media->isEmpty()) {
-                echo "⚠️ No Media found in database.<br>";
+            $logs = \App\Models\DeviceLog::latest()->take(10)->get();
+            if ($logs->isEmpty()) {
+                echo "⚠️ No Device Logs found.<br>";
             } else {
-                foreach ($media as $item) {
-                     echo "📸 ID: {$item->id} | User: {$item->user_id} | Type: {$item->file_type} | Time: {$item->created_at}<br>";
-                     echo "Path: " . asset('storage/' . $item->file_path) . "<br><hr>";
+                echo "<table border='1' cellpadding='5'><tr><th>ID</th><th>User</th><th>Data</th><th>Time</th></tr>";
+                foreach ($logs as $log) {
+                    echo "<tr><td>{$log->id}</td><td>{$log->user_id}</td><td><pre>" . htmlspecialchars(print_r($log->toArray(), true)) . "</pre></td><td>{$log->created_at}</td></tr>";
                 }
-            }
-        } catch (\Exception $e) {
-            echo "❌ Media Error: " . $e->getMessage() . "<br>";
-        }
-        
-        echo "<h2>Storage Check</h2>";
-        if (is_link(public_path('storage'))) {
-            echo "✅ 'public/storage' symlink exists.<br>";
-        } else {
-            echo "❌ 'public/storage' symlink MISSING. Images will not load.<br>";
-        }
-        
-        $uploadDir = storage_path('app/public/uploads');
-        if (is_dir($uploadDir)) {
-             echo "✅ Uploads directory exists: $uploadDir<br>";
-             echo "Writable: " . (is_writable($uploadDir) ? 'YES' : 'NO') . "<br>";
-        } else {
-             echo "⚠️ Uploads directory missing: $uploadDir (Will be created on first upload)<br>";
-        }
-
-        echo "<h2>Relationship Check</h2>";
-        try {
-            $user = \App\Models\User::first();
-            if ($user) {
-                echo "👤 User Found: {$user->id}<br>";
-                $logs = $user->device_logs()->count(); // Test the relationship method
-                echo "🔗 Relationship (device_logs) OK (Count: $logs)<br>";
-            } else {
-                echo "⚠️ No users found to test relationship.<br>";
+                echo "</table>";
             }
         } catch (\Throwable $e) {
-            echo "❌ Relationship Error: " . $e->getMessage() . "<br>";
+            echo "❌ Log Error: " . $e->getMessage() . "<br>";
+        }
+
+        echo "<h2>Laravel Log (Last 50 Lines)</h2>";
+        $logPath = storage_path('logs/laravel.log');
+        if (file_exists($logPath)) {
+            $lines = file($logPath);
+            $lastLines = array_slice($lines, -50);
+            echo "<pre style='background:#eee; padding:10px; height:300px; overflow:scroll;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
+        } else {
+             echo "⚠️ Log file not found at $logPath<br>";
+        }
+
+        echo "<h2>User Check</h2>";
+        $users = \App\Models\User::all();
+        foreach ($users as $u) {
+            echo "👤 ID: {$u->id} | Name: {$u->name} | Token: " . ($u->fcm_token ? substr($u->fcm_token, 0, 10) . '...' : '<span style="color:red">MISSING</span>') . "<br>";
         }
 
     } catch (\Throwable $e) {
