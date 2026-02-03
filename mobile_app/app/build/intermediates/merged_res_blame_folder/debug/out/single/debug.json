@@ -12,6 +12,14 @@
         "source": "C:\\Users\\User\\.gradle\\daemon\\8.2\\com.example.suma.app-main-43:\\xml\\file_paths.xml"
     },
     {
+        "merged": "com.example.suma.app-merged_res-41:/layout_activity_register.xml.flat",
+        "source": "com.example.suma.app-main-43:/layout/activity_register.xml"
+    },
+    {
+        "merged": "C:\\Users\\User\\.gradle\\daemon\\8.2\\com.example.suma.app-merged_res-41:\\layout_activity_login.xml.flat",
+        "source": "C:\\Users\\User\\.gradle\\daemon\\8.2\\com.example.suma.app-main-43:\\layout\\activity_login.xml"
+    },
+    {
         "merged": "C:\\Users\\User\\.gradle\\daemon\\8.2\\com.example.suma.app-merged_res-41:\\xml_data_extraction_rules.xml.flat",
         "source": "C:\\Users\\User\\.gradle\\daemon\\8.2\\com.example.suma.app-main-43:\\xml\\data_extraction_rules.xml"
     },

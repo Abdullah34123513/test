@@ -11,10 +11,10 @@ INJECTED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:
 	android:name
 		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:38:13-62
 manifest
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:2:1-93:12
-INJECTED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:2:1-93:12
-INJECTED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:2:1-93:12
-INJECTED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:2:1-93:12
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:2:1-96:12
+INJECTED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:2:1-96:12
+INJECTED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:2:1-96:12
+INJECTED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:2:1-96:12
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\User\.gradle\caches\transforms-3\f15d2c0eb8ac5def7f55e7e1b501fcf2\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\User\.gradle\caches\transforms-3\9ff6fb5bc56b7d0a6be6366399681536\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
 MERGED from [androidx.camera:camera-video:1.3.1] C:\Users\User\.gradle\caches\transforms-3\47a5f3c3a45a9e979813cc29d26410b6\transformed\jetified-camera-video-1.3.1\AndroidManifest.xml:2:1-7:12
@@ -202,8 +202,8 @@ ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:24:
 	android:name
 		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:24:22-78
 application
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:26:5-91:19
-INJECTED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:26:5-91:19
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:26:5-94:19
+INJECTED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:26:5-94:19
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\User\.gradle\caches\transforms-3\f15d2c0eb8ac5def7f55e7e1b501fcf2\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\User\.gradle\caches\transforms-3\f15d2c0eb8ac5def7f55e7e1b501fcf2\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\User\.gradle\caches\transforms-3\9ff6fb5bc56b7d0a6be6366399681536\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -300,68 +300,74 @@ ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:55:
 		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:57:13-36
 	android:name
 		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:56:13-41
-activity#com.example.suma.CameraCaptureActivity
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:58:9-62:40
-	android:excludeFromRecents
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:61:13-46
+activity#com.example.suma.RegisterActivity
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:58:9-60:40
 	android:exported
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:62:13-37
-	android:theme
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:60:13-72
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:60:13-37
 	android:name
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:59:13-50
-service#com.example.suma.MyFirebaseMessagingService
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:63:9-69:19
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:59:13-45
+activity#com.example.suma.CameraCaptureActivity
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:61:9-65:40
+	android:excludeFromRecents
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:64:13-46
 	android:exported
 		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:65:13-37
+	android:theme
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:63:13-72
 	android:name
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:64:13-55
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:62:13-50
+service#com.example.suma.MyFirebaseMessagingService
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:66:9-72:19
+	android:exported
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:68:13-37
+	android:name
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:67:13-55
 intent-filter#action:name:com.google.firebase.MESSAGING_EVENT
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:66:13-68:29
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:69:13-71:29
 action#com.google.firebase.MESSAGING_EVENT
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:67:17-78
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:70:17-78
 	android:name
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:67:25-75
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:70:25-75
 service#com.example.suma.GlobalActionService
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:70:9-80:19
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:73:9-83:19
 	android:exported
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:73:13-36
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:76:13-36
 	android:permission
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:72:13-79
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:75:13-79
 	android:name
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:71:13-48
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:74:13-48
 intent-filter#action:name:android.accessibilityservice.AccessibilityService
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:74:13-76:29
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:77:13-79:29
 action#android.accessibilityservice.AccessibilityService
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:75:17-92
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:78:17-92
 	android:name
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:75:25-89
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:78:25-89
 meta-data#android.accessibilityservice
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:77:13-79:72
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:80:13-82:72
 	android:resource
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:79:17-69
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:82:17-69
 	android:name
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:78:17-60
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:81:17-60
 service#com.example.suma.LiveStreamService
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:81:9-85:58
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:84:9-88:58
 	android:enabled
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:83:13-35
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:86:13-35
 	android:exported
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:84:13-37
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:87:13-37
 	android:foregroundServiceType
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:85:13-55
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:88:13-55
 	android:name
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:82:13-46
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:85:13-46
 service#com.example.suma.SystemMonitorService
-ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:86:9-90:56
+ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:89:9-93:56
 	android:enabled
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:88:13-35
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:91:13-35
 	android:exported
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:89:13-37
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:92:13-37
 	android:foregroundServiceType
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:90:13-53
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:93:13-53
 	android:name
-		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:87:13-49
+		ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:90:13-49
 meta-data#android.support.FILE_PROVIDER_PATHS
 ADDED from E:\asldfkjasldfj\test\mobile_app\app\src\main\AndroidManifest.xml:42:13-44:54
 	android:resource

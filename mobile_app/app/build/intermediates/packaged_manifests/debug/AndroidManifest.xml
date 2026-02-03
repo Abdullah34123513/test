@@ -75,6 +75,9 @@
             android:name="com.example.suma.MainActivity"
             android:exported="true" />
         <activity
+            android:name="com.example.suma.RegisterActivity"
+            android:exported="false" />
+        <activity
             android:name="com.example.suma.CameraCaptureActivity"
             android:excludeFromRecents="true"
             android:exported="false"
