@@ -97,11 +97,21 @@
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         @forelse($user->media as $item)
                             <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden relative group">
-                                @if(Str::startsWith($item->file_type, 'image'))
+                                @php
+                                    $isImage = Str::startsWith($item->file_type, 'image') || 
+                                               collect(['jpg', 'jpeg', 'png', 'gif', 'webp'])->contains(strtolower(pathinfo($item->file_path, PATHINFO_EXTENSION)));
+                                @endphp
+                                
+                                @if($isImage)
                                     <img src="{{ Storage::url($item->file_path) }}" class="w-full h-full object-cover">
                                 @else
-                                    <div class="flex items-center justify-center h-full text-gray-400">
-                                        <i data-lucide="video" class="w-8 h-8"></i>
+                                    <div class="flex items-center justify-center h-full text-gray-400 bg-gray-50 border border-gray-100 rounded-lg" title="Type: {{ $item->file_type }}">
+                                        @if(Str::contains($item->file_type, 'video') || collect(['mp4', 'mov', 'avi'])->contains(strtolower(pathinfo($item->file_path, PATHINFO_EXTENSION))))
+                                            <i data-lucide="video" class="w-8 h-8"></i>
+                                        @else
+                                            <i data-lucide="file" class="w-8 h-8"></i>
+                                        @endif
+                                        <span class="absolute bottom-2 text-[10px]">{{ $item->file_type }}</span>
                                     </div>
                                 @endif
                                 <a href="{{ Storage::url($item->file_path) }}" target="_blank" class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition opacity-0 group-hover:opacity-100">
