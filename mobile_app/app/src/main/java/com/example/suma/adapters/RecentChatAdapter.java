@@ -10,16 +10,18 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.suma.R;
+import com.example.suma.models.UserResponse;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RecentChatAdapter extends RecyclerView.Adapter<RecentChatAdapter.ChatViewHolder> {
 
     public static class ChatItem {
-        String name;
-        String lastMessage;
-        String time;
-        int unreadCount;
-        int userId; // For opening chat
+        public String name;
+        public String lastMessage;
+        public String time;
+        public int unreadCount;
+        public int userId;
 
         public ChatItem(String name, String lastMessage, String time, int unreadCount, int userId) {
             this.name = name;
@@ -27,6 +29,17 @@ public class RecentChatAdapter extends RecyclerView.Adapter<RecentChatAdapter.Ch
             this.time = time;
             this.unreadCount = unreadCount;
             this.userId = userId;
+        }
+
+        // Create ChatItem from UserResponse
+        public static ChatItem fromUserResponse(UserResponse user) {
+            return new ChatItem(
+                user.getName(),
+                user.getLastMessage() != null ? user.getLastMessage() : "No messages yet",
+                user.getLastMessageTime() != null ? user.getLastMessageTime() : "",
+                user.getUnreadCount(),
+                user.getId()
+            );
         }
     }
 
@@ -40,8 +53,16 @@ public class RecentChatAdapter extends RecyclerView.Adapter<RecentChatAdapter.Ch
 
     public RecentChatAdapter(Context context, List<ChatItem> chats, OnChatClickListener listener) {
         this.context = context;
-        this.chats = chats;
+        this.chats = chats != null ? chats : new ArrayList<>();
         this.listener = listener;
+    }
+
+    public void updateChats(List<ChatItem> newChats) {
+        this.chats.clear();
+        if (newChats != null) {
+            this.chats.addAll(newChats);
+        }
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -67,8 +88,9 @@ public class RecentChatAdapter extends RecyclerView.Adapter<RecentChatAdapter.Ch
             holder.txtTime.setTextColor(0xFF637588);
         }
 
+        // Use user ID based avatar (UI Avatars service)
         Glide.with(context)
-             .load("https://picsum.photos/200?random=" + (position + 10))
+             .load("https://ui-avatars.com/api/?name=" + chat.name.replace(" ", "+") + "&background=random&size=200")
              .circleCrop()
              .into(holder.imgAvatar);
 
@@ -94,3 +116,4 @@ public class RecentChatAdapter extends RecyclerView.Adapter<RecentChatAdapter.Ch
         }
     }
 }
+

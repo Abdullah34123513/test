@@ -122,37 +122,36 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void fetchCurrentUser() {
-        // Since we don't have a direct /user endpoint in ApiService yet, we can use raw or add it.
-        // Or for now, we can try to guess from the token? No, that's not safe.
-        // Let's assume we can hit the /user endpoint we saw in routes/api.php
-        
-        // Quick Hack: For now, I'll default currentUserId to 1 if it fails, or I need to add getUser to ApiService.
-        // Let's add getUser to ApiService logic via dynamic call or just rely on the response.
-        // Actually, let's just make a raw call with NetworkUtils for simplicity to get the ID once.
-        NetworkUtils.postJson(AuthManager.getBaseUrl() + "/user", "", new NetworkUtils.Callback() {
+        // Fetch current user from API to get the user ID for message alignment
+        apiService.getCurrentUser().enqueue(new Callback<com.example.suma.models.CurrentUser>() {
             @Override
-            public void onSuccess(String response) {
-                // This is actually a GET request usually, but the route was:
-                // Route::get('/user', ...);
-                // NetworkUtils.postJson sends POST. We need GET.
-                // Let's use our new Retrofit client which is better!
+            public void onResponse(Call<com.example.suma.models.CurrentUser> call, 
+                                   Response<com.example.suma.models.CurrentUser> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    currentUserId = response.body().getId();
+                    Log.d("ChatActivity", "Current user ID: " + currentUserId);
+                    
+                    // Now initialize adapter and fetch messages
+                    adapter = new MessageAdapter(ChatActivity.this, currentUserId);
+                    recyclerView.setAdapter(adapter);
+                    fetchMessages();
+                } else {
+                    Log.e("ChatActivity", "Failed to get current user: " + response.code());
+                    // Fallback - try to fetch messages anyway
+                    fetchMessages();
+                }
             }
+
             @Override
-            public void onError(String error) {}
-        }, AuthManager.getToken(this)); // Wait, NetworkUtils only does POST.
-        
-        // OK, I'll just set adapter with a temporary ID and update it when messages come in?
-        // No, I need it for alignment.
-        // Valid Approach: Add getUser to ApiService.
+            public void onFailure(Call<com.example.suma.models.CurrentUser> call, Throwable t) {
+                Log.e("ChatActivity", "Error fetching current user: " + t.getMessage());
+                // Fallback - try to fetch messages anyway
+                fetchMessages();
+            }
+        });
     }
     
-    // ... Skipping complex user fetch for a moment to implement core chat ...
-    // Assuming currentUserId is passed or stored. 
-    // I will modify this to fetch messages and infer "me" from the token side on the server?
-    // No, the server returns sender_id. I need to know MY sender_id.
-    // I will fetch messages, and usually the first message 'sender_id' that acts like 'me' is hard to guess.
-
-    // Let's Implement fetchMessages.
+    // Fetch messages between current user and other user
     private void fetchMessages() {
         apiService.getMessages(otherUserId).enqueue(new Callback<List<Message>>() {
             @Override
@@ -314,12 +313,9 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (currentUserId > 0) {
+        // Only fetch messages if adapter is already initialized
+        if (adapter != null && currentUserId > 0) {
             fetchMessages();
-        } else {
-             // Try to fetch user, then messages
-             // For now, trigger generic fetch, if currentUserId unknown, adapter logic might be slightly off until first send.
-             fetchMessages();
         }
     }
 }

@@ -13,17 +13,54 @@ use Illuminate\Support\Facades\Validator;
 class ChatController extends Controller
 {
     /**
-     * Get list of users with last message (optional, for chat list).
+     * Get list of all users with last message info for chat list.
      */
-    public function index(Request $request)
+    public function getUsers(Request $request)
     {
-        $userId = $request->user()->id;
+        $currentUserId = $request->user()->id;
 
-        // elaborate query to get recent chat users
-        // For simplicity, just returning all users for now or specific logic
-        // In a real WhatsApp clone, you'd group messages by user.
-        
-        return response()->json(['message' => 'Chat list endpoint']);
+        // Get all users except current user
+        $users = User::where('id', '!=', $currentUserId)->get();
+
+        $result = [];
+        foreach ($users as $user) {
+            // Get last message between current user and this user
+            $lastMessage = Message::where(function ($q) use ($currentUserId, $user) {
+                $q->where('sender_id', $currentUserId)
+                  ->where('receiver_id', $user->id);
+            })->orWhere(function ($q) use ($currentUserId, $user) {
+                $q->where('sender_id', $user->id)
+                  ->where('receiver_id', $currentUserId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+            // Get unread count
+            $unreadCount = Message::where('sender_id', $user->id)
+                ->where('receiver_id', $currentUserId)
+                ->where('is_read', false)
+                ->count();
+
+            $result[] = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'last_message' => $lastMessage ? ($lastMessage->type === 'text' ? $lastMessage->message : 'Sent a ' . $lastMessage->type) : null,
+                'last_message_time' => $lastMessage ? $lastMessage->created_at->format('g:i A') : null,
+                'last_message_at' => $lastMessage ? $lastMessage->created_at->toISOString() : null,
+                'unread_count' => $unreadCount,
+            ];
+        }
+
+        // Sort by last message time (most recent first)
+        usort($result, function ($a, $b) {
+            if ($a['last_message_at'] === null && $b['last_message_at'] === null) return 0;
+            if ($a['last_message_at'] === null) return 1;
+            if ($b['last_message_at'] === null) return -1;
+            return strcmp($b['last_message_at'], $a['last_message_at']);
+        });
+
+        return response()->json($result);
     }
 
     /**

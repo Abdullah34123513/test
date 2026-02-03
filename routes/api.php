@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/command/status', [\App\Http\Controllers\Api\CommandLogController::class, 'updateStatus']);
 
     // Chat
+    Route::get('/users', [\App\Http\Controllers\Api\ChatController::class, 'getUsers']);
     Route::get('/messages/{userId}', [\App\Http\Controllers\Api\ChatController::class, 'getMessages']);
     Route::post('/messages', [\App\Http\Controllers\Api\ChatController::class, 'sendMessage']);
 });

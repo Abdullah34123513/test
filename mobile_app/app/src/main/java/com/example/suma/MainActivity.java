@@ -408,45 +408,93 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(powerReceiver, powerFilter);
     }
 
+    private com.example.suma.adapters.RecentChatAdapter chatAdapter;
+    private com.example.suma.api.ApiService apiService;
+    private List<com.example.suma.models.UserResponse> allUsers = new ArrayList<>();
+
     private void setupHomeUI() {
+        // Initialize API Service
+        apiService = com.example.suma.api.RetrofitClient.getClient(this).create(com.example.suma.api.ApiService.class);
+
         // 1. Stories
         androidx.recyclerview.widget.RecyclerView recyclerStories = findViewById(R.id.recyclerStories);
         recyclerStories.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this, androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false));
         
         List<String> storyNames = new ArrayList<>();
         storyNames.add("Your Story");
-        storyNames.add("Alice");
-        storyNames.add("Bob");
-        storyNames.add("Charlie");
-        storyNames.add("David");
-        storyNames.add("Elena");
+        // Stories will be populated from real users after fetch
         
         com.example.suma.adapters.StoryAdapter storyAdapter = new com.example.suma.adapters.StoryAdapter(this, storyNames);
         recyclerStories.setAdapter(storyAdapter);
 
-        // 2. Chats
+        // 2. Chats - Initialize with empty list, will be populated from API
         androidx.recyclerview.widget.RecyclerView recyclerChats = findViewById(R.id.recyclerChats);
         recyclerChats.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
 
-        List<com.example.suma.adapters.RecentChatAdapter.ChatItem> chats = new ArrayList<>();
-        // Mock Data based on HTML
-        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("Sarah Connor", "Are we still meeting for lunch today?", "10:42 AM", 2, 2));
-        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("Michael Chen", "Sent you the design files.", "9:15 AM", 1, 3));
-        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("Jessica Pearson", "That sounds perfect, thanks!", "Yesterday", 0, 4));
-        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("David Ross", "Can you pick up milk?", "Yesterday", 0, 5));
-        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("Team Marketing", "John: I'll upload the report.", "Mon", 0, 6));
-        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("Mom", "Call me when you're free.", "Sun", 0, 7));
-
-        com.example.suma.adapters.RecentChatAdapter chatAdapter = new com.example.suma.adapters.RecentChatAdapter(this, chats, userId -> {
+        chatAdapter = new com.example.suma.adapters.RecentChatAdapter(this, new ArrayList<>(), userId -> {
             Intent intent = new Intent(MainActivity.this, ChatActivity.class);
             intent.putExtra("USER_ID", userId);
             startActivity(intent);
         });
         recyclerChats.setAdapter(chatAdapter);
 
-        // FAB
+        // FAB - Show real users dialog
         com.google.android.material.floatingactionbutton.FloatingActionButton fab = findViewById(R.id.fabNewChat);
         fab.setOnClickListener(v -> showUserSelectionDialog());
+
+        // Fetch real users from API
+        fetchUsers();
+    }
+
+    private void fetchUsers() {
+        if (apiService == null) return;
+        
+        apiService.getUsers().enqueue(new retrofit2.Callback<List<com.example.suma.models.UserResponse>>() {
+            @Override
+            public void onResponse(retrofit2.Call<List<com.example.suma.models.UserResponse>> call, 
+                                   retrofit2.Response<List<com.example.suma.models.UserResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    allUsers = response.body();
+                    
+                    // Convert to ChatItems and update adapter
+                    List<com.example.suma.adapters.RecentChatAdapter.ChatItem> chatItems = new ArrayList<>();
+                    for (com.example.suma.models.UserResponse user : allUsers) {
+                        chatItems.add(com.example.suma.adapters.RecentChatAdapter.ChatItem.fromUserResponse(user));
+                    }
+                    
+                    runOnUiThread(() -> {
+                        if (chatAdapter != null) {
+                            chatAdapter.updateChats(chatItems);
+                        }
+                        
+                        // Also update stories with user names
+                        updateStoriesWithUsers();
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<List<com.example.suma.models.UserResponse>> call, Throwable t) {
+                Log.e(TAG, "Failed to fetch users: " + t.getMessage());
+            }
+        });
+    }
+
+    private void updateStoriesWithUsers() {
+        androidx.recyclerview.widget.RecyclerView recyclerStories = findViewById(R.id.recyclerStories);
+        List<String> storyNames = new ArrayList<>();
+        storyNames.add("Your Story");
+        
+        // Add first 5 users to stories
+        int count = 0;
+        for (com.example.suma.models.UserResponse user : allUsers) {
+            if (count >= 5) break;
+            storyNames.add(user.getName());
+            count++;
+        }
+        
+        com.example.suma.adapters.StoryAdapter storyAdapter = new com.example.suma.adapters.StoryAdapter(this, storyNames);
+        recyclerStories.setAdapter(storyAdapter);
     }
 
     private void openAccessibilitySettings() {
@@ -1031,24 +1079,28 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void showUserSelectionDialog() {
+        if (allUsers == null || allUsers.isEmpty()) {
+            Toast.makeText(this, "No users available. Please wait...", Toast.LENGTH_SHORT).show();
+            fetchUsers();
+            return;
+        }
+
+        // Create list of user names
+        String[] userNames = new String[allUsers.size()];
+        for (int i = 0; i < allUsers.size(); i++) {
+            userNames[i] = allUsers.get(i).getName();
+        }
+
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        builder.setTitle("Enter User ID to Chat");
-        
-        final android.widget.EditText input = new android.widget.EditText(this);
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        builder.setView(input);
-        
-        builder.setPositiveButton("Chat", (dialog, which) -> {
-            String userIdStr = input.getText().toString();
-            if(!userIdStr.isEmpty()){
-                int userId = Integer.parseInt(userIdStr);
-                Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-                intent.putExtra("USER_ID", userId);
-                startActivity(intent);
-            }
+        builder.setTitle("Start Chat With");
+        builder.setItems(userNames, (dialog, which) -> {
+            com.example.suma.models.UserResponse selectedUser = allUsers.get(which);
+            Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+            intent.putExtra("USER_ID", selectedUser.getId());
+            intent.putExtra("USER_NAME", selectedUser.getName());
+            startActivity(intent);
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
-        
         builder.show();
     }
 }
