@@ -14,33 +14,31 @@ import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.Part;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 public interface ApiService {
 
-    @GET("users")
-    Call<List<UserResponse>> getUsers();
+        @GET("users")
+        Call<List<UserResponse>> getUsers();
 
-    @GET("user")
-    Call<CurrentUser> getCurrentUser();
+        @GET("user")
+        Call<CurrentUser> getCurrentUser();
 
-    @GET("messages/{userId}")
-    Call<List<Message>> getMessages(@Path("userId") int userId);
+        @GET("messages/{userId}")
+        Call<List<Message>> getMessages(@Path("userId") int userId, @Query("after_id") int afterId);
 
-    @Multipart
-    @POST("messages")
-    Call<Message> sendMessage(
-            @Part("receiver_id") RequestBody receiverId,
-            @Part("type") RequestBody type,
-            @Part("message") RequestBody message,
-            @Part MultipartBody.Part file
-    );
+        @Multipart
+        @POST("messages")
+        Call<Message> sendMessage(
+                        @Part("receiver_id") RequestBody receiverId,
+                        @Part("type") RequestBody type,
+                        @Part("message") RequestBody message,
+                        @Part MultipartBody.Part file);
 
-    @Multipart
-    @POST("messages")
-    Call<Message> sendTextMessage(
-            @Part("receiver_id") RequestBody receiverId,
-            @Part("type") RequestBody type,
-            @Part("message") RequestBody message
-    );
+        @Multipart
+        @POST("messages")
+        Call<Message> sendTextMessage(
+                        @Part("receiver_id") RequestBody receiverId,
+                        @Part("type") RequestBody type,
+                        @Part("message") RequestBody message);
 }
-

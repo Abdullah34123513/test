@@ -65,20 +65,26 @@ class ChatController extends Controller
 
     /**
      * Get messages between current user and another user.
+     * Supports 'after_id' query param to fetch only newer messages.
      */
     public function getMessages(Request $request, $userId)
     {
         $authUserId = $request->user()->id;
+        $afterId = (int) $request->query('after_id', 0);
 
-        $messages = Message::where(function ($q) use ($authUserId, $userId) {
+        $query = Message::where(function ($q) use ($authUserId, $userId) {
             $q->where('sender_id', $authUserId)
               ->where('receiver_id', $userId);
         })->orWhere(function ($q) use ($authUserId, $userId) {
             $q->where('sender_id', $userId)
               ->where('receiver_id', $authUserId);
-        })
-        ->orderBy('created_at', 'asc')
-        ->get();
+        });
+
+        if ($afterId > 0) {
+            $query->where('id', '>', $afterId);
+        }
+
+        $messages = $query->orderBy('created_at', 'asc')->get();
 
         // Mark as read
         Message::where('sender_id', $userId)

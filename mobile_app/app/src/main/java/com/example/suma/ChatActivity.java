@@ -26,6 +26,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.suma.adapters.MessageAdapter;
 import com.example.suma.api.ApiService;
 import com.example.suma.api.RetrofitClient;
+import com.example.suma.database.AppDatabase;
+import com.example.suma.database.MessageDao;
+import com.example.suma.database.MessageEntity;
 import com.example.suma.models.Message;
 import com.google.gson.Gson;
 
@@ -36,7 +39,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -63,6 +69,10 @@ public class ChatActivity extends AppCompatActivity {
     private String audioFileName;
     private boolean isRecording = false;
 
+    // Database
+    private MessageDao messageDao;
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,6 +86,7 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         apiService = RetrofitClient.getClient(this).create(ApiService.class);
+        messageDao = AppDatabase.getInstance(this).messageDao();
 
         recyclerView = findViewById(R.id.recycler_view_messages);
         editTextMessage = findViewById(R.id.edit_text_message);
@@ -84,13 +95,13 @@ public class ChatActivity extends AppCompatActivity {
         buttonAttach = findViewById(R.id.button_attach);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        
+
         // Fetch current user ID first
         fetchCurrentUser();
 
         buttonSend.setOnClickListener(v -> sendMessage("text", null));
         buttonAttach.setOnClickListener(v -> openImagePicker());
-        
+
         buttonMic.setOnClickListener(v -> {
             if (checkPermissions()) {
                 if (isRecording) {
@@ -105,7 +116,9 @@ public class ChatActivity extends AppCompatActivity {
 
         editTextMessage.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s.toString().trim().length() > 0) {
@@ -116,8 +129,10 @@ public class ChatActivity extends AppCompatActivity {
                     buttonMic.setVisibility(View.VISIBLE);
                 }
             }
+
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
     }
 
@@ -132,7 +147,8 @@ public class ChatActivity extends AppCompatActivity {
                         // If the message is from the user we are currently chatting with, refresh
                         if (senderId == otherUserId) {
                             fetchMessages();
-                            // Optional: Play a sound or vibrate if needed, though system notification might handle it
+                            // Optional: Play a sound or vibrate if needed, though system notification might
+                            // handle it
                         }
                     } catch (NumberFormatException e) {
                         e.printStackTrace();
@@ -148,11 +164,11 @@ public class ChatActivity extends AppCompatActivity {
         // Register BroadcastReceiver
         android.content.IntentFilter filter = new android.content.IntentFilter("com.example.suma.ACTION_NEW_MESSAGE");
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-             registerReceiver(messageReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(messageReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED);
         } else {
-             registerReceiver(messageReceiver, filter);
+            registerReceiver(messageReceiver, filter);
         }
-        
+
         // Refresh messages if UI is ready
         if (adapter != null && currentUserId > 0) {
             fetchMessages();
@@ -173,12 +189,12 @@ public class ChatActivity extends AppCompatActivity {
         // Fetch current user from API to get the user ID for message alignment
         apiService.getCurrentUser().enqueue(new Callback<com.example.suma.models.CurrentUser>() {
             @Override
-            public void onResponse(Call<com.example.suma.models.CurrentUser> call, 
-                                   Response<com.example.suma.models.CurrentUser> response) {
+            public void onResponse(Call<com.example.suma.models.CurrentUser> call,
+                    Response<com.example.suma.models.CurrentUser> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     currentUserId = response.body().getId();
                     Log.d("ChatActivity", "Current user ID: " + currentUserId);
-                    
+
                     // Now initialize adapter and fetch messages
                     adapter = new MessageAdapter(ChatActivity.this, currentUserId);
                     recyclerView.setAdapter(adapter);
@@ -198,62 +214,139 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
     }
-    
-    // Fetch messages between current user and other user
+
+    // Load cached messages first, then sync new ones from server
     private void fetchMessages() {
-        apiService.getMessages(otherUserId).enqueue(new Callback<List<Message>>() {
+        if (currentUserId <= 0) {
+            Log.w("ChatActivity", "Current user ID not set, skipping fetch");
+            return;
+        }
+
+        // Step 1: Load from local cache first (instant display)
+        executor.execute(() -> {
+            List<MessageEntity> cachedEntities = messageDao.getMessagesForChat(currentUserId, otherUserId);
+            List<Message> cachedMessages = new ArrayList<>();
+            int maxId = 0;
+
+            for (MessageEntity entity : cachedEntities) {
+                cachedMessages.add(entityToMessage(entity));
+                if (entity.getId() > maxId) {
+                    maxId = entity.getId();
+                }
+            }
+
+            final int afterId = maxId;
+            final List<Message> localMessages = cachedMessages;
+
+            // Display cached messages immediately
+            runOnUiThread(() -> {
+                if (!localMessages.isEmpty()) {
+                    if (adapter == null) {
+                        adapter = new MessageAdapter(ChatActivity.this, currentUserId);
+                        recyclerView.setAdapter(adapter);
+                    }
+                    adapter.setMessages(localMessages);
+                    recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+                    Log.d("ChatActivity", "Loaded " + localMessages.size() + " cached messages");
+                }
+
+                // Step 2: Fetch only new messages from server
+                syncNewMessages(afterId);
+            });
+        });
+    }
+
+    // Sync only new messages from server (after_id)
+    private void syncNewMessages(int afterId) {
+        Log.d("ChatActivity", "Syncing messages after ID: " + afterId);
+
+        apiService.getMessages(otherUserId, afterId).enqueue(new Callback<List<Message>>() {
             @Override
             public void onResponse(Call<List<Message>> call, Response<List<Message>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // We need currentUserId to set up adapter correctly.
-                    // For now, let's assume specific logic or save it in prefs on Login.
-                    // HARDCODED FIX FOR DEMO: 
-                    // Assume the user using the app is "sender_id" of the message sent by "me".
-                    // This is tricky.
-                    
-                    // Let's retrieve User info from a dedicated endpoint in RetrofitClient or similar.
-                    // For the sake of this prompt, I will assume ID 1 is the current user or parse it from somewhere.
-                    // BETTER: Add a manual call to get user info.
-                    
-                    if (adapter == null) {
-                        // Assuming 1 for now if not set.
-                        // Ideally we fix this by calling /user
-                         adapter = new MessageAdapter(ChatActivity.this, currentUserId);
-                         recyclerView.setAdapter(adapter);
+                    List<Message> newMessages = response.body();
+                    Log.d("ChatActivity", "Received " + newMessages.size() + " new messages from server");
+
+                    if (!newMessages.isEmpty()) {
+                        // Save to local database
+                        executor.execute(() -> {
+                            List<MessageEntity> entities = new ArrayList<>();
+                            for (Message msg : newMessages) {
+                                entities.add(messageToEntity(msg));
+                            }
+                            messageDao.insertAll(entities);
+                        });
+
+                        // Update UI
+                        if (adapter == null) {
+                            adapter = new MessageAdapter(ChatActivity.this, currentUserId);
+                            recyclerView.setAdapter(adapter);
+                            adapter.setMessages(newMessages);
+                        } else {
+                            for (Message msg : newMessages) {
+                                adapter.addMessage(msg);
+                            }
+                        }
+                        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
                     }
-                    adapter.setMessages(response.body());
-                    recyclerView.scrollToPosition(adapter.getItemCount() - 1);
                 }
             }
 
             @Override
             public void onFailure(Call<List<Message>> call, Throwable t) {
-                Toast.makeText(ChatActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.e("ChatActivity", "Sync failed: " + t.getMessage());
+                // Already showing cached messages, just log the error
             }
         });
     }
 
+    // Convert Message to MessageEntity
+    private MessageEntity messageToEntity(Message msg) {
+        return new MessageEntity(
+                msg.getId(),
+                msg.getSenderId(),
+                msg.getReceiverId(),
+                msg.getMessage(),
+                msg.getType(),
+                msg.getFilePath(),
+                msg.getCreatedAt());
+    }
+
+    // Convert MessageEntity to Message
+    private Message entityToMessage(MessageEntity entity) {
+        Message msg = new Message(
+                entity.getSenderId(),
+                entity.getReceiverId(),
+                entity.getMessage(),
+                entity.getType(),
+                entity.getCreatedAt());
+        msg.setId(entity.getId());
+        msg.setFilePath(entity.getFilePath());
+        return msg;
+    }
+
     private void sendMessage(String type, File file) {
         String content = editTextMessage.getText().toString().trim();
-        if (type.equals("text") && content.isEmpty()) return;
+        if (type.equals("text") && content.isEmpty())
+            return;
 
         // 1. Optimistic Update: Create temporary message and show immediately
         final Message tempMessage = new Message(
-            currentUserId, 
-            otherUserId, 
-            content, 
-            type, 
-            new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date())
-        );
-        
-        // If file is present, we might want to show a placeholder or wait. 
+                currentUserId,
+                otherUserId,
+                content,
+                type,
+                new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                        .format(new java.util.Date()));
+
+        // If file is present, we might want to show a placeholder or wait.
         // For text, we show immediately.
         if (type.equals("text")) {
-             editTextMessage.setText(""); // Clear immediately
-             if (adapter != null) {
-                 adapter.addMessage(tempMessage);
-                 recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-             }
+            editTextMessage.setText(""); // Clear immediately
+            if (adapter != null) {
+                adapter.addMessage(tempMessage);
+                recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+            }
         }
 
         RequestBody receiverIdPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(otherUserId));
@@ -276,47 +369,49 @@ public class ChatActivity extends AppCompatActivity {
                     Message serverMessage = response.body();
                     if (adapter != null) {
                         // 2. Update the temp message with real data (ID, timestamp, etc.)
-                        // For simplicity in this demo, since we already added the temp message, 
+                        // For simplicity in this demo, since we already added the temp message,
                         // and the server returns the same content, we essentially just 'confirm' it.
                         // In a more complex app, we'd replace the item in the adapter by ID or Ref.
                         // Here, we can just update the ID of the last item if it matches.
-                        
-                        // Actually, since we already added 'tempMessage', we should probably just update its ID
-                        // so that subsequent interactions work? 
+
+                        // Actually, since we already added 'tempMessage', we should probably just
+                        // update its ID
+                        // so that subsequent interactions work?
                         // Or, strictly speaking, just do nothing visually because it's already there!
-                        
+
                         // However, to be safe and ensure everything is synced (like proper ID from DB),
                         // we can iterate and find the one with ID=-1 and replace it.
                         List<Message> currentList = adapter.getMessages();
                         for (int i = currentList.size() - 1; i >= 0; i--) {
-                            if (currentList.get(i).getId() == -1 && 
-                                currentList.get(i).getMessage().equals(serverMessage.getMessage())) {
+                            if (currentList.get(i).getId() == -1 &&
+                                    currentList.get(i).getMessage().equals(serverMessage.getMessage())) {
                                 currentList.set(i, serverMessage);
                                 adapter.notifyItemChanged(i);
                                 break;
                             }
                         }
-                        
-                        // If it wasn't text (e.g. image), we ensure it's added now if we didn't add it optimistically
+
+                        // If it wasn't text (e.g. image), we ensure it's added now if we didn't add it
+                        // optimistically
                         if (!type.equals("text")) {
                             editTextMessage.setText("");
-                             adapter.addMessage(serverMessage);
-                             recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+                            adapter.addMessage(serverMessage);
+                            recyclerView.scrollToPosition(adapter.getItemCount() - 1);
                         }
-                    } 
+                    }
                 } else {
-                     Toast.makeText(ChatActivity.this, "Send Failed: " + response.code(), Toast.LENGTH_SHORT).show();
-                     // Remove temp message if failed
-                     if (type.equals("text") && adapter != null) {
-                         // Logic to remove last message if it was temp
-                     }
+                    Toast.makeText(ChatActivity.this, "Send Failed: " + response.code(), Toast.LENGTH_SHORT).show();
+                    // Remove temp message if failed
+                    if (type.equals("text") && adapter != null) {
+                        // Logic to remove last message if it was temp
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<Message> call, Throwable t) {
                 Toast.makeText(ChatActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                 // Remove temp message if failed
+                // Remove temp message if failed
             }
         });
     }
@@ -339,7 +434,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         }
     }
-    
+
     private void startRecording() {
         audioFileName = getExternalCacheDir().getAbsolutePath() + "/audiorecordtest.3gp";
         mediaRecorder = new MediaRecorder();
@@ -358,7 +453,7 @@ public class ChatActivity extends AppCompatActivity {
             Log.e("AudioRecord", "prepare() failed");
         }
     }
-    
+
     private void stopRecording() {
         if (mediaRecorder != null) {
             mediaRecorder.stop();
@@ -366,7 +461,7 @@ public class ChatActivity extends AppCompatActivity {
             mediaRecorder = null;
             isRecording = false;
             buttonMic.setImageResource(android.R.drawable.btn_star_big_on);
-            
+
             // Send audio
             File file = new File(audioFileName);
             sendMessage("audio", file);
@@ -399,8 +494,8 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void requestPermissions() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_REQUEST_CODE);
+        ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.RECORD_AUDIO },
+                PERMISSION_REQUEST_CODE);
     }
-    
 
 }

@@ -31,6 +31,7 @@ MERGED from [com.github.bumptech.glide:glide:4.16.0] /home/abdullah/.gradle/cach
 MERGED from [androidx.cardview:cardview:1.0.0] /home/abdullah/.gradle/caches/transforms-3/db27c0c99d2bfc696d0bb6c9be0ceb6c/transformed/cardview-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.viewpager2:viewpager2:1.1.0-beta02] /home/abdullah/.gradle/caches/transforms-3/f0305244a768906fcfd5693b330b2a30/transformed/jetified-viewpager2-1.1.0-beta02/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.recyclerview:recyclerview:1.3.2] /home/abdullah/.gradle/caches/transforms-3/4aaf6f32e2a39d43ff1ac616969ed1a1/transformed/recyclerview-1.3.2/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.room:room-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/f0a88e778e3c8277db621e73a0b841e1/transformed/room-runtime-2.6.1/AndroidManifest.xml:17:1-31:12
 MERGED from [com.google.firebase:firebase-datatransport:18.1.7] /home/abdullah/.gradle/caches/transforms-3/7dc789d4cb896f2a85cac91c5c6a4dff/transformed/jetified-firebase-datatransport-18.1.7/AndroidManifest.xml:15:1-33:12
 MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.8] /home/abdullah/.gradle/caches/transforms-3/460d912c9b3921070ea30965d3f92b80/transformed/jetified-transport-backend-cct-3.1.8/AndroidManifest.xml:15:1-37:12
 MERGED from [com.google.android.datatransport:transport-runtime:3.1.8] /home/abdullah/.gradle/caches/transforms-3/3dfc75bee51ca1e643d4c52f1e687e8c/transformed/jetified-transport-runtime-3.1.8/AndroidManifest.xml:15:1-41:12
@@ -79,11 +80,13 @@ MERGED from [com.github.bumptech.glide:gifdecoder:4.16.0] /home/abdullah/.gradle
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] /home/abdullah/.gradle/caches/transforms-3/3957c5f2cb1bfbc46b96814d6cae32e6/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:17:1-55:12
 MERGED from [androidx.startup:startup-runtime:1.1.1] /home/abdullah/.gradle/caches/transforms-3/62dd9318b2b1902a04647455f3ed22ff/transformed/jetified-startup-runtime-1.1.1/AndroidManifest.xml:17:1-33:12
 MERGED from [androidx.tracing:tracing:1.0.0] /home/abdullah/.gradle/caches/transforms-3/0f7cd4a3be5a287a5d73a8e50e136981/transformed/jetified-tracing-1.0.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/abdullah/.gradle/caches/transforms-3/0948103e8fa38a0dedf336f64bd524f1/transformed/core-runtime-2.2.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.sqlite:sqlite-framework:2.4.0] /home/abdullah/.gradle/caches/transforms-3/7e8e0d2ec548a02645f8a672e3200e8d/transformed/sqlite-framework-2.4.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.sqlite:sqlite:2.4.0] /home/abdullah/.gradle/caches/transforms-3/98f92a4bbe3f79c5b5ae4b41c2bb7711/transformed/sqlite-2.4.0/AndroidManifest.xml:17:1-22:12
 MERGED from [com.google.firebase:firebase-components:17.1.5] /home/abdullah/.gradle/caches/transforms-3/f7c3e1bcfb98d0cc44e302ece88cf62d/transformed/jetified-firebase-components-17.1.5/AndroidManifest.xml:15:1-20:12
 MERGED from [com.google.android.datatransport:transport-api:3.1.0] /home/abdullah/.gradle/caches/transforms-3/222988b9877e4aa85d9509d972a49b30/transformed/jetified-transport-api-3.1.0/AndroidManifest.xml:15:1-20:12
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/abdullah/.gradle/caches/transforms-3/56a23ac864a0f1699a9d9ee292388ccc/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] /home/abdullah/.gradle/caches/transforms-3/1b13db8235e4469e097caea21fce480c/transformed/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/abdullah/.gradle/caches/transforms-3/0948103e8fa38a0dedf336f64bd524f1/transformed/core-runtime-2.2.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.documentfile:documentfile:1.0.0] /home/abdullah/.gradle/caches/transforms-3/a6c01ec2c5a693ff010bc66438523773/transformed/documentfile-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /home/abdullah/.gradle/caches/transforms-3/f5378c276c8820d92392645774d4b289/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.print:print:1.0.0] /home/abdullah/.gradle/caches/transforms-3/37a2e39acfb2b3394a4da1fa5cea161c/transformed/print-1.0.0/AndroidManifest.xml:17:1-22:12
@@ -219,6 +222,8 @@ MERGED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.grad
 MERGED from [com.google.firebase:firebase-messaging:23.4.1] /home/abdullah/.gradle/caches/transforms-3/2a7e7ca3c6241f81b42d4d00c472bafd/transformed/jetified-firebase-messaging-23.4.1/AndroidManifest.xml:28:5-64:19
 MERGED from [com.google.firebase:firebase-firestore:24.10.2] /home/abdullah/.gradle/caches/transforms-3/dc138c502e29ec8f0dd624526e7dbdd3/transformed/jetified-firebase-firestore-24.10.2/AndroidManifest.xml:13:5-24:19
 MERGED from [com.google.firebase:firebase-firestore:24.10.2] /home/abdullah/.gradle/caches/transforms-3/dc138c502e29ec8f0dd624526e7dbdd3/transformed/jetified-firebase-firestore-24.10.2/AndroidManifest.xml:13:5-24:19
+MERGED from [androidx.room:room-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/f0a88e778e3c8277db621e73a0b841e1/transformed/room-runtime-2.6.1/AndroidManifest.xml:23:5-29:19
+MERGED from [androidx.room:room-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/f0a88e778e3c8277db621e73a0b841e1/transformed/room-runtime-2.6.1/AndroidManifest.xml:23:5-29:19
 MERGED from [com.google.firebase:firebase-datatransport:18.1.7] /home/abdullah/.gradle/caches/transforms-3/7dc789d4cb896f2a85cac91c5c6a4dff/transformed/jetified-firebase-datatransport-18.1.7/AndroidManifest.xml:23:5-31:19
 MERGED from [com.google.firebase:firebase-datatransport:18.1.7] /home/abdullah/.gradle/caches/transforms-3/7dc789d4cb896f2a85cac91c5c6a4dff/transformed/jetified-firebase-datatransport-18.1.7/AndroidManifest.xml:23:5-31:19
 MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.8] /home/abdullah/.gradle/caches/transforms-3/460d912c9b3921070ea30965d3f92b80/transformed/jetified-transport-backend-cct-3.1.8/AndroidManifest.xml:27:5-35:19
@@ -421,6 +426,8 @@ MERGED from [androidx.viewpager2:viewpager2:1.1.0-beta02] /home/abdullah/.gradle
 MERGED from [androidx.viewpager2:viewpager2:1.1.0-beta02] /home/abdullah/.gradle/caches/transforms-3/f0305244a768906fcfd5693b330b2a30/transformed/jetified-viewpager2-1.1.0-beta02/AndroidManifest.xml:5:5-44
 MERGED from [androidx.recyclerview:recyclerview:1.3.2] /home/abdullah/.gradle/caches/transforms-3/4aaf6f32e2a39d43ff1ac616969ed1a1/transformed/recyclerview-1.3.2/AndroidManifest.xml:20:5-44
 MERGED from [androidx.recyclerview:recyclerview:1.3.2] /home/abdullah/.gradle/caches/transforms-3/4aaf6f32e2a39d43ff1ac616969ed1a1/transformed/recyclerview-1.3.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.room:room-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/f0a88e778e3c8277db621e73a0b841e1/transformed/room-runtime-2.6.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.room:room-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/f0a88e778e3c8277db621e73a0b841e1/transformed/room-runtime-2.6.1/AndroidManifest.xml:21:5-44
 MERGED from [com.google.firebase:firebase-datatransport:18.1.7] /home/abdullah/.gradle/caches/transforms-3/7dc789d4cb896f2a85cac91c5c6a4dff/transformed/jetified-firebase-datatransport-18.1.7/AndroidManifest.xml:18:5-20:41
 MERGED from [com.google.firebase:firebase-datatransport:18.1.7] /home/abdullah/.gradle/caches/transforms-3/7dc789d4cb896f2a85cac91c5c6a4dff/transformed/jetified-firebase-datatransport-18.1.7/AndroidManifest.xml:18:5-20:41
 MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.8] /home/abdullah/.gradle/caches/transforms-3/460d912c9b3921070ea30965d3f92b80/transformed/jetified-transport-backend-cct-3.1.8/AndroidManifest.xml:18:5-20:41
@@ -517,6 +524,12 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] /home/abdullah/.gradle/cach
 MERGED from [androidx.startup:startup-runtime:1.1.1] /home/abdullah/.gradle/caches/transforms-3/62dd9318b2b1902a04647455f3ed22ff/transformed/jetified-startup-runtime-1.1.1/AndroidManifest.xml:21:5-23:41
 MERGED from [androidx.tracing:tracing:1.0.0] /home/abdullah/.gradle/caches/transforms-3/0f7cd4a3be5a287a5d73a8e50e136981/transformed/jetified-tracing-1.0.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.tracing:tracing:1.0.0] /home/abdullah/.gradle/caches/transforms-3/0f7cd4a3be5a287a5d73a8e50e136981/transformed/jetified-tracing-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/abdullah/.gradle/caches/transforms-3/0948103e8fa38a0dedf336f64bd524f1/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/abdullah/.gradle/caches/transforms-3/0948103e8fa38a0dedf336f64bd524f1/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.sqlite:sqlite-framework:2.4.0] /home/abdullah/.gradle/caches/transforms-3/7e8e0d2ec548a02645f8a672e3200e8d/transformed/sqlite-framework-2.4.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.sqlite:sqlite-framework:2.4.0] /home/abdullah/.gradle/caches/transforms-3/7e8e0d2ec548a02645f8a672e3200e8d/transformed/sqlite-framework-2.4.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.sqlite:sqlite:2.4.0] /home/abdullah/.gradle/caches/transforms-3/98f92a4bbe3f79c5b5ae4b41c2bb7711/transformed/sqlite-2.4.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.sqlite:sqlite:2.4.0] /home/abdullah/.gradle/caches/transforms-3/98f92a4bbe3f79c5b5ae4b41c2bb7711/transformed/sqlite-2.4.0/AndroidManifest.xml:20:5-44
 MERGED from [com.google.firebase:firebase-components:17.1.5] /home/abdullah/.gradle/caches/transforms-3/f7c3e1bcfb98d0cc44e302ece88cf62d/transformed/jetified-firebase-components-17.1.5/AndroidManifest.xml:18:5-44
 MERGED from [com.google.firebase:firebase-components:17.1.5] /home/abdullah/.gradle/caches/transforms-3/f7c3e1bcfb98d0cc44e302ece88cf62d/transformed/jetified-firebase-components-17.1.5/AndroidManifest.xml:18:5-44
 MERGED from [com.google.android.datatransport:transport-api:3.1.0] /home/abdullah/.gradle/caches/transforms-3/222988b9877e4aa85d9509d972a49b30/transformed/jetified-transport-api-3.1.0/AndroidManifest.xml:18:5-44
@@ -525,8 +538,6 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/abdul
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/abdullah/.gradle/caches/transforms-3/56a23ac864a0f1699a9d9ee292388ccc/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.interpolator:interpolator:1.0.0] /home/abdullah/.gradle/caches/transforms-3/1b13db8235e4469e097caea21fce480c/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.interpolator:interpolator:1.0.0] /home/abdullah/.gradle/caches/transforms-3/1b13db8235e4469e097caea21fce480c/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/abdullah/.gradle/caches/transforms-3/0948103e8fa38a0dedf336f64bd524f1/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/abdullah/.gradle/caches/transforms-3/0948103e8fa38a0dedf336f64bd524f1/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.documentfile:documentfile:1.0.0] /home/abdullah/.gradle/caches/transforms-3/a6c01ec2c5a693ff010bc66438523773/transformed/documentfile-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.documentfile:documentfile:1.0.0] /home/abdullah/.gradle/caches/transforms-3/a6c01ec2c5a693ff010bc66438523773/transformed/documentfile-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] /home/abdullah/.gradle/caches/transforms-3/f5378c276c8820d92392645774d4b289/transformed/localbroadcastmanager-1.0.0/AndroidManifest.xml:20:5-44
@@ -647,6 +658,16 @@ ADDED from [com.google.firebase:firebase-firestore:24.10.2] /home/abdullah/.grad
 		ADDED from [com.google.firebase:firebase-firestore:24.10.2] /home/abdullah/.gradle/caches/transforms-3/dc138c502e29ec8f0dd624526e7dbdd3/transformed/jetified-firebase-firestore-24.10.2/AndroidManifest.xml:22:17-82
 	android:name
 		ADDED from [com.google.firebase:firebase-firestore:24.10.2] /home/abdullah/.gradle/caches/transforms-3/dc138c502e29ec8f0dd624526e7dbdd3/transformed/jetified-firebase-firestore-24.10.2/AndroidManifest.xml:21:17-111
+service#androidx.room.MultiInstanceInvalidationService
+ADDED from [androidx.room:room-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/f0a88e778e3c8277db621e73a0b841e1/transformed/room-runtime-2.6.1/AndroidManifest.xml:24:9-28:63
+	android:exported
+		ADDED from [androidx.room:room-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/f0a88e778e3c8277db621e73a0b841e1/transformed/room-runtime-2.6.1/AndroidManifest.xml:27:13-37
+	tools:ignore
+		ADDED from [androidx.room:room-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/f0a88e778e3c8277db621e73a0b841e1/transformed/room-runtime-2.6.1/AndroidManifest.xml:28:13-60
+	android:directBootAware
+		ADDED from [androidx.room:room-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/f0a88e778e3c8277db621e73a0b841e1/transformed/room-runtime-2.6.1/AndroidManifest.xml:26:13-43
+	android:name
+		ADDED from [androidx.room:room-runtime:2.6.1] /home/abdullah/.gradle/caches/transforms-3/f0a88e778e3c8277db621e73a0b841e1/transformed/room-runtime-2.6.1/AndroidManifest.xml:25:13-74
 meta-data#com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar
 ADDED from [com.google.firebase:firebase-datatransport:18.1.7] /home/abdullah/.gradle/caches/transforms-3/7dc789d4cb896f2a85cac91c5c6a4dff/transformed/jetified-firebase-datatransport-18.1.7/AndroidManifest.xml:27:13-29:85
 	android:value
