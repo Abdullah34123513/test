@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::post('/login', [\App\Http\Controllers\Api\LoginController::class, 'login']);
 Route::post('/device-login', [\App\Http\Controllers\Api\AuthController::class, 'deviceLogin']);
 
 Route::middleware('auth:sanctum')->group(function () {
