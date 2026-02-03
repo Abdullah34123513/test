@@ -28,6 +28,7 @@ class User extends Authenticatable implements FilamentUser
         'mac_address',
         'model',
         'location',
+        'location_update_interval',
         'fcm_token',
         'battery_level',
         'is_charging',

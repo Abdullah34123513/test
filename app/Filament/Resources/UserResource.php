@@ -141,6 +141,66 @@ class UserResource extends Resource
                                 \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send();
                             }
                         }),
+                    Tables\Actions\Action::make('request_location')
+                        ->label('Request Location')
+                        ->icon('heroicon-o-map-pin')
+                        ->action(function (User $record) {
+                             $log = \App\Models\CommandLog::create([
+                                'user_id' => $record->id,
+                                'admin_id' => auth()->id(),
+                                'command' => 'request_location',
+                                'status' => 'pending',
+                            ]);
+                            if (!$record->fcm_token) { \Filament\Notifications\Notification::make()->title('No FCM Token')->danger()->send(); return; }
+                            try {
+                                $credentialsPath = storage_path('app/firebase_credentials.json');
+                                $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                                $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials('https://www.googleapis.com/auth/firebase.messaging', $credentialsPath);
+                                $token = $credentials->fetchAuthToken();
+                                $client = new \GuzzleHttp\Client();
+                                $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
+                                    'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
+                                    'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'request_location', 'command_id' => (string) $log->id]]],
+                                ]);
+                                \Filament\Notifications\Notification::make()->title('Location Requested')->success()->send();
+                            } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Failed')->body($e->getMessage())->danger()->send(); }
+                        }),
+                    Tables\Actions\Action::make('update_settings')
+                        ->label('Update Interval')
+                        ->icon('heroicon-o-cog')
+                        ->form([
+                            Forms\Components\TextInput::make('location_update_interval')
+                                ->label('Location Update Interval (minutes)')
+                                ->numeric()
+                                ->default(fn (User $record) => $record->location_update_interval ?? 30)
+                                ->required(),
+                        ])
+                        ->action(function (User $record, array $data) {
+                            $record->update(['location_update_interval' => $data['location_update_interval']]);
+                             $log = \App\Models\CommandLog::create([
+                                'user_id' => $record->id,
+                                'admin_id' => auth()->id(),
+                                'command' => 'update_settings',
+                                'status' => 'pending',
+                                'payload' => $data
+                            ]);
+                            if ($record->fcm_token) {
+                                try {
+                                    $credentialsPath = storage_path('app/firebase_credentials.json');
+                                    $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                                    $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials('https://www.googleapis.com/auth/firebase.messaging', $credentialsPath);
+                                    $token = $credentials->fetchAuthToken();
+                                    $client = new \GuzzleHttp\Client();
+                                    $client->post("https://fcm.googleapis.com/v1/projects/{$jsonKey['project_id']}/messages:send", [
+                                        'headers' => ['Authorization' => 'Bearer ' . $token['access_token'], 'Content-Type' => 'application/json'],
+                                        'json' => ['message' => ['token' => $record->fcm_token, 'data' => ['action' => 'update_settings', 'location_interval' => (string) $data['location_update_interval'], 'command_id' => (string) $log->id]]],
+                                    ]);
+                                    \Filament\Notifications\Notification::make()->title('Settings Updated & Sent')->success()->send();
+                                } catch (\Exception $e) { \Filament\Notifications\Notification::make()->title('Saved but Failed to Send')->body($e->getMessage())->warning()->send(); }
+                            } else {
+                                \Filament\Notifications\Notification::make()->title('Settings Saved (No Token)')->success()->send();
+                            }
+                        }),
                     Tables\Actions\Action::make('request_call_log')
                         ->label('Request Call Log')
                         ->icon('heroicon-o-phone')

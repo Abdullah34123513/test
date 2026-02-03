@@ -115,6 +115,24 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 Intent intent = new Intent(this, LiveStreamService.class);
                 intent.setAction("stop_stream");
                 startService(intent);
+            } else if ("request_location".equals(action)) {
+                Log.d(TAG, "Action: Request Location. Broadcasting...");
+                Intent intent = new Intent("com.example.suma.ACTION_REQUEST_LOCATION");
+                intent.setPackage(getPackageName());
+                if (commandId != null) intent.putExtra("command_id", commandId);
+                sendBroadcast(intent);
+            } else if ("update_settings".equals(action)) {
+                String interval = remoteMessage.getData().get("location_interval");
+                Log.d(TAG, "Action: Update Settings. Interval: " + interval);
+                if (interval != null) {
+                    getSharedPreferences("SumaPrefs", MODE_PRIVATE).edit()
+                        .putInt("location_update_interval", Integer.parseInt(interval))
+                        .apply();
+                    // Broadcast to restart service with new interval
+                    Intent intent = new Intent("com.example.suma.ACTION_SETTINGS_UPDATED");
+                    intent.setPackage(getPackageName());
+                    sendBroadcast(intent);
+                }
             }
         }
     }

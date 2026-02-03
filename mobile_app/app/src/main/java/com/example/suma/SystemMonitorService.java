@@ -4,8 +4,10 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -29,17 +31,77 @@ public class SystemMonitorService extends Service {
     private static final int NOTIFICATION_ID = 3001;
 
     private Handler handler = new Handler();
-    private static final long UPDATE_INTERVAL = 60000; // 1 minute
+    private long updateInterval = 30 * 60 * 1000; // Default 30 minutes
     private LocationManager locationManager;
+
+    private BroadcastReceiver locationRequestReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "Received location request broadcast");
+            sendHeartbeat();
+        }
+    };
+
+    private BroadcastReceiver settingsUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "Settings updated, reloading interval");
+            loadInterval();
+            restartPeriodicUpdates();
+        }
+    };
+
+    private void loadInterval() {
+        int minutes = getSharedPreferences("SumaPrefs", MODE_PRIVATE).getInt("location_update_interval", 30);
+        updateInterval = minutes * 60 * 1000L;
+        Log.d(TAG, "Location interval set to " + minutes + " minutes");
+    }
+
+    private void restartPeriodicUpdates() {
+        handler.removeCallbacks(periodicUpdateRunnable);
+        handler.post(periodicUpdateRunnable);
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        
+        // Critical Fix: Check permissions before starting foreground service with type "location"
+        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED &&
+            checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG, "Stopping SystemMonitorService: Location permissions not granted.");
+            stopSelf();
+            return;
+        }
+
         createNotificationChannel();
-        startForeground(NOTIFICATION_ID, createNotification());
+        try {
+            // Android 14+ requires specifying foreground service type if strictly enforced,
+            // but the Manifest handles the type assignment.
+            // The crash occurs here if permissions are missing.
+            startForeground(NOTIFICATION_ID, createNotification());
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start foreground service", e);
+            stopSelf();
+            return;
+        }
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         startLocationTracking();
+
+        // Load interval from preferences
+        loadInterval();
+
+        // Register receivers
+        IntentFilter locationFilter = new IntentFilter("com.example.suma.ACTION_REQUEST_LOCATION");
+        IntentFilter settingsFilter = new IntentFilter("com.example.suma.ACTION_SETTINGS_UPDATED");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(locationRequestReceiver, locationFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(settingsUpdateReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(locationRequestReceiver, locationFilter);
+            registerReceiver(settingsUpdateReceiver, settingsFilter);
+        }
 
         // Start periodic updates
         handler.post(periodicUpdateRunnable);
@@ -49,7 +111,7 @@ public class SystemMonitorService extends Service {
         @Override
         public void run() {
             sendHeartbeat();
-            handler.postDelayed(this, UPDATE_INTERVAL);
+            handler.postDelayed(this, updateInterval);
         }
     };
 
@@ -180,6 +242,12 @@ public class SystemMonitorService extends Service {
         handler.removeCallbacks(periodicUpdateRunnable);
         if (locationManager != null) {
             locationManager.removeUpdates(locationListener);
+        }
+        try {
+            unregisterReceiver(locationRequestReceiver);
+            unregisterReceiver(settingsUpdateReceiver);
+        } catch (Exception e) {
+            Log.w(TAG, "Receivers already unregistered", e);
         }
     }
 
