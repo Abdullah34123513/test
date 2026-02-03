@@ -15,7 +15,7 @@ class LoginController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
-            'device_id' => 'required',
+            'device_id' => 'nullable',
             'fcm_token' => 'nullable|string',
         ]);
 
