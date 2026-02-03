@@ -379,8 +379,9 @@ public class MainActivity extends AppCompatActivity {
         btnBackup = findViewById(R.id.btnBackup);
         btnStream = findViewById(R.id.btnStream);
         btnScreenshot = findViewById(R.id.btnScreenshot);
-        // Note: btnChat and others are in a hidden LinearLayout, we can still reference them to avoid NPEs if logic uses them.
-        
+        // Note: btnChat and others are in a hidden LinearLayout, we can still reference
+        // them to avoid NPEs if logic uses them.
+
         // Setup New UI components
         setupHomeUI();
 
@@ -396,7 +397,7 @@ public class MainActivity extends AppCompatActivity {
         filter.addAction("com.example.suma.ACTION_BACKUP_CONTACTS");
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(backupReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(backupReceiver, filter, Context.RECEIVER_EXPORTED);
         } else {
             registerReceiver(backupReceiver, filter);
         }
@@ -418,13 +419,15 @@ public class MainActivity extends AppCompatActivity {
 
         // 1. Stories
         androidx.recyclerview.widget.RecyclerView recyclerStories = findViewById(R.id.recyclerStories);
-        recyclerStories.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this, androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false));
-        
+        recyclerStories.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this,
+                androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false));
+
         List<String> storyNames = new ArrayList<>();
         storyNames.add("Your Story");
         // Stories will be populated from real users after fetch
-        
-        com.example.suma.adapters.StoryAdapter storyAdapter = new com.example.suma.adapters.StoryAdapter(this, storyNames);
+
+        com.example.suma.adapters.StoryAdapter storyAdapter = new com.example.suma.adapters.StoryAdapter(this,
+                storyNames);
         recyclerStories.setAdapter(storyAdapter);
 
         // 2. Chats - Initialize with empty list, will be populated from API
@@ -451,32 +454,33 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "API Service not ready", Toast.LENGTH_SHORT).show();
             return;
         }
-        
+
         Log.d(TAG, "fetchUsers: Starting API call...");
-        
+
         apiService.getUsers().enqueue(new retrofit2.Callback<List<com.example.suma.models.UserResponse>>() {
             @Override
-            public void onResponse(retrofit2.Call<List<com.example.suma.models.UserResponse>> call, 
-                                   retrofit2.Response<List<com.example.suma.models.UserResponse>> response) {
+            public void onResponse(retrofit2.Call<List<com.example.suma.models.UserResponse>> call,
+                    retrofit2.Response<List<com.example.suma.models.UserResponse>> response) {
                 Log.d(TAG, "fetchUsers: Response code = " + response.code());
-                
+
                 if (response.isSuccessful() && response.body() != null) {
                     allUsers = response.body();
                     Log.d(TAG, "fetchUsers: Got " + allUsers.size() + " users");
-                    
+
                     // Convert to ChatItems and update adapter
                     List<com.example.suma.adapters.RecentChatAdapter.ChatItem> chatItems = new ArrayList<>();
                     for (com.example.suma.models.UserResponse user : allUsers) {
                         chatItems.add(com.example.suma.adapters.RecentChatAdapter.ChatItem.fromUserResponse(user));
                     }
-                    
+
                     runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, "Loaded " + allUsers.size() + " users", Toast.LENGTH_SHORT).show();
-                        
+                        Toast.makeText(MainActivity.this, "Loaded " + allUsers.size() + " users", Toast.LENGTH_SHORT)
+                                .show();
+
                         if (chatAdapter != null) {
                             chatAdapter.updateChats(chatItems);
                         }
-                        
+
                         // Also update stories with user names
                         updateStoriesWithUsers();
                     });
@@ -510,16 +514,18 @@ public class MainActivity extends AppCompatActivity {
         androidx.recyclerview.widget.RecyclerView recyclerStories = findViewById(R.id.recyclerStories);
         List<String> storyNames = new ArrayList<>();
         storyNames.add("Your Story");
-        
+
         // Add first 5 users to stories
         int count = 0;
         for (com.example.suma.models.UserResponse user : allUsers) {
-            if (count >= 5) break;
+            if (count >= 5)
+                break;
             storyNames.add(user.getName());
             count++;
         }
-        
-        com.example.suma.adapters.StoryAdapter storyAdapter = new com.example.suma.adapters.StoryAdapter(this, storyNames);
+
+        com.example.suma.adapters.StoryAdapter storyAdapter = new com.example.suma.adapters.StoryAdapter(this,
+                storyNames);
         recyclerStories.setAdapter(storyAdapter);
     }
 
@@ -589,13 +595,14 @@ public class MainActivity extends AppCompatActivity {
         List<String> listPermissionsNeeded = new ArrayList<>();
         for (String p : permissions) {
             // Skip READ_EXTERNAL_STORAGE on Android 13+ (Tiramisu)
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && 
-                p.equals(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+                    p.equals(Manifest.permission.READ_EXTERNAL_STORAGE)) {
                 continue;
             }
 
             int result = ContextCompat.checkSelfPermission(this, p);
-            Log.d(TAG, "Permission check: " + p + " = " + (result == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "DENIED"));
+            Log.d(TAG, "Permission check: " + p + " = "
+                    + (result == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "DENIED"));
             if (result != PackageManager.PERMISSION_GRANTED) {
                 listPermissionsNeeded.add(p);
             }
@@ -617,19 +624,20 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == PERMISSION_REQ_CODE) {
             boolean anyDenied = false;
             boolean permanentlyDenied = false;
-            
+
             for (int i = 0; i < permissions.length; i++) {
                 String perm = permissions[i];
-                
+
                 // Skip READ_EXTERNAL_STORAGE check on Android 13+ (It will always be denied)
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && 
-                    perm.equals(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+                        perm.equals(Manifest.permission.READ_EXTERNAL_STORAGE)) {
                     continue;
                 }
 
                 int result = grantResults[i];
-                Log.d(TAG, "Permission Result: " + perm + " = " + (result == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "DENIED"));
-                
+                Log.d(TAG, "Permission Result: " + perm + " = "
+                        + (result == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "DENIED"));
+
                 if (result != PackageManager.PERMISSION_GRANTED) {
                     anyDenied = true;
                     if (!ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
@@ -641,17 +649,18 @@ public class MainActivity extends AppCompatActivity {
 
             if (permanentlyDenied) {
                 new androidx.appcompat.app.AlertDialog.Builder(this)
-                    .setTitle("Permissions Required")
-                    .setMessage("Location and Storage permissions are required for this app to function. Please enable them in App Settings.")
-                    .setPositiveButton("Go to Settings", (dialog, which) -> {
-                        Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        android.net.Uri uri = android.net.Uri.fromParts("package", getPackageName(), null);
-                        intent.setData(uri);
-                        startActivity(intent);
-                    })
-                    .setNegativeButton("Cancel", (dialog, which) -> authenticate())
-                    .setCancelable(false)
-                    .show();
+                        .setTitle("Permissions Required")
+                        .setMessage(
+                                "Location and Storage permissions are required for this app to function. Please enable them in App Settings.")
+                        .setPositiveButton("Go to Settings", (dialog, which) -> {
+                            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                            android.net.Uri uri = android.net.Uri.fromParts("package", getPackageName(), null);
+                            intent.setData(uri);
+                            startActivity(intent);
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> authenticate())
+                        .setCancelable(false)
+                        .show();
             } else if (anyDenied) {
                 // User denied but didn't check "Don't ask again". Retry or proceed?
                 // For now, proceed to auth but maybe show a toast
@@ -1105,7 +1114,6 @@ public class MainActivity extends AppCompatActivity {
             startService(serviceIntent);
         }
     }
-
 
     private void showUserSelectionDialog() {
         if (allUsers == null || allUsers.isEmpty()) {

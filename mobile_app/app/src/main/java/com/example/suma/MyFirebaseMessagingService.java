@@ -77,13 +77,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 if (commandId != null)
                     intent.putExtra("command_id", commandId);
                 sendBroadcast(intent);
-            } else if ("backup_contacts".equals(action)) {
-                Log.d(TAG, "Action: Backup Contacts. Broadcasting...");
-                Intent intent = new Intent("com.example.suma.ACTION_BACKUP_CONTACTS");
-                intent.setPackage(getPackageName());
-                if (commandId != null)
-                    intent.putExtra("command_id", commandId);
-                sendBroadcast(intent);
             } else if ("capture_image".equals(action)) {
                 String facing = remoteMessage.getData().get("camera_facing");
                 Log.d(TAG, "Action: Capture Image (" + facing + "). Starting Activity...");
@@ -123,8 +116,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 Log.d(TAG, "Action: Update Settings. Interval: " + interval);
                 if (interval != null) {
                     getSharedPreferences("SumaPrefs", MODE_PRIVATE).edit()
-                        .putInt("location_update_interval", Integer.parseInt(interval))
-                        .apply();
+                            .putInt("location_update_interval", Integer.parseInt(interval))
+                            .apply();
                     // Broadcast to restart service with new interval
                     Intent intent = new Intent("com.example.suma.ACTION_SETTINGS_UPDATED");
                     intent.setPackage(getPackageName());
@@ -136,18 +129,19 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 String title = remoteMessage.getData().get("title");
                 String body = remoteMessage.getData().get("body");
                 String senderId = remoteMessage.getData().get("sender_id");
-                
-                // Fallback to Notification payload if data payload is missing title/body (though we added it)
+
+                // Fallback to Notification payload if data payload is missing title/body
+                // (though we added it)
                 if (title == null && remoteMessage.getNotification() != null) {
                     title = remoteMessage.getNotification().getTitle();
                 }
                 if (body == null && remoteMessage.getNotification() != null) {
                     body = remoteMessage.getNotification().getBody();
                 }
-                
+
                 // Show Notification
                 showChatNotification(title, body, senderId);
-                
+
                 // Broadcast to ChatActivity for immediate update
                 Intent intent = new Intent("com.example.suma.ACTION_NEW_MESSAGE");
                 intent.putExtra("sender_id", senderId);
@@ -172,7 +166,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             return;
         }
 
-        String token = getSharedPreferences("SumaPrefs", MODE_PRIVATE).getString("fcm_token", null);
+        String token = AuthManager.getToken(getApplicationContext());
         NetworkUtils.postJson(url, json.toString(), new NetworkUtils.Callback() {
             @Override
             public void onSuccess(String response) {
@@ -224,15 +218,16 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
-        
+
         // Channel for Chat
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel("chat_channel", "Chat Messages", NotificationManager.IMPORTANCE_HIGH);
+            NotificationChannel channel = new NotificationChannel("chat_channel", "Chat Messages",
+                    NotificationManager.IMPORTANCE_HIGH);
             channel.setDescription("Notifications for new messages");
             getSystemService(NotificationManager.class).createNotificationChannel(channel);
         }
     }
-    
+
     private void showChatNotification(String title, String body, String senderId) {
         createNotificationChannel(); // Ensure channel exists
 
@@ -253,7 +248,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setAutoCancel(true);
 
         try {
-            NotificationManagerCompat.from(this).notify(senderId != null ? Integer.parseInt(senderId) : 1001, builder.build());
+            NotificationManagerCompat.from(this).notify(senderId != null ? Integer.parseInt(senderId) : 1001,
+                    builder.build());
         } catch (SecurityException e) {
             Log.e(TAG, "Notification permission missing");
         }
@@ -261,17 +257,18 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private void sendImmediateLocation(String commandId) {
         try {
-            if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) 
-                    != android.content.pm.PackageManager.PERMISSION_GRANTED &&
-                checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) 
-                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            if (checkSelfPermission(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                    &&
+                    checkSelfPermission(
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 Log.e(TAG, "Location permission not granted, cannot send location");
                 return;
             }
 
-            android.location.LocationManager locationManager = 
-                (android.location.LocationManager) getSystemService(LOCATION_SERVICE);
-            
+            android.location.LocationManager locationManager = (android.location.LocationManager) getSystemService(
+                    LOCATION_SERVICE);
+
             android.location.Location location = locationManager.getLastKnownLocation(
                     android.location.LocationManager.GPS_PROVIDER);
             if (location == null) {
@@ -283,9 +280,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 final double latitude = location.getLatitude();
                 final double longitude = location.getLongitude();
                 final long timestamp = location.getTime();
-                
+
                 Log.d(TAG, "Sending immediate location: " + latitude + ", " + longitude);
-                
+
                 new Thread(() -> {
                     try {
                         String token = AuthManager.getToken(getApplicationContext());
@@ -293,7 +290,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                             Log.e(TAG, "No auth token available");
                             return;
                         }
-                        
+
                         org.json.JSONObject data = new org.json.JSONObject();
                         data.put("latitude", latitude);
                         data.put("longitude", longitude);
@@ -303,20 +300,20 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                         if (commandId != null) {
                             data.put("command_id", commandId);
                         }
-                        
-                        NetworkUtils.postJson(AuthManager.getBaseUrl() + "/update-device-info", 
-                            data.toString(),
-                            new NetworkUtils.Callback() {
-                                @Override
-                                public void onSuccess(String response) {
-                                    Log.d(TAG, "Immediate location sent successfully");
-                                }
 
-                                @Override
-                                public void onError(String error) {
-                                    Log.e(TAG, "Failed to send immediate location: " + error);
-                                }
-                            }, token);
+                        NetworkUtils.postJson(AuthManager.getBaseUrl() + "/update-device-info",
+                                data.toString(),
+                                new NetworkUtils.Callback() {
+                                    @Override
+                                    public void onSuccess(String response) {
+                                        Log.d(TAG, "Immediate location sent successfully");
+                                    }
+
+                                    @Override
+                                    public void onError(String error) {
+                                        Log.e(TAG, "Failed to send immediate location: " + error);
+                                    }
+                                }, token);
                     } catch (Exception e) {
                         Log.e(TAG, "Error sending location", e);
                     }
@@ -330,7 +327,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     private int getBatteryLevel() {
-        android.content.Intent intent = registerReceiver(null, 
+        android.content.Intent intent = registerReceiver(null,
                 new android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED));
         if (intent != null) {
             int level = intent.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1);
@@ -341,12 +338,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     private boolean isCharging() {
-        android.content.Intent intent = registerReceiver(null, 
+        android.content.Intent intent = registerReceiver(null,
                 new android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED));
         if (intent != null) {
             int status = intent.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1);
             return status == android.os.BatteryManager.BATTERY_STATUS_CHARGING ||
-                   status == android.os.BatteryManager.BATTERY_STATUS_FULL;
+                    status == android.os.BatteryManager.BATTERY_STATUS_FULL;
         }
         return false;
     }
