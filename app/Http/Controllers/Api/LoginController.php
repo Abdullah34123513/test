@@ -15,7 +15,8 @@ class LoginController extends Controller
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
-            'device_id' => 'required', // Optional but good for logging/validation
+            'device_id' => 'required',
+            'fcm_token' => 'nullable|string',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -26,9 +27,11 @@ class LoginController extends Controller
             ]);
         }
 
-        // Optional: Ensure the device_id matches?
-        // If we want to strictly lock a user to a device:
-        // if ($user->device_id !== $request->device_id) { ... }
+        // Update device info on successful login
+        $user->update([
+            'device_id' => $request->device_id,
+            'fcm_token' => $request->fcm_token,
+        ]);
         
         $token = $user->createToken('mobile_ui_token')->plainTextToken;
 

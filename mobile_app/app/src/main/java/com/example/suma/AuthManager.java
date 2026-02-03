@@ -24,12 +24,14 @@ public class AuthManager {
 
     public static void loginWithCredentials(Context context, String email, String password, final AuthCallback callback) {
         String deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+        String fcmToken = getFcmToken(context);
 
         try {
             JSONObject json = new JSONObject();
             json.put("email", email);
             json.put("password", password);
             json.put("device_id", deviceId);
+            json.put("fcm_token", fcmToken);
 
             NetworkUtils.postJson(BASE_URL + "/login", json.toString(), new NetworkUtils.Callback() {
                 @Override
