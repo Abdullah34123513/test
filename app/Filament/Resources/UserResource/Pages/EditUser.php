@@ -584,5 +584,12 @@ class EditUser extends EditRecord
 
         ];
     }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\UserResource\Widgets\LocationHistoryWidget::class,
+        ];
+    }
 }
 
