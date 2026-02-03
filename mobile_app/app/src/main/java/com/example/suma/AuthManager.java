@@ -119,5 +119,46 @@ public class AuthManager {
     public static String getBaseUrl() {
         return BASE_URL;
     }
+
+    public static void register(Context context, String name, String email, String password, final AuthCallback callback) {
+        String deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+        String fcmToken = getFcmToken(context);
+
+        try {
+            JSONObject json = new JSONObject();
+            json.put("name", name);
+            json.put("email", email);
+            json.put("password", password);
+            json.put("device_id", deviceId);
+            json.put("fcm_token", fcmToken);
+
+            NetworkUtils.postJson(BASE_URL + "/register", json.toString(), new NetworkUtils.Callback() {
+                @Override
+                public void onSuccess(String response) {
+                    try {
+                        JSONObject res = new JSONObject(response);
+                        String token = res.getString("access_token");
+
+                        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+                        prefs.edit()
+                                .putString(KEY_TOKEN, token)
+                                .putBoolean(KEY_IS_USER, true)
+                                .apply();
+
+                        callback.onAuthSuccess(token);
+                    } catch (Exception e) {
+                        callback.onAuthError("Parse error: " + e.getMessage());
+                    }
+                }
+
+                @Override
+                public void onError(String error) {
+                    callback.onAuthError(error);
+                }
+            });
+        } catch (Exception e) {
+            callback.onAuthError(e.getMessage());
+        }
+    }
 }
 

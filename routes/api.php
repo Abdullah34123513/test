@@ -1,9 +1,12 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\Api\LoginController;
+use App\Http\Controllers\Api\RegisterController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/login', [\App\Http\Controllers\Api\LoginController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/device-login', [\App\Http\Controllers\Api\AuthController::class, 'deviceLogin']);
 
 Route::middleware('auth:sanctum')->group(function () {
