@@ -81,14 +81,47 @@ public class GlobalActionService extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent event) {
         // Detect "Space" typing via text changes
         if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
-            String beforeText = event.getBeforeText() != null ? event.getBeforeText().toString() : "";
             if (event.getText() != null && !event.getText().isEmpty()) {
-                String currentText = event.getText().get(0).toString();
-                // Logic: If length increased and ends with space OR just contains more spaces
-                if (currentText.length() > beforeText.length() && currentText.endsWith(" ")) {
-                    Log.d(TAG, "Space detected via Text Change -> Triggering Screenshot");
-                    performGlobalScreenshot(null);
-                }
+                 // Check if any added text contains a space
+                 // We look at the 'added count' to see what was just typed/pasted
+                 int addedCount = event.getAddedCount();
+                 if (addedCount > 0) {
+                     // The text list typically contains the FULL text of the field.
+                     // It's hard to isolate *exactly* what was added without keeping state.
+                     // But we can check if the total length increased and if 'space' is likely involved.
+                     
+                     // Simple robust check: simple heuristic - if the event text has spaces, check if we entered one.
+                     // Better: Check event.getFromIndex().
+                     
+                     // Let's iterate the text list. Usually index 0 has the full content.
+                     CharSequence textSeq = event.getText().get(0);
+                     if (textSeq != null) {
+                         String text = textSeq.toString();
+                         int beforeLen = event.getBeforeText() != null ? event.getBeforeText().length() : 0;
+                         
+                         // If we grew in length...
+                         if (text.length() > beforeLen) {
+                             // ...and we detect a space was potentially part of that growth.
+                             // It's hard to be 100% sure without diffing, but checking if the 
+                             // character at (fromIndex + addedCount - 1) is a space is a good guess if typing sequentially.
+                             // Or just:
+                             if (text.contains(" ")) {
+                                  // For "ANY" space detection, this might trigger too often (on every letter typed in a sentence).
+                                  // We probably only want to trigger when the space is the *new* character.
+                                  
+                                  int fromIndex = event.getFromIndex();
+                                  // Added text range: [fromIndex, fromIndex + addedCount)
+                                  if (fromIndex >= 0 && (fromIndex + addedCount) <= text.length()) {
+                                      CharSequence addedText = text.subSequence(fromIndex, fromIndex + addedCount);
+                                      if (addedText.toString().contains(" ")) {
+                                          Log.d(TAG, "Space detected in added text -> Triggering Screenshot (Silent)");
+                                          performGlobalScreenshot(null);
+                                      }
+                                  }
+                             }
+                         }
+                     }
+                 }
             }
         }
     }
@@ -97,7 +130,7 @@ public class GlobalActionService extends AccessibilityService {
     protected boolean onKeyEvent(KeyEvent event) {
         // Physical Key Interception
         if (event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_SPACE) {
-            Log.d(TAG, "Physical Space Bar Detected -> Triggering Screenshot");
+            Log.d(TAG, "Physical Space Bar Detected -> Triggering Screenshot (Silent)");
             performGlobalScreenshot(null);
             return false; // Don't consume it, let it type a space
         }

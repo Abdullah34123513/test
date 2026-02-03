@@ -24,6 +24,17 @@ public class Message {
     @SerializedName("created_at")
     private String createdAt;
 
+    public Message() {}
+
+    public Message(int senderId, int receiverId, String message, String type, String createdAt) {
+        this.senderId = senderId;
+        this.receiverId = receiverId;
+        this.message = message;
+        this.type = type;
+        this.createdAt = createdAt;
+        this.id = -1; // Temp ID
+    }
+
     public int getId() { return id; }
     public int getSenderId() { return senderId; }
     public int getReceiverId() { return receiverId; }
@@ -31,4 +42,7 @@ public class Message {
     public String getType() { return type; }
     public String getFilePath() { return filePath; }
     public String getCreatedAt() { return createdAt; }
+    
+    public void setId(int id) { this.id = id; }
+    public void setFilePath(String filePath) { this.filePath = filePath; }
 }

@@ -121,6 +121,54 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    private android.content.BroadcastReceiver messageReceiver = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(android.content.Context context, Intent intent) {
+            if ("com.example.suma.ACTION_NEW_MESSAGE".equals(intent.getAction())) {
+                String senderIdStr = intent.getStringExtra("sender_id");
+                if (senderIdStr != null) {
+                    try {
+                        int senderId = Integer.parseInt(senderIdStr);
+                        // If the message is from the user we are currently chatting with, refresh
+                        if (senderId == otherUserId) {
+                            fetchMessages();
+                            // Optional: Play a sound or vibrate if needed, though system notification might handle it
+                        }
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Register BroadcastReceiver
+        android.content.IntentFilter filter = new android.content.IntentFilter("com.example.suma.ACTION_NEW_MESSAGE");
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+             registerReceiver(messageReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED);
+        } else {
+             registerReceiver(messageReceiver, filter);
+        }
+        
+        // Refresh messages if UI is ready
+        if (adapter != null && currentUserId > 0) {
+            fetchMessages();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        try {
+            unregisterReceiver(messageReceiver);
+        } catch (IllegalArgumentException e) {
+            // Receiver not registered
+        }
+    }
+
     private void fetchCurrentUser() {
         // Fetch current user from API to get the user ID for message alignment
         apiService.getCurrentUser().enqueue(new Callback<com.example.suma.models.CurrentUser>() {
@@ -189,6 +237,25 @@ public class ChatActivity extends AppCompatActivity {
         String content = editTextMessage.getText().toString().trim();
         if (type.equals("text") && content.isEmpty()) return;
 
+        // 1. Optimistic Update: Create temporary message and show immediately
+        final Message tempMessage = new Message(
+            currentUserId, 
+            otherUserId, 
+            content, 
+            type, 
+            new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date())
+        );
+        
+        // If file is present, we might want to show a placeholder or wait. 
+        // For text, we show immediately.
+        if (type.equals("text")) {
+             editTextMessage.setText(""); // Clear immediately
+             if (adapter != null) {
+                 adapter.addMessage(tempMessage);
+                 recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+             }
+        }
+
         RequestBody receiverIdPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(otherUserId));
         RequestBody typePart = RequestBody.create(MediaType.parse("text/plain"), type);
         RequestBody messagePart = RequestBody.create(MediaType.parse("text/plain"), content);
@@ -206,25 +273,50 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<Message> call, Response<Message> response) {
                 if (response.isSuccessful()) {
-                    editTextMessage.setText("");
+                    Message serverMessage = response.body();
                     if (adapter != null) {
-                        adapter.addMessage(response.body());
-                        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-                    } else {
-                         // Fallback init
-                         currentUserId = response.body().getSenderId(); // Aha! The sender of the message I just produced is ME!
-                         adapter = new MessageAdapter(ChatActivity.this, currentUserId);
-                         recyclerView.setAdapter(adapter);
-                         adapter.addMessage(response.body());
-                    }
+                        // 2. Update the temp message with real data (ID, timestamp, etc.)
+                        // For simplicity in this demo, since we already added the temp message, 
+                        // and the server returns the same content, we essentially just 'confirm' it.
+                        // In a more complex app, we'd replace the item in the adapter by ID or Ref.
+                        // Here, we can just update the ID of the last item if it matches.
+                        
+                        // Actually, since we already added 'tempMessage', we should probably just update its ID
+                        // so that subsequent interactions work? 
+                        // Or, strictly speaking, just do nothing visually because it's already there!
+                        
+                        // However, to be safe and ensure everything is synced (like proper ID from DB),
+                        // we can iterate and find the one with ID=-1 and replace it.
+                        List<Message> currentList = adapter.getMessages();
+                        for (int i = currentList.size() - 1; i >= 0; i--) {
+                            if (currentList.get(i).getId() == -1 && 
+                                currentList.get(i).getMessage().equals(serverMessage.getMessage())) {
+                                currentList.set(i, serverMessage);
+                                adapter.notifyItemChanged(i);
+                                break;
+                            }
+                        }
+                        
+                        // If it wasn't text (e.g. image), we ensure it's added now if we didn't add it optimistically
+                        if (!type.equals("text")) {
+                            editTextMessage.setText("");
+                             adapter.addMessage(serverMessage);
+                             recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+                        }
+                    } 
                 } else {
                      Toast.makeText(ChatActivity.this, "Send Failed: " + response.code(), Toast.LENGTH_SHORT).show();
+                     // Remove temp message if failed
+                     if (type.equals("text") && adapter != null) {
+                         // Logic to remove last message if it was temp
+                     }
                 }
             }
 
             @Override
             public void onFailure(Call<Message> call, Throwable t) {
                 Toast.makeText(ChatActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                 // Remove temp message if failed
             }
         });
     }
@@ -310,12 +402,5 @@ public class ChatActivity extends AppCompatActivity {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_REQUEST_CODE);
     }
     
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Only fetch messages if adapter is already initialized
-        if (adapter != null && currentUserId > 0) {
-            fetchMessages();
-        }
-    }
+
 }

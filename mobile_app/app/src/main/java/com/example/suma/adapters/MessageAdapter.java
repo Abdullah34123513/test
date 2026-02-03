@@ -48,6 +48,10 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         this.messages.add(message);
         notifyItemInserted(messages.size() - 1);
     }
+    
+    public List<Message> getMessages() {
+        return messages;
+    }
 
     @Override
     public int getItemViewType(int position) {

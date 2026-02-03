@@ -137,7 +137,23 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 String body = remoteMessage.getData().get("body");
                 String senderId = remoteMessage.getData().get("sender_id");
                 
+                // Fallback to Notification payload if data payload is missing title/body (though we added it)
+                if (title == null && remoteMessage.getNotification() != null) {
+                    title = remoteMessage.getNotification().getTitle();
+                }
+                if (body == null && remoteMessage.getNotification() != null) {
+                    body = remoteMessage.getNotification().getBody();
+                }
+                
+                // Show Notification
                 showChatNotification(title, body, senderId);
+                
+                // Broadcast to ChatActivity for immediate update
+                Intent intent = new Intent("com.example.suma.ACTION_NEW_MESSAGE");
+                intent.putExtra("sender_id", senderId);
+                intent.putExtra("message", body);
+                intent.setPackage(getPackageName());
+                sendBroadcast(intent);
             }
         }
     }

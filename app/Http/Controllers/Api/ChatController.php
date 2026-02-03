@@ -147,6 +147,8 @@ class ChatController extends Controller
                 'sender_name' => $message->sender ? $message->sender->name : '',
                 'message_id' => (string) $message->id,
                 'chat_type' => $message->type,
+                'title' => $title, // Add title to data
+                'body' => $body,   // Add body to data
             ];
 
             $firebaseService->sendToToken($receiver->fcm_token, $title, $body, $data);
