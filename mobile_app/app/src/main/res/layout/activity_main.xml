@@ -1,50 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="24dp"
+    android:background="#f6f7f8"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/statusText"
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#f6f7f8"
+        app:elevation="0dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/btnEdit"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_menu_edit"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentStart="true"
+                    app:tint="#2b8cee"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Chats"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#111418"
+                    android:layout_centerInParent="true"/>
+
+                <ImageView
+                    android:id="@+id/btnReview"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_menu_edit"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginEnd="16dp"
+                    app:tint="#2b8cee"/>
+            </RelativeLayout>
+        </androidx.appcompat.widget.Toolbar>
+
+        <!-- Search Bar -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_search_bar"
+                android:hint="Search"
+                android:paddingStart="48dp"
+                android:paddingEnd="16dp"
+                android:drawableStart="@android:drawable/ic_menu_search"
+                android:drawablePadding="8dp"
+                android:textColor="#111418"
+                android:textColorHint="#637588"
+                android:textSize="16sp"/>
+        </FrameLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!-- Story Carousel -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerStories"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:clipToPadding="false"
+            tools:listitem="@layout/item_story"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Chat List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerChats"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:listitem="@layout/item_chat_recent"/>
+
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabNewChat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/status_authenticating"
-        android:textSize="18sp"
-        android:layout_marginBottom="32dp"/>
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/ic_input_add"
+        app:backgroundTint="#2b8cee"
+        app:tint="@android:color/white"/>
 
-    <Button
-        android:id="@+id/btnUpload"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="@string/action_upload_media"
-        android:enabled="false"
-        android:layout_marginBottom="16dp"/>
+    <!-- Hidden Utility Buttons (Accessible via menu later if needed) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone">
+        <Button android:id="@+id/btnUpload" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/btnBackup" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/btnStream" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/btnScreenshot" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <TextView android:id="@+id/statusText" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/btnChat" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+    </LinearLayout>
 
-    <Button
-        android:id="@+id/btnBackup"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="@string/action_backup_data"
-        android:enabled="false"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/btnStream"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="@string/action_start_live"
-        android:enabled="false"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/btnScreenshot"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="Take Screenshot &amp; Upload"
-        android:enabled="false"/>
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

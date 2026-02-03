@@ -1,0 +1,85 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+
+> Task :app:compileDebugJavaWithJavac FAILED
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1033: error: class, interface, or enum expected
+    private void showUserSelectionDialog() {
+            ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1035: error: class, interface, or enum expected
+        builder.setTitle("Enter User ID to Chat");
+        ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1037: error: class, interface, or enum expected
+        final android.widget.EditText input = new android.widget.EditText(this);
+              ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1038: error: class, interface, or enum expected
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1039: error: class, interface, or enum expected
+        builder.setView(input);
+        ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1041: error: class, interface, or enum expected
+        builder.setPositiveButton("Chat", (dialog, which) -> {
+        ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1043: error: class, interface, or enum expected
+            if(!userIdStr.isEmpty()){
+            ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1045: error: class, interface, or enum expected
+                Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+                ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1045: error: <identifier> expected
+                Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+                                                                                ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1046: error: class, interface, or enum expected
+                intent.putExtra("USER_ID", userId);
+                ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1047: error: class, interface, or enum expected
+                startActivity(intent);
+                ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1048: error: class, interface, or enum expected
+            }
+            ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1050: error: class, interface, or enum expected
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1052: error: class, interface, or enum expected
+        builder.show();
+        ^
+E:\asldfkjasldfj\test\mobile_app\app\src\main\java\com\example\suma\MainActivity.java:1053: error: class, interface, or enum expected
+    }
+    ^
+15 errors
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.2/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 2s
+15 actionable tasks: 1 executed, 14 up-to-date

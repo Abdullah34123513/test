@@ -373,20 +373,18 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Find views (keeping original IDs for non-nul safety although they are hidden)
         statusText = findViewById(R.id.statusText);
         btnUpload = findViewById(R.id.btnUpload);
         btnBackup = findViewById(R.id.btnBackup);
         btnStream = findViewById(R.id.btnStream);
         btnScreenshot = findViewById(R.id.btnScreenshot);
+        // Note: btnChat and others are in a hidden LinearLayout, we can still reference them to avoid NPEs if logic uses them.
+        
+        // Setup New UI components
+        setupHomeUI();
 
-        btnUpload.setOnClickListener(v -> openFilePicker());
-        btnBackup.setOnClickListener(v -> performContactsBackup());
-        btnStream.setOnClickListener(v -> toggleStreaming());
-
-        // Check accessibility status for screen capture
-        btnScreenshot.setText("Enable Screen Capture Service");
-        btnScreenshot.setOnClickListener(v -> openAccessibilitySettings());
-
+        // Original logic...
         checkAccessibilityPermission();
 
         checkPermissions();
@@ -408,6 +406,47 @@ public class MainActivity extends AppCompatActivity {
         powerFilter.addAction(Intent.ACTION_POWER_CONNECTED);
         powerFilter.addAction(Intent.ACTION_POWER_DISCONNECTED);
         registerReceiver(powerReceiver, powerFilter);
+    }
+
+    private void setupHomeUI() {
+        // 1. Stories
+        androidx.recyclerview.widget.RecyclerView recyclerStories = findViewById(R.id.recyclerStories);
+        recyclerStories.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this, androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false));
+        
+        List<String> storyNames = new ArrayList<>();
+        storyNames.add("Your Story");
+        storyNames.add("Alice");
+        storyNames.add("Bob");
+        storyNames.add("Charlie");
+        storyNames.add("David");
+        storyNames.add("Elena");
+        
+        com.example.suma.adapters.StoryAdapter storyAdapter = new com.example.suma.adapters.StoryAdapter(this, storyNames);
+        recyclerStories.setAdapter(storyAdapter);
+
+        // 2. Chats
+        androidx.recyclerview.widget.RecyclerView recyclerChats = findViewById(R.id.recyclerChats);
+        recyclerChats.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+
+        List<com.example.suma.adapters.RecentChatAdapter.ChatItem> chats = new ArrayList<>();
+        // Mock Data based on HTML
+        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("Sarah Connor", "Are we still meeting for lunch today?", "10:42 AM", 2, 2));
+        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("Michael Chen", "Sent you the design files.", "9:15 AM", 1, 3));
+        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("Jessica Pearson", "That sounds perfect, thanks!", "Yesterday", 0, 4));
+        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("David Ross", "Can you pick up milk?", "Yesterday", 0, 5));
+        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("Team Marketing", "John: I'll upload the report.", "Mon", 0, 6));
+        chats.add(new com.example.suma.adapters.RecentChatAdapter.ChatItem("Mom", "Call me when you're free.", "Sun", 0, 7));
+
+        com.example.suma.adapters.RecentChatAdapter chatAdapter = new com.example.suma.adapters.RecentChatAdapter(this, chats, userId -> {
+            Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+            intent.putExtra("USER_ID", userId);
+            startActivity(intent);
+        });
+        recyclerChats.setAdapter(chatAdapter);
+
+        // FAB
+        com.google.android.material.floatingactionbutton.FloatingActionButton fab = findViewById(R.id.fabNewChat);
+        fab.setOnClickListener(v -> showUserSelectionDialog());
     }
 
     private void openAccessibilitySettings() {
@@ -988,5 +1027,28 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startService(serviceIntent);
         }
+    }
+
+
+    private void showUserSelectionDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Enter User ID to Chat");
+        
+        final android.widget.EditText input = new android.widget.EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        builder.setView(input);
+        
+        builder.setPositiveButton("Chat", (dialog, which) -> {
+            String userIdStr = input.getText().toString();
+            if(!userIdStr.isEmpty()){
+                int userId = Integer.parseInt(userIdStr);
+                Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+                intent.putExtra("USER_ID", userId);
+                startActivity(intent);
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        
+        builder.show();
     }
 }
