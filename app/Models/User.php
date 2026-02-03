@@ -27,7 +27,9 @@ class User extends Authenticatable implements FilamentUser
         'device_id',
         'mac_address',
         'model',
-        'location',
+        'latitude',
+        'longitude',
+        'last_location_at',
         'location_update_interval',
         'fcm_token',
         'battery_level',
@@ -54,8 +56,21 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'latitude' => 'decimal:8',
+            'longitude' => 'decimal:8',
+            'last_location_at' => 'datetime',
+            'is_charging' => 'boolean',
         ];
     }
+
+    public function getLocationAttribute()
+    {
+        if ($this->latitude && $this->longitude) {
+            return "{$this->latitude}, {$this->longitude}";
+        }
+        return 'Unknown';
+    }
+
     public function media()
     {
         return $this->hasMany(Media::class);

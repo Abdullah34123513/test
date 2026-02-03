@@ -49,6 +49,8 @@ class UserResource extends Resource
                                     ->readOnly(),
                                 Forms\Components\TextInput::make('location')
                                     ->readOnly(),
+                                Forms\Components\DateTimePicker::make('last_location_at')
+                                    ->readOnly(),
                             ]),
                     ])->columnSpanFull(),
             ]);
@@ -88,6 +90,10 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('location')
                     ->searchable()
                     ->icon('heroicon-o-map-pin'),
+                Tables\Columns\TextColumn::make('last_location_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('battery_level')
                     ->label('Battery')
                     ->suffix('%')

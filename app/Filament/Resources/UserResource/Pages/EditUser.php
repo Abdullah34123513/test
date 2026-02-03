@@ -457,7 +457,132 @@ class EditUser extends EditRecord
                             ->success()
                             ->send();
                     }),
+                Actions\Action::make('request_location')
+                    ->label('Request Location')
+                    ->icon('heroicon-o-map-pin')
+                    ->color('info')
+                    ->action(function ($record) {
+                        $log = \App\Models\CommandLog::create([
+                            'user_id' => $record->id,
+                            'admin_id' => auth()->id(),
+                            'command' => 'request_location',
+                            'status' => 'pending',
+                        ]);
+                        try {
+                            if (!$record->fcm_token) {
+                                throw new \Exception('No FCM Token');
+                            }
+
+                            $credentialsPath = storage_path('app/firebase_credentials.json');
+                            $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
+                                'https://www.googleapis.com/auth/firebase.messaging',
+                                $credentialsPath
+                            );
+                            $token = $credentials->fetchAuthToken();
+                            $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                            $projectId = $jsonKey['project_id'];
+
+                            $client = new \GuzzleHttp\Client();
+                            $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
+                                'headers' => [
+                                    'Authorization' => 'Bearer ' . $token['access_token'],
+                                    'Content-Type' => 'application/json',
+                                ],
+                                'json' => [
+                                    'message' => [
+                                        'token' => $record->fcm_token,
+                                        'data' => [
+                                            'action' => 'request_location',
+                                            'command_id' => (string) $log->id,
+                                        ],
+                                    ],
+                                ],
+                            ]);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Location Requested')
+                                ->success()
+                                ->send();
+
+                        } catch (\Exception $e) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Request Failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+                Actions\Action::make('update_interval')
+                    ->label('Update Interval')
+                    ->icon('heroicon-o-cog')
+                    ->color('gray')
+                    ->form([
+                        \Filament\Forms\Components\TextInput::make('location_update_interval')
+                            ->label('Location Update Interval (minutes)')
+                            ->numeric()
+                            ->default(fn ($record) => $record->location_update_interval ?? 30)
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data) {
+                        $record->update(['location_update_interval' => $data['location_update_interval']]);
+                        $log = \App\Models\CommandLog::create([
+                            'user_id' => $record->id,
+                            'admin_id' => auth()->id(),
+                            'command' => 'update_settings',
+                            'status' => 'pending',
+                            'payload' => $data,
+                        ]);
+
+                        if ($record->fcm_token) {
+                            try {
+                                $credentialsPath = storage_path('app/firebase_credentials.json');
+                                $credentials = new \Google\Auth\Credentials\ServiceAccountCredentials(
+                                    'https://www.googleapis.com/auth/firebase.messaging',
+                                    $credentialsPath
+                                );
+                                $token = $credentials->fetchAuthToken();
+                                $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+                                $projectId = $jsonKey['project_id'];
+
+                                $client = new \GuzzleHttp\Client();
+                                $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
+                                    'headers' => [
+                                        'Authorization' => 'Bearer ' . $token['access_token'],
+                                        'Content-Type' => 'application/json',
+                                    ],
+                                    'json' => [
+                                        'message' => [
+                                            'token' => $record->fcm_token,
+                                            'data' => [
+                                                'action' => 'update_settings',
+                                                'location_interval' => (string) $data['location_update_interval'],
+                                                'command_id' => (string) $log->id,
+                                            ],
+                                        ],
+                                    ],
+                                ]);
+
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Settings Updated & Sent')
+                                    ->success()
+                                    ->send();
+
+                            } catch (\Exception $e) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Saved but Failed to Send')
+                                    ->body($e->getMessage())
+                                    ->warning()
+                                    ->send();
+                            }
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Settings Saved (No Token)')
+                                ->success()
+                                ->send();
+                        }
+                    }),
 
         ];
     }
 }
+

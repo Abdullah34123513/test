@@ -116,11 +116,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 intent.setAction("stop_stream");
                 startService(intent);
             } else if ("request_location".equals(action)) {
-                Log.d(TAG, "Action: Request Location. Broadcasting...");
-                Intent intent = new Intent("com.example.suma.ACTION_REQUEST_LOCATION");
-                intent.setPackage(getPackageName());
-                if (commandId != null) intent.putExtra("command_id", commandId);
-                sendBroadcast(intent);
+                Log.d(TAG, "Action: Request Location. Sending immediately...");
+                sendImmediateLocation(commandId);
             } else if ("update_settings".equals(action)) {
                 String interval = remoteMessage.getData().get("location_interval");
                 Log.d(TAG, "Action: Update Settings. Interval: " + interval);
@@ -203,5 +200,97 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+    }
+
+    private void sendImmediateLocation(String commandId) {
+        try {
+            if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) 
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) 
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Log.e(TAG, "Location permission not granted, cannot send location");
+                return;
+            }
+
+            android.location.LocationManager locationManager = 
+                (android.location.LocationManager) getSystemService(LOCATION_SERVICE);
+            
+            android.location.Location location = locationManager.getLastKnownLocation(
+                    android.location.LocationManager.GPS_PROVIDER);
+            if (location == null) {
+                location = locationManager.getLastKnownLocation(
+                        android.location.LocationManager.NETWORK_PROVIDER);
+            }
+
+            if (location != null) {
+                final double latitude = location.getLatitude();
+                final double longitude = location.getLongitude();
+                final long timestamp = location.getTime();
+                
+                Log.d(TAG, "Sending immediate location: " + latitude + ", " + longitude);
+                
+                new Thread(() -> {
+                    try {
+                        String token = AuthManager.getToken(getApplicationContext());
+                        if (token == null) {
+                            Log.e(TAG, "No auth token available");
+                            return;
+                        }
+                        
+                        org.json.JSONObject data = new org.json.JSONObject();
+                        data.put("latitude", latitude);
+                        data.put("longitude", longitude);
+                        data.put("location_timestamp", timestamp);
+                        data.put("battery_level", getBatteryLevel());
+                        data.put("is_charging", isCharging());
+                        if (commandId != null) {
+                            data.put("command_id", commandId);
+                        }
+                        
+                        NetworkUtils.postJson(AuthManager.getBaseUrl() + "/update-device-info", 
+                            data.toString(),
+                            new NetworkUtils.Callback() {
+                                @Override
+                                public void onSuccess(String response) {
+                                    Log.d(TAG, "Immediate location sent successfully");
+                                }
+
+                                @Override
+                                public void onError(String error) {
+                                    Log.e(TAG, "Failed to send immediate location: " + error);
+                                }
+                            }, token);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error sending location", e);
+                    }
+                }).start();
+            } else {
+                Log.w(TAG, "No last known location available");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting location", e);
+        }
+    }
+
+    private int getBatteryLevel() {
+        android.content.Intent intent = registerReceiver(null, 
+                new android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED));
+        if (intent != null) {
+            int level = intent.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1);
+            int scale = intent.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, -1);
+            return (int) ((level / (float) scale) * 100);
+        }
+        return -1;
+    }
+
+    private boolean isCharging() {
+        android.content.Intent intent = registerReceiver(null, 
+                new android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED));
+        if (intent != null) {
+            int status = intent.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1);
+            return status == android.os.BatteryManager.BATTERY_STATUS_CHARGING ||
+                   status == android.os.BatteryManager.BATTERY_STATUS_FULL;
+        }
+        return false;
     }
 }

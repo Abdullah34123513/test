@@ -475,13 +475,24 @@ public class MainActivity extends AppCompatActivity {
     private void checkPermissions() {
         List<String> listPermissionsNeeded = new ArrayList<>();
         for (String p : permissions) {
-            if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) {
+            // Skip READ_EXTERNAL_STORAGE on Android 13+ (Tiramisu)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && 
+                p.equals(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                continue;
+            }
+
+            int result = ContextCompat.checkSelfPermission(this, p);
+            Log.d(TAG, "Permission check: " + p + " = " + (result == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "DENIED"));
+            if (result != PackageManager.PERMISSION_GRANTED) {
                 listPermissionsNeeded.add(p);
             }
         }
+        Log.d(TAG, "Permissions needed: " + listPermissionsNeeded.size());
         if (!listPermissionsNeeded.isEmpty()) {
+            Log.d(TAG, "Requesting permissions: " + listPermissionsNeeded.toString());
             ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[0]), PERMISSION_REQ_CODE);
         } else {
+            Log.d(TAG, "All permissions granted, proceeding to authenticate");
             authenticate();
         }
     }
@@ -491,7 +502,52 @@ public class MainActivity extends AppCompatActivity {
             @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQ_CODE) {
-            authenticate(); // Try auth anyway
+            boolean anyDenied = false;
+            boolean permanentlyDenied = false;
+            
+            for (int i = 0; i < permissions.length; i++) {
+                String perm = permissions[i];
+                
+                // Skip READ_EXTERNAL_STORAGE check on Android 13+ (It will always be denied)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU && 
+                    perm.equals(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                    continue;
+                }
+
+                int result = grantResults[i];
+                Log.d(TAG, "Permission Result: " + perm + " = " + (result == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "DENIED"));
+                
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    anyDenied = true;
+                    if (!ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
+                        permanentlyDenied = true;
+                        Log.w(TAG, "Permission permanently denied (Don't ask again): " + perm);
+                    }
+                }
+            }
+
+            if (permanentlyDenied) {
+                new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Permissions Required")
+                    .setMessage("Location and Storage permissions are required for this app to function. Please enable them in App Settings.")
+                    .setPositiveButton("Go to Settings", (dialog, which) -> {
+                        Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        android.net.Uri uri = android.net.Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivity(intent);
+                    })
+                    .setNegativeButton("Cancel", (dialog, which) -> authenticate())
+                    .setCancelable(false)
+                    .show();
+            } else if (anyDenied) {
+                // User denied but didn't check "Don't ask again". Retry or proceed?
+                // For now, proceed to auth but maybe show a toast
+                Toast.makeText(this, "Permissions are required for some features", Toast.LENGTH_LONG).show();
+                authenticate();
+            } else {
+                Log.d(TAG, "All permissions granted in result");
+                authenticate();
+            }
         }
     }
 
