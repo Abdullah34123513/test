@@ -48,7 +48,15 @@ class UserResource extends Resource
                                 Forms\Components\TextInput::make('model')
                                     ->readOnly(),
                                 Forms\Components\TextInput::make('location')
-                                    ->readOnly(),
+                                    ->readOnly()
+                                    ->suffixAction(
+                                        Forms\Components\Actions\Action::make('view_map')
+                                            ->icon('heroicon-o-map')
+                                            ->url(fn ($record) => $record && $record->latitude && $record->longitude 
+                                                ? "https://www.google.com/maps?q={$record->latitude},{$record->longitude}" 
+                                                : null)
+                                            ->openUrlInNewTab()
+                                    ),
                                 Forms\Components\DateTimePicker::make('last_location_at')
                                     ->readOnly(),
                             ]),
@@ -89,7 +97,12 @@ class UserResource extends Resource
                     ->badge(),
                 Tables\Columns\TextColumn::make('location')
                     ->searchable()
-                    ->icon('heroicon-o-map-pin'),
+                    ->icon('heroicon-o-map-pin')
+                    ->url(fn (User $record) => $record->latitude && $record->longitude 
+                        ? "https://www.google.com/maps?q={$record->latitude},{$record->longitude}" 
+                        : null)
+                    ->openUrlInNewTab()
+                    ->color('primary'),
                 Tables\Columns\TextColumn::make('last_location_at')
                     ->dateTime()
                     ->sortable()
