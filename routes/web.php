@@ -64,3 +64,8 @@ Route::get('/debug-db', function () {
         echo "❌ Database Error: " . $e->getMessage();
     }
 });
+
+Route::group(['prefix' => 'portal', 'middleware' => ['web', 'auth'], 'as' => 'admin.'], function () {
+    Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+});

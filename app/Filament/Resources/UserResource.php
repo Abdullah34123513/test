@@ -38,27 +38,48 @@ class UserResource extends Resource
                                     ->dehydrated(fn ($state) => filled($state))
                                     ->required(fn (string $context): bool => $context === 'create'),
                             ]),
-                        Forms\Components\Tabs\Tab::make('Device Information')
-                            ->icon('heroicon-o-device-phone-mobile')
+                        Forms\Components\Tabs\Tab::make('Location & Device')
+                            ->icon('heroicon-o-map-pin')
                             ->schema([
-                                Forms\Components\TextInput::make('device_id')
-                                    ->readOnly(),
-                                Forms\Components\TextInput::make('mac_address')
-                                    ->readOnly(),
-                                Forms\Components\TextInput::make('model')
-                                    ->readOnly(),
-                                Forms\Components\TextInput::make('location')
-                                    ->readOnly()
-                                    ->suffixAction(
-                                        Forms\Components\Actions\Action::make('view_map')
-                                            ->icon('heroicon-o-map')
-                                            ->url(fn ($record) => $record && $record->latitude && $record->longitude 
-                                                ? "https://www.google.com/maps?q={$record->latitude},{$record->longitude}" 
-                                                : null)
-                                            ->openUrlInNewTab()
-                                    ),
-                                Forms\Components\DateTimePicker::make('last_location_at')
-                                    ->readOnly(),
+                                Forms\Components\Section::make('Current Location')
+                                    ->schema([
+                                        Forms\Components\View::make('filament.forms.components.current-location-map')
+                                            ->columnSpanFull(),
+                                        Forms\Components\Grid::make(3)
+                                            ->schema([
+                                                Forms\Components\TextInput::make('latitude')->readOnly(),
+                                                Forms\Components\TextInput::make('longitude')->readOnly(),
+                                                Forms\Components\TextInput::make('last_location_at')->readOnly(),
+                                            ]),
+                                    ]),
+                                
+                                Forms\Components\Section::make('Settings')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('location_update_interval')
+                                            ->label('Update Interval (minutes)')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->default(30)
+                                            ->helperText('How often the device sends location updates.')
+                                            ->suffixAction(
+                                                Forms\Components\Actions\Action::make('save_interval')
+                                                    ->icon('heroicon-o-check')
+                                                    ->action(function ($state, $record) {
+                                                        $record->update(['location_update_interval' => $state]);
+                                                        // Trigger FCM update logic here (simplified for form context)
+                                                        \Filament\Notifications\Notification::make()->title('Interval Saved')->success()->send();
+                                                    })
+                                            ),
+                                    ])->columns(2),
+
+                                Forms\Components\Section::make('Device Stats')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('device_id')->readOnly(),
+                                        Forms\Components\TextInput::make('model')->readOnly(),
+                                        Forms\Components\TextInput::make('battery_level')->suffix('%')->readOnly(),
+                                        Forms\Components\Toggle::make('is_charging')->disabled(),
+                                        Forms\Components\TextInput::make('mac_address')->readOnly(),
+                                    ])->columns(3),
                             ]),
                     ])->columnSpanFull(),
             ]);
