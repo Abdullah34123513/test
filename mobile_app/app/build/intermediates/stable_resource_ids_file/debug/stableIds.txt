@@ -1,3 +1,4 @@
+com.example.suma:xml/network_security_config = 0x7f120004
 com.example.suma:styleable/ViewTransition = 0x7f11009a
 com.example.suma:styleable/ViewStubCompat = 0x7f110099
 com.example.suma:styleable/Transform = 0x7f110093

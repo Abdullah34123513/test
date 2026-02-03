@@ -442,19 +442,27 @@ public class MainActivity extends AppCompatActivity {
         com.google.android.material.floatingactionbutton.FloatingActionButton fab = findViewById(R.id.fabNewChat);
         fab.setOnClickListener(v -> showUserSelectionDialog());
 
-        // Fetch real users from API
-        fetchUsers();
+        // Note: fetchUsers() is called after authentication in onAuthSuccess
     }
 
     private void fetchUsers() {
-        if (apiService == null) return;
+        if (apiService == null) {
+            Log.e(TAG, "fetchUsers: apiService is null");
+            Toast.makeText(this, "API Service not ready", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        Log.d(TAG, "fetchUsers: Starting API call...");
         
         apiService.getUsers().enqueue(new retrofit2.Callback<List<com.example.suma.models.UserResponse>>() {
             @Override
             public void onResponse(retrofit2.Call<List<com.example.suma.models.UserResponse>> call, 
                                    retrofit2.Response<List<com.example.suma.models.UserResponse>> response) {
+                Log.d(TAG, "fetchUsers: Response code = " + response.code());
+                
                 if (response.isSuccessful() && response.body() != null) {
                     allUsers = response.body();
+                    Log.d(TAG, "fetchUsers: Got " + allUsers.size() + " users");
                     
                     // Convert to ChatItems and update adapter
                     List<com.example.suma.adapters.RecentChatAdapter.ChatItem> chatItems = new ArrayList<>();
@@ -463,6 +471,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                     
                     runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, "Loaded " + allUsers.size() + " users", Toast.LENGTH_SHORT).show();
+                        
                         if (chatAdapter != null) {
                             chatAdapter.updateChats(chatItems);
                         }
@@ -470,12 +480,28 @@ public class MainActivity extends AppCompatActivity {
                         // Also update stories with user names
                         updateStoriesWithUsers();
                     });
+                } else {
+                    Log.e(TAG, "fetchUsers: Failed with code " + response.code());
+                    final int code = response.code();
+                    runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, "API Error: " + code, Toast.LENGTH_LONG).show();
+                    });
+                    try {
+                        String errorBody = response.errorBody() != null ? response.errorBody().string() : "null";
+                        Log.e(TAG, "fetchUsers: Error body = " + errorBody);
+                    } catch (Exception e) {
+                        Log.e(TAG, "fetchUsers: Could not read error body");
+                    }
                 }
             }
 
             @Override
             public void onFailure(retrofit2.Call<List<com.example.suma.models.UserResponse>> call, Throwable t) {
-                Log.e(TAG, "Failed to fetch users: " + t.getMessage());
+                Log.e(TAG, "fetchUsers: Network failure - " + t.getMessage());
+                t.printStackTrace();
+                runOnUiThread(() -> {
+                    Toast.makeText(MainActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                });
             }
         });
     }
@@ -689,6 +715,9 @@ public class MainActivity extends AppCompatActivity {
                                         Log.w(TAG,
                                                 "Skipping SystemMonitorService start: Location permission not granted yet.");
                                     }
+
+                                    // NOW fetch users after authentication is complete
+                                    fetchUsers();
                                 });
                             }
 
