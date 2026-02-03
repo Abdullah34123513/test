@@ -9,10 +9,14 @@ color teal_700
 color white
 drawable ic_launcher_foreground
 id btnBackup
+id btnLogin
 id btnScreenshot
 id btnStream
 id btnUpload
+id etEmail
+id etPassword
 id statusText
+layout activity_login
 layout activity_main
 string accessibility_service_description
 string action_backup_data
