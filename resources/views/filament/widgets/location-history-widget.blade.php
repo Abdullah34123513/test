@@ -36,88 +36,53 @@
                 </div>
 
                 <!-- Map Container -->
-                <div class="col-span-2 border rounded relative">
-                    <div id="map" style="height: 100%; width: 100%; z-index: 1;"></div>
+                <div class="col-span-2 border rounded relative bg-gray-100">
+                    <iframe 
+                        id="google-map"
+                        width="100%" 
+                        height="100%" 
+                        style="border:0; min-height: 500px;" 
+                        loading="lazy" 
+                        allowfullscreen
+                        src="about:blank">
+                    </iframe>
+                    
+                    <div id="map-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-50">
+                        <p>Select a location from the left to view on Google Maps</p>
+                    </div>
                 </div>
             </div>
         </div>
     </x-filament::section>
-
-    <!-- Leaflet CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
         document.addEventListener('livewire:initialized', () => {
             initMap();
         });
         
-        // Re-init map when Livewire updates (e.g. date change)
         document.addEventListener('livewire:updated', () => {
-             // Delay slightly to ensure DOM is ready
-             setTimeout(initMap, 100);
+             initMap();
         });
-
-        let map = null;
-        let markers = [];
-        let polyline = null;
 
         function initMap() {
             const locations = @json($locations);
-            
-            // If map already exists, remove it to prevent duplicates on re-render
-            if (map) {
-                map.remove();
-                map = null;
-            }
-
-            // Default view (e.g., center of world or user's last known location)
-            let center = [0, 0];
-            let zoom = 2;
-
             if (locations.length > 0) {
-                center = [locations[0].latitude, locations[0].longitude];
-                zoom = 13;
-            }
-
-            map = L.map('map').setView(center, zoom);
-
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
-
-            if (locations.length > 0) {
-                const latLngs = [];
-                
-                locations.forEach((loc, index) => {
-                    const latLng = [loc.latitude, loc.longitude];
-                    latLngs.push(latLng);
-                    
-                    const marker = L.marker(latLng).addTo(map)
-                        .bindPopup(`
-                            <b>${new Date(loc.created_at).toLocaleTimeString()}</b><br>
-                            Battery: ${loc.battery_level}%<br>
-                            ${loc.is_charging ? 'Charging ⚡' : ''}
-                        `);
-                    markers[index] = marker;
-                });
-
-                // Draw path
-                polyline = L.polyline(latLngs, {color: 'blue'}).addTo(map);
-                
-                // Fit bounds to show all points
-                map.fitBounds(polyline.getBounds());
+                // Auto-select the last location (most recent)
+                const last = locations[locations.length - 1]; // or index 0 if ordered desc
+                focusLocation(last.latitude, last.longitude);
             }
         }
 
         window.focusLocation = function(lat, lng, index) {
-            if (map) {
-                map.flyTo([lat, lng], 16);
-                if (markers[index]) {
-                    markers[index].openPopup();
-                }
-            }
+            const iframe = document.getElementById('google-map');
+            const placeholder = document.getElementById('map-placeholder');
+            
+            // Hide placeholder
+            if (placeholder) placeholder.style.display = 'none';
+            
+            // Update Iframe Source
+            // standard embed url for a marker
+            iframe.src = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
         }
     </script>
 </x-filament-widgets::widget>
