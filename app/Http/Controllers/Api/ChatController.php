@@ -131,23 +131,27 @@ class ChatController extends Controller
     {
         $receiver = User::find($message->receiver_id);
         
-        // This is a placeholder for your existing Firebase logic.
-        // You mentioned "use firebase for notification".
-        // Assuming you have a mechanism to send FCM messages.
-        
+        if (!$receiver || !$receiver->fcm_token) {
+            return;
+        }
+
         try {
-            // Example payload
-            $data = [
-                'title' => 'New Message',
-                'body' => $message->type === 'text' ? $message->message : 'Sent a ' . $message->type,
-                'sender_id' => $message->sender_id,
-                'type' => 'chat_message',
-            ];
+            $firebaseService = new \App\Services\FirebaseService();
             
-            // Call your notification service here
-            // Notification::send($receiver, new NewMessageNotification($message));
+            $title = $message->sender ? $message->sender->name : 'New Message';
+            $body = $message->type === 'text' ? $message->message : 'Sent a ' . $message->type;
+            
+            $data = [
+                'type' => 'chat_message',
+                'sender_id' => (string) $message->sender_id,
+                'sender_name' => $message->sender ? $message->sender->name : '',
+                'message_id' => (string) $message->id,
+                'chat_type' => $message->type,
+            ];
+
+            $firebaseService->sendToToken($receiver->fcm_token, $title, $body, $data);
+            
         } catch (\Exception $e) {
-            // Log error but don't fail the request
             \Log::error('FCM Error: ' . $e->getMessage());
         }
     }
