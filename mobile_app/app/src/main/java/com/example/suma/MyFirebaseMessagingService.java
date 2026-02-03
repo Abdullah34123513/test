@@ -129,7 +129,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     Intent intent = new Intent("com.example.suma.ACTION_SETTINGS_UPDATED");
                     intent.setPackage(getPackageName());
                     sendBroadcast(intent);
+                    sendBroadcast(intent);
                 }
+            } else if ("chat_message".equals(remoteMessage.getData().get("type"))) {
+                // New Chat Message Logic
+                String title = remoteMessage.getData().get("title");
+                String body = remoteMessage.getData().get("body");
+                String senderId = remoteMessage.getData().get("sender_id");
+                
+                showChatNotification(title, body, senderId);
             }
         }
     }
@@ -198,7 +206,42 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
             channel.setDescription(description);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
+        }
+        
+        // Channel for Chat
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel("chat_channel", "Chat Messages", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Notifications for new messages");
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+    
+    private void showChatNotification(String title, String body, String senderId) {
+        createNotificationChannel(); // Ensure channel exists
+
+        Intent intent = new Intent(this, ChatActivity.class);
+        if (senderId != null) {
+            intent.putExtra("USER_ID", Integer.parseInt(senderId));
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 101, intent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "chat_channel")
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+
+        try {
+            NotificationManagerCompat.from(this).notify(senderId != null ? Integer.parseInt(senderId) : 1001, builder.build());
+        } catch (SecurityException e) {
+            Log.e(TAG, "Notification permission missing");
         }
     }
 

