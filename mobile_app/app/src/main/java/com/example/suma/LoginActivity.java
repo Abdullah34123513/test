@@ -25,6 +25,9 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         tvRegisterLink = findViewById(R.id.tvRegisterLink);
+        
+        TextView tvForgotPasswordLink = findViewById(R.id.tvForgotPasswordLink);
+        tvForgotPasswordLink.setOnClickListener(v -> showForgotPasswordDialog());
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -38,6 +41,49 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         checkLoginStatus();
+    }
+
+    private void showForgotPasswordDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Reset Password");
+        builder.setMessage("Enter your email address to receive a reset link.");
+
+        final EditText input = new EditText(this);
+        input.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        builder.setView(input);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String email = input.getText().toString().trim();
+            if (!email.isEmpty()) {
+                sendResetLink(email);
+            } else {
+                Toast.makeText(LoginActivity.this, "Email is required", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    private void sendResetLink(String email) {
+        try {
+            org.json.JSONObject json = new org.json.JSONObject();
+            json.put("email", email);
+
+            NetworkUtils.postJson(AuthManager.getBaseUrl() + "/forgot-password", json.toString(), new NetworkUtils.Callback() {
+                @Override
+                public void onSuccess(String response) {
+                    runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Reset link sent! Check your email.", Toast.LENGTH_LONG).show());
+                }
+
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Failed: " + error, Toast.LENGTH_LONG).show());
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void checkLoginStatus() {

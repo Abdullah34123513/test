@@ -44,6 +44,7 @@ id seekbar_audio
 id statusText
 id text_message
 id text_timestamp
+id tvForgotPasswordLink
 id tvLoginLink
 id tvRegisterLink
 id txtChatName

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/device-login', [\App\Http\Controllers\Api\AuthController::class, 'deviceLogin']);
+Route::post('/forgot-password', [\App\Http\Controllers\Api\ForgotPasswordController::class, 'sendResetLinkEmail']);
+Route::post('/reset-password', [\App\Http\Controllers\Api\ResetPasswordController::class, 'reset']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/upload-media', [\App\Http\Controllers\Api\MediaController::class, 'upload']);
