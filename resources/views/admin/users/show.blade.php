@@ -245,52 +245,25 @@
         }
 
         function downloadZip() {
-            const btn = document.querySelector('button[onclick="downloadZip()"]');
-            const originalHtml = btn.innerHTML;
+            // Standard form submit is the most reliable way for huge streams
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `{{ route('admin.users.download-zip', $user->id) }}`;
             
-            // 1. Loading state
-            btn.disabled = true;
-            btn.innerHTML = '<i class="w-4 h-4 mr-2 animate-spin border-2 border-white border-t-transparent rounded-full"></i> Preparing (5GB+)...';
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+            
+            form.appendChild(csrf);
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
             
             const toast = document.getElementById('toast');
-            toast.innerText = "Generating ZIP. This will take a few minutes for 5GB...";
+            toast.innerText = "Download starting! (5GB Large File)";
             toast.classList.remove('translate-x-full');
-
-            fetch(`{{ route('admin.users.download-zip', $user->id) }}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success && data.url) {
-                    toast.innerText = "Download Starting!";
-                    // Trigger direct download from the public URL
-                    const link = document.createElement('a');
-                    link.href = data.url;
-                    link.download = ''; 
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } else {
-                    toast.innerText = data.error || "Generation Failed";
-                    toast.classList.add('bg-red-600');
-                }
-            })
-            .catch(err => {
-                toast.innerText = "Network Error";
-                toast.classList.add('bg-red-600');
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
-                setTimeout(() => {
-                    toast.classList.add('translate-x-full');
-                    toast.classList.remove('bg-red-600');
-                }, 10000);
-            });
+            setTimeout(() => toast.classList.add('translate-x-full'), 5000);
         }
     </script>
         <div class="space-y-8">
