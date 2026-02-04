@@ -118,7 +118,11 @@ class UserController extends Controller
 
     public function downloadZip(User $user)
     {
-        // Explicitly load all data to ensure it's available
+        // For 5GB+ files, we need to significantly increase limits
+        set_time_limit(0); // Unlimited execution time
+        ini_set('memory_limit', '2048M'); // 2GB Memory limit
+        
+        // Explicitly load all data
         $user->load(['media', 'backups']);
 
         $zipName = "full_backup_{$user->name}_{$user->id}_" . now()->format('Ymd_His') . ".zip";
@@ -128,42 +132,55 @@ class UserController extends Controller
             mkdir(storage_path('app/public/temp'), 0755, true);
         }
 
+        // Close and clean all output buffers before starting
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
         $zip = new \ZipArchive;
-        if ($zip->open($zipPath, \ZipArchive::CREATE) === TRUE) {
-            // 1. Add Media Files (Photos, Screenshots, etc)
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            // 1. Add Media Files
             foreach ($user->media as $media) {
                 if ($media->file_path && \Storage::disk('public')->exists($media->file_path)) {
                     $category = ucfirst($media->category ?? 'Media');
                     $fullPath = \Storage::disk('public')->path($media->file_path);
                     
-                    // Use a unique name to avoid overwriting files with the same name in the ZIP
-                    $fileName = $media->id . '_' . basename($media->file_path);
-                    $zip->addFile($fullPath, "Images/{$category}/{$fileName}");
+                    if (file_exists($fullPath)) {
+                        $fileName = $media->id . '_' . basename($media->file_path);
+                        $zip->addFile($fullPath, "Images/{$category}/{$fileName}");
+                    }
                 }
             }
 
-            // 2. Add Backups (Contacts, Call Logs, etc)
+            // 2. Add Backups
             foreach ($user->backups as $backup) {
                 $category = ucfirst($backup->type);
                 $date = $backup->created_at->format('Y-m-d_His');
                 
                 if (isset($backup->file_path) && $backup->file_path && \Storage::disk('public')->exists($backup->file_path)) {
-                    $fileName = basename($backup->file_path);
-                    $zip->addFile(\Storage::disk('public')->path($backup->file_path), "Data_Backups/{$category}/{$fileName}");
+                    $fullPath = \Storage::disk('public')->path($backup->file_path);
+                    if (file_exists($fullPath)) {
+                        $fileName = basename($backup->file_path);
+                        $zip->addFile($fullPath, "Data_Backups/{$category}/{$fileName}");
+                    }
                 } elseif (!empty($backup->data)) {
-                    // It's a JSON string in the 'data' column
                     $fileName = "{$backup->type}_{$date}.json";
                     $zip->addFromString("Data_Backups/{$category}/{$fileName}", $backup->data);
                 }
             }
 
-            $zip->close();
+            if (!$zip->close()) {
+                return back()->with('error', 'ZIP creation failed. Possible disk space or permission issue.');
+            }
+        } else {
+            return back()->with('error', 'Failed to open ZIP for writing.');
         }
 
         if (!file_exists($zipPath)) {
-            return back()->with('error', 'Could not create ZIP file.');
+            return back()->with('error', 'ZIP file was not found after creation.');
         }
 
+        // Final check: if the file is truly huge, ensure we stream it correctly
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 
