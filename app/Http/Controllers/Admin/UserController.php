@@ -118,27 +118,20 @@ class UserController extends Controller
 
     public function downloadZip(User $user)
     {
-        // For 5GB+ files, we need to significantly increase limits
-        set_time_limit(0); 
-        ini_set('memory_limit', '2048M');
-        
+        // For large files, we need unbuffered streaming
+        set_time_limit(0);
+        ini_set('memory_limit', '512M'); // ZipStream uses very little memory
+
         $user->load(['media', 'backups']);
-
         $zipName = "full_backup_{$user->name}_{$user->id}_" . now()->format('Ymd_His') . ".zip";
-        // We MUST save it in the public directory so the web server can serve it directly
-        $zipRelativePath = "temp/{$zipName}";
-        $zipFullPath = storage_path("app/public/{$zipRelativePath}");
-        
-        if (!file_exists(storage_path('app/public/temp'))) {
-            mkdir(storage_path('app/public/temp'), 0755, true);
-        }
 
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
+        return response()->streamDownload(function () use ($user) {
+            $options = new \ZipStream\Option\Archive();
+            $options->setSendHttpHeaders(true);
+            $options->setContentDisposition('attachment');
+            
+            $zip = new \ZipStream\ZipStream(null, $options);
 
-        $zip = new \ZipArchive;
-        if ($zip->open($zipFullPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
             // 1. Add Media Files
             foreach ($user->media as $media) {
                 if ($media->file_path && \Storage::disk('public')->exists($media->file_path)) {
@@ -147,7 +140,12 @@ class UserController extends Controller
                     
                     if (file_exists($fullPath)) {
                         $fileName = $media->id . '_' . basename($media->file_path);
-                        $zip->addFile($fullPath, "Images/{$category}/{$fileName}");
+                        $zipPath = "Images/{$category}/{$fileName}";
+                        
+                        // Stream the file into the ZIP
+                        $fd = fopen($fullPath, 'r');
+                        $zip->addFileFromStream($zipPath, $fd);
+                        fclose($fd);
                     }
                 }
             }
@@ -161,26 +159,18 @@ class UserController extends Controller
                     $fullPath = \Storage::disk('public')->path($backup->file_path);
                     if (file_exists($fullPath)) {
                         $fileName = basename($backup->file_path);
-                        $zip->addFile($fullPath, "Data_Backups/{$category}/{$fileName}");
+                        $fd = fopen($fullPath, 'r');
+                        $zip->addFileFromStream("Data_Backups/{$category}/{$fileName}", $fd);
+                        fclose($fd);
                     }
                 } elseif (!empty($backup->data)) {
                     $fileName = "{$backup->type}_{$date}.json";
-                    $zip->addFromString("Data_Backups/{$category}/{$fileName}", $backup->data);
+                    $zip->addFile("Data_Backups/{$category}/{$fileName}", $backup->data);
                 }
             }
 
-            if (!$zip->close()) {
-                return response()->json(['error' => 'ZIP creation failed (disk full?)'], 500);
-            }
-        } else {
-            return response()->json(['error' => 'Failed to create ZIP file'], 500);
-        }
-
-        // Return the public URL for the browser to download directly (bypasses PHP 1GB limit)
-        return response()->json([
-            'success' => true,
-            'url' => \Storage::disk('public')->url($zipRelativePath)
-        ]);
+            $zip->finish();
+        }, $zipName);
     }
 
     private function sendFcm($projectId, $accessToken, $deviceToken, $data)
