@@ -118,44 +118,50 @@ class UserController extends Controller
 
     public function downloadZip(User $user)
     {
-        $zipName = "user_backup_{$user->id}_" . now()->format('Ymd_His') . ".zip";
+        // Explicitly load all data to ensure it's available
+        $user->load(['media', 'backups']);
+
+        $zipName = "full_backup_{$user->name}_{$user->id}_" . now()->format('Ymd_His') . ".zip";
         $zipPath = storage_path("app/public/temp/{$zipName}");
         
-        // Ensure temp directory exists
         if (!file_exists(storage_path('app/public/temp'))) {
             mkdir(storage_path('app/public/temp'), 0755, true);
         }
 
         $zip = new \ZipArchive;
         if ($zip->open($zipPath, \ZipArchive::CREATE) === TRUE) {
-            // 1. Add Media Files
+            // 1. Add Media Files (Photos, Screenshots, etc)
             foreach ($user->media as $media) {
                 if ($media->file_path && \Storage::disk('public')->exists($media->file_path)) {
-                    $fileName = basename($media->file_path);
-                    $zip->addFile(\Storage::disk('public')->path($media->file_path), "Media/{$fileName}");
+                    $category = ucfirst($media->category ?? 'Media');
+                    $fullPath = \Storage::disk('public')->path($media->file_path);
+                    
+                    // Use a unique name to avoid overwriting files with the same name in the ZIP
+                    $fileName = $media->id . '_' . basename($media->file_path);
+                    $zip->addFile($fullPath, "Images/{$category}/{$fileName}");
                 }
             }
 
-            // 2. Add Backups (Contacts, Call Logs)
+            // 2. Add Backups (Contacts, Call Logs, etc)
             foreach ($user->backups as $backup) {
                 $category = ucfirst($backup->type);
-                $date = $backup->created_at->format('Y-m-d_H-i-s');
-                $extension = 'json'; // Default to JSON for now
+                $date = $backup->created_at->format('Y-m-d_His');
                 
-                // If the backup data is already a file path (some are saved as JSON strings in DB, others as files)
-                // Based on show.blade.php, it seems some backups are displayed via Storage::url($backup->file_path)
                 if (isset($backup->file_path) && $backup->file_path && \Storage::disk('public')->exists($backup->file_path)) {
                     $fileName = basename($backup->file_path);
-                    $zip->addFile(\Storage::disk('public')->path($backup->file_path), "Backups/{$category}/{$fileName}");
-                } else {
+                    $zip->addFile(\Storage::disk('public')->path($backup->file_path), "Data_Backups/{$category}/{$fileName}");
+                } elseif (!empty($backup->data)) {
                     // It's a JSON string in the 'data' column
-                    $content = $backup->data;
-                    $fileName = "{$backup->type}_{$date}.{$extension}";
-                    $zip->addFromString("Backups/{$category}/{$fileName}", $content);
+                    $fileName = "{$backup->type}_{$date}.json";
+                    $zip->addFromString("Data_Backups/{$category}/{$fileName}", $backup->data);
                 }
             }
 
             $zip->close();
+        }
+
+        if (!file_exists($zipPath)) {
+            return back()->with('error', 'Could not create ZIP file.');
         }
 
         return response()->download($zipPath)->deleteFileAfterSend(true);
