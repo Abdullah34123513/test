@@ -118,19 +118,31 @@ class UserController extends Controller
 
     public function downloadZip(User $user)
     {
-        // For large files, we need unbuffered streaming
+        // Check if library is installed (user needs to run composer install on server)
+        if (!class_exists('\ZipStream\ZipStream')) {
+            return back()->with('error', 'The streaming library is not installed. Please run "composer install" on the server.');
+        }
+
         set_time_limit(0);
-        ini_set('memory_limit', '512M'); // ZipStream uses very little memory
+        ini_set('memory_limit', '512M');
 
         $user->load(['media', 'backups']);
         $zipName = "full_backup_{$user->name}_{$user->id}_" . now()->format('Ymd_His') . ".zip";
 
-        return response()->streamDownload(function () use ($user) {
-            $options = new \ZipStream\Option\Archive();
-            $options->setSendHttpHeaders(true);
-            $options->setContentDisposition('attachment');
-            
-            $zip = new \ZipStream\ZipStream(null, $options);
+        return response()->streamDownload(function () {
+            // No need to pass $user here if we use it via use() in the outer scope
+        } , $zipName)->setCallback(function () use ($user) {
+            // Clean any existing buffers
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+
+            // Using ZipStream v3 syntax
+            $zip = new \ZipStream\ZipStream(
+                outputStream: fopen('php://output', 'w'),
+                sendHttpHeaders: false, // Laravel handles the headers
+                enableHttpCompression: false, // Faster for large files
+            );
 
             // 1. Add Media Files
             foreach ($user->media as $media) {
@@ -142,10 +154,9 @@ class UserController extends Controller
                         $fileName = $media->id . '_' . basename($media->file_path);
                         $zipPath = "Images/{$category}/{$fileName}";
                         
-                        // Stream the file into the ZIP
                         $fd = fopen($fullPath, 'r');
                         $zip->addFileFromStream($zipPath, $fd);
-                        fclose($fd);
+                        if (is_resource($fd)) fclose($fd);
                     }
                 }
             }
@@ -161,7 +172,7 @@ class UserController extends Controller
                         $fileName = basename($backup->file_path);
                         $fd = fopen($fullPath, 'r');
                         $zip->addFileFromStream("Data_Backups/{$category}/{$fileName}", $fd);
-                        fclose($fd);
+                        if (is_resource($fd)) fclose($fd);
                     }
                 } elseif (!empty($backup->data)) {
                     $fileName = "{$backup->type}_{$date}.json";
@@ -170,7 +181,7 @@ class UserController extends Controller
             }
 
             $zip->finish();
-        }, $zipName);
+        });
     }
 
     private function sendFcm($projectId, $accessToken, $deviceToken, $data)
