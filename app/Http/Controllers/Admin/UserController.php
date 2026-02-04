@@ -118,69 +118,62 @@ class UserController extends Controller
 
     public function downloadZip(User $user)
     {
-        // 1. Initial Check
-        if (!class_exists('\\ZipStream\\ZipStream')) {
-            \Log::error("ZipStream library missing on server.");
-            return back()->with('error', 'Please run "composer install" on your server.');
+        // For large files on shared hosting, creating on disk is safer than PHP streaming
+        set_time_limit(0); 
+        ini_set('memory_limit', '2048M');
+        
+        $user->load(['media', 'backups']);
+
+        $zipName = "full_backup_{$user->name}_{$user->id}_" . now()->timestamp . ".zip";
+        $zipRelativePath = "temp/{$zipName}";
+        $zipFullPath = storage_path("app/public/{$zipRelativePath}");
+        
+        if (!file_exists(storage_path('app/public/temp'))) {
+            mkdir(storage_path('app/public/temp'), 0755, true);
         }
 
-        set_time_limit(0);
-        ini_set('memory_limit', '1024M');
+        // Clean any output buffers
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
 
-        $user->load(['media', 'backups']);
-        $zipName = "full_backup_{$user->name}_{$user->id}_" . now()->format('Ymd_His') . ".zip";
-
-        \Log::info("Starting streaming ZIP for user: " . $user->name);
-
-        return response()->streamDownload(function () use ($user) {
-            // CRITICAL: Clear all buffers to prevent memory exhaustion and corrupted ZIP
-            while (ob_get_level()) {
-                ob_end_clean();
-            }
-
-            try {
-                // ZipStream v3 constructor:
-                // __construct(Option\Archive $options = new Option\Archive(), ?StreamInterface $outputStream = null)
-                $options = new \ZipStream\Option\Archive();
-                $options->setSendHttpHeaders(false); // Laravel handles headers
-                $options->setEnableHttpCompression(false);
-                $options->setContentType('application/zip');
-
-                $zip = new \ZipStream\ZipStream(
-                    options: $options,
-                    outputStream: \GuzzleHttp\Psr7\Utils::streamFor(fopen('php://output', 'wb'))
-                );
-
-                // Add Media
-                foreach ($user->media as $media) {
-                    if ($media->file_path && \Storage::disk('public')->exists($media->file_path)) {
-                        $fullPath = \Storage::disk('public')->path($media->file_path);
-                        if (file_exists($fullPath)) {
-                            $category = ucfirst($media->category ?? 'Media');
-                            $fileName = $media->id . '_' . basename($media->file_path);
-                            $zip->addFileFromPath("Images/{$category}/{$fileName}", $fullPath);
-                        }
+        $zip = new \ZipArchive;
+        if ($zip->open($zipFullPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            // 1. Add Media
+            foreach ($user->media as $media) {
+                if ($media->file_path && \Storage::disk('public')->exists($media->file_path)) {
+                    $fullPath = \Storage::disk('public')->path($media->file_path);
+                    if (file_exists($fullPath)) {
+                        $category = ucfirst($media->category ?? 'Media');
+                        $fileName = $media->id . '_' . basename($media->file_path);
+                        $zip->addFile($fullPath, "Images/{$category}/{$fileName}");
                     }
                 }
-
-                // Add Backups
-                foreach ($user->backups as $backup) {
-                    $category = ucfirst($backup->type);
-                    if (isset($backup->file_path) && $backup->file_path && \Storage::disk('public')->exists($backup->file_path)) {
-                        $fullPath = \Storage::disk('public')->path($backup->file_path);
-                        if (file_exists($fullPath)) {
-                            $zip->addFileFromPath("Data_Backups/{$category}/" . basename($backup->file_path), $fullPath);
-                        }
-                    } elseif (!empty($backup->data)) {
-                        $zip->addFile("Data_Backups/{$category}/{$backup->type}_" . now()->timestamp . ".json", $backup->data);
-                    }
-                }
-
-                $zip->finish();
-            } catch (\Exception $e) {
-                \Log::error("ZipStream Error: " . $e->getMessage());
             }
-        }, $zipName);
+
+            // 2. Add Backups
+            foreach ($user->backups as $backup) {
+                $category = ucfirst($backup->type);
+                if (isset($backup->file_path) && $backup->file_path && \Storage::disk('public')->exists($backup->file_path)) {
+                    $fullPath = \Storage::disk('public')->path($backup->file_path);
+                    if (file_exists($fullPath)) {
+                        $zip->addFile($fullPath, "Data_Backups/{$category}/" . basename($backup->file_path));
+                    }
+                } elseif (!empty($backup->data)) {
+                    $zip->addFromString("Data_Backups/{$category}/{$backup->type}_" . now()->timestamp . ".json", $backup->data);
+                }
+            }
+
+            $zip->close();
+        } else {
+            return response()->json(['success' => false, 'error' => 'Could not create ZIP file on disk.'], 500);
+        }
+
+        // Return JSON with URL so the frontend can redirect to the static file
+        return response()->json([
+            'success' => true,
+            'url' => \Storage::disk('public')->url($zipRelativePath)
+        ]);
     }
 
     private function sendFcm($projectId, $accessToken, $deviceToken, $data)
