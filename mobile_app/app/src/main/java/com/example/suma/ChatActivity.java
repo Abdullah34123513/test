@@ -73,6 +73,7 @@ public class ChatActivity extends AppCompatActivity {
 
     // Database
     private MessageDao messageDao;
+    private com.example.suma.database.UserDao userDao;
     private ExecutorService executor = Executors.newSingleThreadExecutor();
     private boolean initialSyncDone = false;
 
@@ -90,6 +91,7 @@ public class ChatActivity extends AppCompatActivity {
 
         apiService = RetrofitClient.getClient(this).create(ApiService.class);
         messageDao = AppDatabase.getInstance(this).messageDao();
+        userDao = AppDatabase.getInstance(this).userDao();
 
         recyclerView = findViewById(R.id.recycler_view_messages);
         editTextMessage = findViewById(R.id.edit_text_message);
@@ -144,6 +146,19 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
+            }
+        });
+
+        clearUnreadCount();
+    }
+
+    private void clearUnreadCount() {
+        executor.execute(() -> {
+            com.example.suma.database.UserEntity user = userDao.getUserById(otherUserId);
+            if (user != null && user.getUnreadCount() > 0) {
+                user.setUnreadCount(0);
+                userDao.update(user);
+                Log.d("ChatActivity", "Cleared unread count for user: " + otherUserId);
             }
         });
     }
@@ -331,6 +346,14 @@ public class ChatActivity extends AppCompatActivity {
         executor.execute(() -> {
             long localId = messageDao.insert(optimisticEntity);
             optimisticEntity.setLocalId((int) localId);
+
+            // Update user ranking (move to top)
+            com.example.suma.database.UserEntity user = userDao.getUserById(otherUserId);
+            if (user != null) {
+                user.setLastMessage(content != null && !content.isEmpty() ? content : "[" + type + "]");
+                user.setLastMessageTime(optimisticEntity.getCreatedAt());
+                userDao.update(user);
+            }
 
             // 2. Perform Network Call
             performSendMessageNetworkCall(optimisticEntity, file);

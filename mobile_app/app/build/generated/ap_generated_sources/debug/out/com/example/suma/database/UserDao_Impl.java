@@ -4,6 +4,7 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
+import androidx.room.EntityDeletionOrUpdateAdapter;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.RoomSQLiteQuery;
@@ -26,6 +27,8 @@ public final class UserDao_Impl implements UserDao {
   private final RoomDatabase __db;
 
   private final EntityInsertionAdapter<UserEntity> __insertionAdapterOfUserEntity;
+
+  private final EntityDeletionOrUpdateAdapter<UserEntity> __updateAdapterOfUserEntity;
 
   private final SharedSQLiteStatement __preparedStmtOfDeleteAll;
 
@@ -65,6 +68,41 @@ public final class UserDao_Impl implements UserDao {
         statement.bindLong(6, entity.getUnreadCount());
       }
     };
+    this.__updateAdapterOfUserEntity = new EntityDeletionOrUpdateAdapter<UserEntity>(__db) {
+      @Override
+      @NonNull
+      protected String createQuery() {
+        return "UPDATE OR ABORT `users` SET `id` = ?,`name` = ?,`email` = ?,`lastMessage` = ?,`lastMessageTime` = ?,`unreadCount` = ? WHERE `id` = ?";
+      }
+
+      @Override
+      protected void bind(@NonNull final SupportSQLiteStatement statement,
+          final UserEntity entity) {
+        statement.bindLong(1, entity.getId());
+        if (entity.getName() == null) {
+          statement.bindNull(2);
+        } else {
+          statement.bindString(2, entity.getName());
+        }
+        if (entity.getEmail() == null) {
+          statement.bindNull(3);
+        } else {
+          statement.bindString(3, entity.getEmail());
+        }
+        if (entity.getLastMessage() == null) {
+          statement.bindNull(4);
+        } else {
+          statement.bindString(4, entity.getLastMessage());
+        }
+        if (entity.getLastMessageTime() == null) {
+          statement.bindNull(5);
+        } else {
+          statement.bindString(5, entity.getLastMessageTime());
+        }
+        statement.bindLong(6, entity.getUnreadCount());
+        statement.bindLong(7, entity.getId());
+      }
+    };
     this.__preparedStmtOfDeleteAll = new SharedSQLiteStatement(__db) {
       @Override
       @NonNull
@@ -81,6 +119,18 @@ public final class UserDao_Impl implements UserDao {
     __db.beginTransaction();
     try {
       __insertionAdapterOfUserEntity.insert(users);
+      __db.setTransactionSuccessful();
+    } finally {
+      __db.endTransaction();
+    }
+  }
+
+  @Override
+  public void update(final UserEntity user) {
+    __db.assertNotSuspendingTransaction();
+    __db.beginTransaction();
+    try {
+      __updateAdapterOfUserEntity.handle(user);
       __db.setTransactionSuccessful();
     } finally {
       __db.endTransaction();
@@ -227,6 +277,28 @@ public final class UserDao_Impl implements UserDao {
         _result.setUnreadCount(_tmpUnreadCount);
       } else {
         _result = null;
+      }
+      return _result;
+    } finally {
+      _cursor.close();
+      _statement.release();
+    }
+  }
+
+  @Override
+  public int checkUserExists(final int userId) {
+    final String _sql = "SELECT COUNT(*) FROM users WHERE id = ?";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindLong(_argIndex, userId);
+    __db.assertNotSuspendingTransaction();
+    final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+    try {
+      final int _result;
+      if (_cursor.moveToFirst()) {
+        _result = _cursor.getInt(0);
+      } else {
+        _result = 0;
       }
       return _result;
     } finally {

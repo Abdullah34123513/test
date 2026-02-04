@@ -146,6 +146,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     final int currentUserId = getSharedPreferences("SumaPrefs", MODE_PRIVATE).getInt("current_user_id",
                             -1);
                     if (currentUserId != -1) {
+                        String timeStr = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
+                                java.util.Locale.getDefault())
+                                .format(new java.util.Date());
+
+                        final String finalBody = body;
+                        final String finalTimeStr = timeStr;
+
                         com.example.suma.database.MessageEntity entity = new com.example.suma.database.MessageEntity(
                                 messageId,
                                 senderId,
@@ -153,19 +160,31 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                                 body,
                                 type != null ? type : "text",
                                 null, // filePath
-                                new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-                                        .format(new java.util.Date()),
+                                timeStr,
                                 System.currentTimeMillis(),
                                 "sent");
 
                         // Save in background thread
                         new Thread(() -> {
                             try {
-                                com.example.suma.database.AppDatabase.getInstance(getApplicationContext())
-                                        .messageDao().insert(entity);
+                                com.example.suma.database.AppDatabase db = com.example.suma.database.AppDatabase
+                                        .getInstance(getApplicationContext());
+                                db.messageDao().insert(entity);
                                 Log.d(TAG, "Saved incoming message to local database: " + messageId);
+
+                                // Update UserEntity to move it to the top
+                                com.example.suma.database.UserEntity user = db.userDao().getUserById(senderId);
+                                if (user != null) {
+                                    user.setLastMessage(finalBody);
+                                    user.setLastMessageTime(finalTimeStr);
+                                    // Increment unread count if we are not in the chat with this user
+                                    // (Simplification: always increment, we'll clear it when opening ChatActivity)
+                                    user.setUnreadCount(user.getUnreadCount() + 1);
+                                    db.userDao().update(user);
+                                    Log.d(TAG, "Updated UserEntity for ranking: " + senderId);
+                                }
                             } catch (Exception e) {
-                                Log.e(TAG, "Error saving message to DB", e);
+                                Log.e(TAG, "Error saving message/updating user in DB", e);
                             }
                         }).start();
                     }

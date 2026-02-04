@@ -5,6 +5,7 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import java.util.List;
 
@@ -28,6 +29,12 @@ public interface UserDao {
 
     @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
     UserEntity getUserById(int userId);
+
+    @Update
+    void update(UserEntity user);
+
+    @Query("SELECT COUNT(*) FROM users WHERE id = :userId")
+    int checkUserExists(int userId);
 
     /**
      * Delete all users.
