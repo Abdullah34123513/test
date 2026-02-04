@@ -245,26 +245,47 @@
         }
 
         function downloadZip() {
-            // Standard form submit is the most reliable way for huge streams
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `{{ route('admin.users.download-zip', $user->id) }}`;
+            const btn = document.querySelector('button[onclick="downloadZip()"]');
+            const originalHtml = btn.innerHTML;
             
-            const csrf = document.createElement('input');
-            csrf.type = 'hidden';
-            csrf.name = '_token';
-            csrf.value = '{{ csrf_token() }}';
-            
-            form.appendChild(csrf);
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
+            btn.disabled = true;
+            btn.innerHTML = '<i class="w-4 h-4 mr-2 animate-spin border-2 border-white border-t-transparent rounded-full"></i> Preparing...';
             
             const toast = document.getElementById('toast');
-            toast.innerText = "Download starting! (5GB Large File)";
+            toast.innerText = "Creating ZIP file... Please wait.";
             toast.classList.remove('translate-x-full');
-            setTimeout(() => toast.classList.add('translate-x-full'), 5000);
+
+            fetch(`{{ route('admin.users.download-zip', $user->id) }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.url) {
+                    toast.innerText = "Download starting!";
+                    window.location.href = data.url;
+                } else {
+                    toast.innerText = data.error || "Failed to create ZIP";
+                    toast.classList.add('bg-red-600');
+                }
+            })
+            .catch(err => {
+                toast.innerText = "Error: " + err.message;
+                toast.classList.add('bg-red-600');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full');
+                    toast.classList.remove('bg-red-600');
+                }, 5000);
+            });
         }
+
     </script>
         <div class="space-y-8">
             <!-- Device Info -->

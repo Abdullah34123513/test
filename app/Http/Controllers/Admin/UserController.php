@@ -118,81 +118,62 @@ class UserController extends Controller
 
     public function downloadZip(User $user)
     {
-        // 1. Setup Environment for Huge Data
+        // Maximum simplicity - only built-in PHP, no external libraries
         set_time_limit(0);
-        ini_set('memory_limit', '512M'); // Only needs enough for DB cursors
+        ini_set('memory_limit', '2048M');
+        
+        $user->load(['media', 'backups']);
 
-        // Verify Library
-        if (!class_exists('\\ZipStream\\ZipStream')) {
-            return back()->with('error', 'Please run "composer install" on your server.');
+        $zipName = "backup_" . $user->id . "_" . time() . ".zip";
+        $tempDir = storage_path('app/public/temp');
+        
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        
+        $zipPath = $tempDir . '/' . $zipName;
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== TRUE) {
+            return back()->with('error', 'Cannot create ZIP file');
         }
 
-        $zipName = "full_backup_" . str_replace(' ', '_', $user->name) . "_" . $user->id . ".zip";
-
-        // 2. Clear AND Close Output Buffers (Crucial for streaming)
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        // 3. Raw PHP Headers (Bypass Laravel to prevent buffering)
-        header('Content-Type: application/zip');
-        header('Content-Disposition: attachment; filename="' . $zipName . '"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        // 4. Stream directly to output
-        $options = new \ZipStream\Option\Archive();
-        $options->setSendHttpHeaders(false); // We sent them manually
-        $options->setEnableHttpCompression(false); // Vital for speed & reliability
-
-        $zip = new \ZipStream\ZipStream(
-            outputStream: fopen('php://output', 'wb'),
-            options: $options
-        );
-
-        // 5. Stream Media using Cursor (Saves RAM)
-        foreach ($user->media()->cursor() as $media) {
-            if ($media->file_path) {
-                $fullPath = storage_path('app/public/' . $media->file_path);
-                if (!file_exists($fullPath)) {
-                    $fullPath = base_path('storage/app/public/' . $media->file_path);
-                }
-
-                if (file_exists($fullPath) && !is_dir($fullPath)) {
-                    $folder = ucfirst($media->category ?? 'Media');
-                    $name = $media->id . "_" . basename($media->file_path);
-                    
-                    try {
-                        $zip->addFileFromPath("Images/{$folder}/{$name}", $fullPath);
-                        flush(); // Send to browser immediately
-                    } catch (\Exception $e) {
-                        continue; // Skip corrupted files
-                    }
-                }
+        // Add all media files
+        foreach ($user->media as $media) {
+            if (!$media->file_path) continue;
+            
+            $filePath = storage_path('app/public/' . $media->file_path);
+            
+            if (file_exists($filePath) && is_file($filePath)) {
+                $folder = ucfirst($media->category ?? 'Media');
+                $fileName = $media->id . '_' . basename($filePath);
+                $zip->addFile($filePath, "Images/{$folder}/{$fileName}");
             }
         }
 
-        // 6. Stream Backups
-        foreach ($user->backups()->cursor() as $backup) {
-            $type = ucfirst($backup->type);
-            if ($backup->file_path) {
-                $fullPath = storage_path('app/public/' . $backup->file_path);
-                if (file_exists($fullPath)) {
-                    try {
-                        $zip->addFileFromPath("Data_Backups/{$type}/" . basename($backup->file_path), $fullPath);
-                        flush();
-                    } catch (\Exception $e) { continue; }
+        // Add all backup data
+        foreach ($user->backups as $backup) {
+            $type = ucfirst($backup->type ?? 'Other');
+            
+            if (!empty($backup->file_path)) {
+                $filePath = storage_path('app/public/' . $backup->file_path);
+                if (file_exists($filePath) && is_file($filePath)) {
+                    $zip->addFile($filePath, "Backups/{$type}/" . basename($filePath));
                 }
             } elseif (!empty($backup->data)) {
-                $zip->addFile("Data_Backups/{$type}/{$backup->type}_" . time() . ".json", $backup->data);
-                flush();
+                $zip->addFromString("Backups/{$type}/data_" . time() . ".json", $backup->data);
             }
         }
 
-        // 7. Complete and Exit
-        $zip->finish();
-        exit(); 
+        $zip->close();
+
+        // Return download URL
+        return response()->json([
+            'success' => true,
+            'url' => asset('storage/temp/' . $zipName)
+        ]);
     }
+
 
     private function sendFcm($projectId, $accessToken, $deviceToken, $data)
     {
