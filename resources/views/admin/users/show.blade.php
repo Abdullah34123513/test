@@ -44,7 +44,7 @@
              <button onclick="sendCommand('capture_image', {camera_facing: 'back'})" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition shadow-sm flex items-center">
                 <i data-lucide="image" class="w-4 h-4 mr-2"></i> Photo
             </button>
-            <button onclick="downloadZip()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm flex items-center">
+            <button id="btn-full-backup" onclick="downloadZip()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm flex items-center">
                 <i data-lucide="download" class="w-4 h-4 mr-2"></i> Full Backup
             </button>
     </div>
@@ -245,19 +245,47 @@
         }
 
         function downloadZip() {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `{{ route('admin.users.download-zip', $user->id) }}`;
+            const btn = document.getElementById('btn-full-backup');
+            const originalHtml = btn.innerHTML;
             
-            const csrf = document.createElement('input');
-            csrf.type = 'hidden';
-            csrf.name = '_token';
-            csrf.value = '{{ csrf_token() }}';
+            // 1. Loading state
+            btn.disabled = true;
+            btn.innerHTML = '<i class="w-4 h-4 mr-2 animate-spin border-2 border-white border-t-transparent rounded-full"></i> Preparing...';
             
-            form.appendChild(csrf);
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
+            const toast = document.getElementById('toast');
+            toast.innerText = "Generating ZIP. Please wait...";
+            toast.classList.remove('translate-x-full');
+
+            fetch(`{{ route('admin.users.download-zip', $user->id) }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.url) {
+                    toast.innerText = "Download Starting!";
+                    // Support large file download by directing browser to the static URL
+                    window.location.href = data.url;
+                } else {
+                    toast.innerText = data.error || "Generation Failed";
+                    toast.classList.add('bg-red-600');
+                }
+            })
+            .catch(err => {
+                toast.innerText = "Network Error";
+                toast.classList.add('bg-red-600');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full');
+                    toast.classList.remove('bg-red-600');
+                }, 5000);
+            });
         }
     </script>
         <div class="space-y-8">

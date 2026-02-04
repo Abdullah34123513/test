@@ -119,26 +119,26 @@ class UserController extends Controller
     public function downloadZip(User $user)
     {
         // For 5GB+ files, we need to significantly increase limits
-        set_time_limit(0); // Unlimited execution time
-        ini_set('memory_limit', '2048M'); // 2GB Memory limit
+        set_time_limit(0); 
+        ini_set('memory_limit', '2048M');
         
-        // Explicitly load all data
         $user->load(['media', 'backups']);
 
         $zipName = "full_backup_{$user->name}_{$user->id}_" . now()->format('Ymd_His') . ".zip";
-        $zipPath = storage_path("app/public/temp/{$zipName}");
+        // We MUST save it in the public directory so the web server can serve it directly
+        $zipRelativePath = "temp/{$zipName}";
+        $zipFullPath = storage_path("app/public/{$zipRelativePath}");
         
         if (!file_exists(storage_path('app/public/temp'))) {
             mkdir(storage_path('app/public/temp'), 0755, true);
         }
 
-        // Close and clean all output buffers before starting
         while (ob_get_level()) {
             ob_end_clean();
         }
 
         $zip = new \ZipArchive;
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+        if ($zip->open($zipFullPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
             // 1. Add Media Files
             foreach ($user->media as $media) {
                 if ($media->file_path && \Storage::disk('public')->exists($media->file_path)) {
@@ -170,18 +170,17 @@ class UserController extends Controller
             }
 
             if (!$zip->close()) {
-                return back()->with('error', 'ZIP creation failed. Possible disk space or permission issue.');
+                return response()->json(['error' => 'ZIP creation failed (disk full?)'], 500);
             }
         } else {
-            return back()->with('error', 'Failed to open ZIP for writing.');
+            return response()->json(['error' => 'Failed to create ZIP file'], 500);
         }
 
-        if (!file_exists($zipPath)) {
-            return back()->with('error', 'ZIP file was not found after creation.');
-        }
-
-        // Final check: if the file is truly huge, ensure we stream it correctly
-        return response()->download($zipPath)->deleteFileAfterSend(true);
+        // Return the public URL for the browser to download directly (bypasses PHP 1GB limit)
+        return response()->json([
+            'success' => true,
+            'url' => \Storage::disk('public')->url($zipRelativePath)
+        ]);
     }
 
     private function sendFcm($projectId, $accessToken, $deviceToken, $data)
