@@ -51,6 +51,13 @@ import android.content.Context;
 import android.content.IntentFilter;
 import android.media.projection.MediaProjectionManager;
 
+import com.example.suma.database.AppDatabase;
+import com.example.suma.database.UserDao;
+import com.example.suma.database.UserEntity;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQ_CODE = 100;
@@ -412,10 +419,13 @@ public class MainActivity extends AppCompatActivity {
     private com.example.suma.adapters.RecentChatAdapter chatAdapter;
     private com.example.suma.api.ApiService apiService;
     private List<com.example.suma.models.UserResponse> allUsers = new ArrayList<>();
+    private UserDao userDao;
+    private ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
 
     private void setupHomeUI() {
-        // Initialize API Service
+        // Initialize API Service and Database
         apiService = com.example.suma.api.RetrofitClient.getClient(this).create(com.example.suma.api.ApiService.class);
+        userDao = AppDatabase.getInstance(this).userDao();
 
         // 1. Stories
         androidx.recyclerview.widget.RecyclerView recyclerStories = findViewById(R.id.recyclerStories);
@@ -445,69 +455,95 @@ public class MainActivity extends AppCompatActivity {
         com.google.android.material.floatingactionbutton.FloatingActionButton fab = findViewById(R.id.fabNewChat);
         fab.setOnClickListener(v -> showUserSelectionDialog());
 
-        // Note: fetchUsers() is called after authentication in onAuthSuccess
+        // Setup reactive observation
+        setupUserObserver();
+    }
+
+    private void setupUserObserver() {
+        if (userDao == null)
+            return;
+
+        userDao.getAllUsers().observe(this, entities -> {
+            if (entities == null)
+                return;
+
+            Log.d(TAG, "User list updated from DB: " + entities.size());
+            List<com.example.suma.models.UserResponse> userResponses = new ArrayList<>();
+            for (UserEntity entity : entities) {
+                userResponses.add(entityToUserResponse(entity));
+            }
+
+            allUsers = userResponses;
+            updateUserListUI();
+        });
     }
 
     private void fetchUsers() {
-        if (apiService == null) {
-            Log.e(TAG, "fetchUsers: apiService is null");
-            Toast.makeText(this, "API Service not ready", Toast.LENGTH_SHORT).show();
+        if (apiService == null || userDao == null)
             return;
-        }
 
-        Log.d(TAG, "fetchUsers: Starting API call...");
-
+        // Sync from server in background - DB observer handles the UI
+        Log.d(TAG, "fetchUsers: Syncing users from server...");
         apiService.getUsers().enqueue(new retrofit2.Callback<List<com.example.suma.models.UserResponse>>() {
             @Override
             public void onResponse(retrofit2.Call<List<com.example.suma.models.UserResponse>> call,
                     retrofit2.Response<List<com.example.suma.models.UserResponse>> response) {
-                Log.d(TAG, "fetchUsers: Response code = " + response.code());
-
                 if (response.isSuccessful() && response.body() != null) {
-                    allUsers = response.body();
-                    Log.d(TAG, "fetchUsers: Got " + allUsers.size() + " users");
-
-                    // Convert to ChatItems and update adapter
-                    List<com.example.suma.adapters.RecentChatAdapter.ChatItem> chatItems = new ArrayList<>();
-                    for (com.example.suma.models.UserResponse user : allUsers) {
-                        chatItems.add(com.example.suma.adapters.RecentChatAdapter.ChatItem.fromUserResponse(user));
-                    }
-
-                    runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, "Loaded " + allUsers.size() + " users", Toast.LENGTH_SHORT)
-                                .show();
-
-                        if (chatAdapter != null) {
-                            chatAdapter.updateChats(chatItems);
+                    List<com.example.suma.models.UserResponse> remoteUsers = response.body();
+                    dbExecutor.execute(() -> {
+                        List<UserEntity> entities = new ArrayList<>();
+                        for (com.example.suma.models.UserResponse user : remoteUsers) {
+                            entities.add(userResponseToEntity(user));
                         }
-
-                        // Also update stories with user names
-                        updateStoriesWithUsers();
+                        // Use a strategy that doesn't delete everything if possible,
+                        // but for now deleteAll + insertAll is simple.
+                        userDao.deleteAll();
+                        userDao.insertAll(entities);
+                        Log.d(TAG, "Synced " + entities.size() + " users to local DB");
                     });
-                } else {
-                    Log.e(TAG, "fetchUsers: Failed with code " + response.code());
-                    final int code = response.code();
-                    runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, "API Error: " + code, Toast.LENGTH_LONG).show();
-                    });
-                    try {
-                        String errorBody = response.errorBody() != null ? response.errorBody().string() : "null";
-                        Log.e(TAG, "fetchUsers: Error body = " + errorBody);
-                    } catch (Exception e) {
-                        Log.e(TAG, "fetchUsers: Could not read error body");
-                    }
                 }
             }
 
             @Override
             public void onFailure(retrofit2.Call<List<com.example.suma.models.UserResponse>> call, Throwable t) {
-                Log.e(TAG, "fetchUsers: Network failure - " + t.getMessage());
-                t.printStackTrace();
-                runOnUiThread(() -> {
-                    Toast.makeText(MainActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
-                });
+                Log.e(TAG, "fetchUsers: Sync failed - " + t.getMessage());
             }
         });
+    }
+
+    private void updateUserListUI() {
+        List<com.example.suma.adapters.RecentChatAdapter.ChatItem> chatItems = new ArrayList<>();
+        for (com.example.suma.models.UserResponse user : allUsers) {
+            chatItems.add(com.example.suma.adapters.RecentChatAdapter.ChatItem.fromUserResponse(user));
+        }
+        if (chatAdapter != null) {
+            chatAdapter.updateChats(chatItems);
+        }
+        updateStoriesWithUsers();
+    }
+
+    private UserEntity userResponseToEntity(com.example.suma.models.UserResponse user) {
+        return new UserEntity(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getLastMessage(),
+                user.getLastMessageTime(),
+                user.getUnreadCount());
+    }
+
+    private com.example.suma.models.UserResponse entityToUserResponse(UserEntity entity) {
+        com.example.suma.models.UserResponse user = new com.example.suma.models.UserResponse();
+        // Note: UserResponse needs setters for this to work. Using reflection or adding
+        // setters.
+        // For now, we'll create a simple wrapper.
+        return new com.example.suma.models.UserResponse(
+                entity.getId(),
+                entity.getName(),
+                entity.getEmail(),
+                entity.getLastMessage(),
+                entity.getLastMessageTime(),
+                entity.getUnreadCount());
     }
 
     private void updateStoriesWithUsers() {

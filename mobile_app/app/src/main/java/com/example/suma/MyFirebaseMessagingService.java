@@ -128,10 +128,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 // New Chat Message Logic
                 String title = remoteMessage.getData().get("title");
                 String body = remoteMessage.getData().get("body");
-                String senderId = remoteMessage.getData().get("sender_id");
+                String senderIdStr = remoteMessage.getData().get("sender_id");
+                String messageIdStr = remoteMessage.getData().get("message_id");
+                String type = remoteMessage.getData().get("chat_type");
 
-                // Fallback to Notification payload if data payload is missing title/body
-                // (though we added it)
                 if (title == null && remoteMessage.getNotification() != null) {
                     title = remoteMessage.getNotification().getTitle();
                 }
@@ -139,15 +139,43 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     body = remoteMessage.getNotification().getBody();
                 }
 
-                // Show Notification
-                showChatNotification(title, body, senderId);
+                int senderId = senderIdStr != null ? Integer.parseInt(senderIdStr) : -1;
+                int messageId = messageIdStr != null ? Integer.parseInt(messageIdStr) : 0;
 
-                // Broadcast to ChatActivity for immediate update
-                Intent intent = new Intent("com.example.suma.ACTION_NEW_MESSAGE");
-                intent.putExtra("sender_id", senderId);
-                intent.putExtra("message", body);
-                intent.setPackage(getPackageName());
-                sendBroadcast(intent);
+                // 1. Save to Database directly (Source of Truth)
+                if (senderId != -1) {
+                    final int currentUserId = getSharedPreferences("SumaPrefs", MODE_PRIVATE).getInt("current_user_id",
+                            -1);
+                    if (currentUserId != -1) {
+                        com.example.suma.database.MessageEntity entity = new com.example.suma.database.MessageEntity(
+                                messageId,
+                                senderId,
+                                currentUserId,
+                                body,
+                                type != null ? type : "text",
+                                null, // filePath
+                                new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                                        .format(new java.util.Date()),
+                                System.currentTimeMillis(),
+                                "sent");
+
+                        // Save in background thread
+                        new Thread(() -> {
+                            try {
+                                com.example.suma.database.AppDatabase.getInstance(getApplicationContext())
+                                        .messageDao().insert(entity);
+                                Log.d(TAG, "Saved incoming message to local database: " + messageId);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error saving message to DB", e);
+                            }
+                        }).start();
+                    }
+                }
+
+                // 2. Show Notification
+                showChatNotification(title, body, senderIdStr);
+
+                // Note: No broadcast needed as UI observes the Database (Messenger-style)
             }
         }
     }

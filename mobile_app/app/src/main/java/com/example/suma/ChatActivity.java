@@ -64,6 +64,8 @@ public class ChatActivity extends AppCompatActivity {
     private ApiService apiService;
     private int otherUserId; // The user we are chatting with
     private int currentUserId = -1; // We need to fetch this
+    private static final String PREFS_NAME = "SumaPrefs";
+    private static final String KEY_CURRENT_USER_ID = "current_user_id";
 
     private MediaRecorder mediaRecorder;
     private String audioFileName;
@@ -72,6 +74,7 @@ public class ChatActivity extends AppCompatActivity {
     // Database
     private MessageDao messageDao;
     private ExecutorService executor = Executors.newSingleThreadExecutor();
+    private boolean initialSyncDone = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +99,16 @@ public class ChatActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Fetch current user ID first
+        // Load cached user ID for instant message loading
+        currentUserId = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getInt(KEY_CURRENT_USER_ID, -1);
+        Log.d("ChatActivity", "Loaded cached user ID: " + currentUserId);
+
+        // Initialize reactive observation if user ID available
+        if (currentUserId > 0) {
+            setupMessageObserver();
+        }
+
+        // Refresh current user ID from server
         fetchCurrentUser();
 
         buttonSend.setOnClickListener(v -> sendMessage("text", null));
@@ -136,123 +148,76 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    private android.content.BroadcastReceiver messageReceiver = new android.content.BroadcastReceiver() {
-        @Override
-        public void onReceive(android.content.Context context, Intent intent) {
-            if ("com.example.suma.ACTION_NEW_MESSAGE".equals(intent.getAction())) {
-                String senderIdStr = intent.getStringExtra("sender_id");
-                if (senderIdStr != null) {
-                    try {
-                        int senderId = Integer.parseInt(senderIdStr);
-                        // If the message is from the user we are currently chatting with, refresh
-                        if (senderId == otherUserId) {
-                            fetchMessages();
-                            // Optional: Play a sound or vibrate if needed, though system notification might
-                            // handle it
-                        }
-                    } catch (NumberFormatException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-    };
-
     @Override
     protected void onResume() {
         super.onResume();
-        // Register BroadcastReceiver
-        android.content.IntentFilter filter = new android.content.IntentFilter("com.example.suma.ACTION_NEW_MESSAGE");
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(messageReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(messageReceiver, filter);
-        }
-
-        // Refresh messages if UI is ready
-        if (adapter != null && currentUserId > 0) {
-            fetchMessages();
-        }
+        // Reactive UI handles everything via setupMessageObserver (called in onCreate)
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        try {
-            unregisterReceiver(messageReceiver);
-        } catch (IllegalArgumentException e) {
-            // Receiver not registered
-        }
+    }
+
+    private void setupMessageObserver() {
+        if (currentUserId <= 0)
+            return;
+
+        runOnUiThread(() -> {
+            if (adapter == null) {
+                adapter = new MessageAdapter(this, currentUserId);
+                recyclerView.setAdapter(adapter);
+            }
+
+            // Observe the database (Source of Truth)
+            messageDao.getMessagesForChat(currentUserId, otherUserId).observe(this, entities -> {
+                List<Message> messages = new ArrayList<>();
+                for (MessageEntity entity : entities) {
+                    messages.add(entityToMessage(entity));
+                }
+                adapter.setMessages(messages);
+                recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+                Log.d("ChatActivity", "UI updated from database: " + messages.size() + " messages");
+
+                // Once we have messages, we can sync from server ONLY ONCE to get any missing
+                // ones
+                // Future updates are handled by FCM saving directly to DB
+                if (!initialSyncDone) {
+                    int maxId = 0;
+                    for (MessageEntity e : entities)
+                        if (e.getId() > maxId)
+                            maxId = e.getId();
+                    syncNewMessages(maxId);
+                    initialSyncDone = true;
+                }
+            });
+        });
     }
 
     private void fetchCurrentUser() {
-        // Fetch current user from API to get the user ID for message alignment
+        // Fetch current user from API
         apiService.getCurrentUser().enqueue(new Callback<com.example.suma.models.CurrentUser>() {
             @Override
             public void onResponse(Call<com.example.suma.models.CurrentUser> call,
                     Response<com.example.suma.models.CurrentUser> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    currentUserId = response.body().getId();
-                    Log.d("ChatActivity", "Current user ID: " + currentUserId);
+                    int newUserId = response.body().getId();
+                    boolean userIdChanged = (currentUserId != newUserId);
 
-                    // Now initialize adapter and fetch messages
-                    adapter = new MessageAdapter(ChatActivity.this, currentUserId);
-                    recyclerView.setAdapter(adapter);
-                    fetchMessages();
-                } else {
-                    Log.e("ChatActivity", "Failed to get current user: " + response.code());
-                    // Fallback - try to fetch messages anyway
-                    fetchMessages();
+                    currentUserId = newUserId;
+                    getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                            .putInt(KEY_CURRENT_USER_ID, currentUserId).apply();
+
+                    if (userIdChanged || adapter == null) {
+                        setupMessageObserver();
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<com.example.suma.models.CurrentUser> call, Throwable t) {
                 Log.e("ChatActivity", "Error fetching current user: " + t.getMessage());
-                // Fallback - try to fetch messages anyway
-                fetchMessages();
             }
-        });
-    }
-
-    // Load cached messages first, then sync new ones from server
-    private void fetchMessages() {
-        if (currentUserId <= 0) {
-            Log.w("ChatActivity", "Current user ID not set, skipping fetch");
-            return;
-        }
-
-        // Step 1: Load from local cache first (instant display)
-        executor.execute(() -> {
-            List<MessageEntity> cachedEntities = messageDao.getMessagesForChat(currentUserId, otherUserId);
-            List<Message> cachedMessages = new ArrayList<>();
-            int maxId = 0;
-
-            for (MessageEntity entity : cachedEntities) {
-                cachedMessages.add(entityToMessage(entity));
-                if (entity.getId() > maxId) {
-                    maxId = entity.getId();
-                }
-            }
-
-            final int afterId = maxId;
-            final List<Message> localMessages = cachedMessages;
-
-            // Display cached messages immediately
-            runOnUiThread(() -> {
-                if (!localMessages.isEmpty()) {
-                    if (adapter == null) {
-                        adapter = new MessageAdapter(ChatActivity.this, currentUserId);
-                        recyclerView.setAdapter(adapter);
-                    }
-                    adapter.setMessages(localMessages);
-                    recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-                    Log.d("ChatActivity", "Loaded " + localMessages.size() + " cached messages");
-                }
-
-                // Step 2: Fetch only new messages from server
-                syncNewMessages(afterId);
-            });
         });
     }
 
@@ -268,26 +233,21 @@ public class ChatActivity extends AppCompatActivity {
                     Log.d("ChatActivity", "Received " + newMessages.size() + " new messages from server");
 
                     if (!newMessages.isEmpty()) {
-                        // Save to local database
+                        // Save to local database (Source of Truth)
+                        // The LiveData observer will automatically update the UI
                         executor.execute(() -> {
                             List<MessageEntity> entities = new ArrayList<>();
                             for (Message msg : newMessages) {
-                                entities.add(messageToEntity(msg));
+                                MessageEntity entity = messageToEntity(msg);
+                                // Ensure timestamp is parsed from created_at if not present
+                                if (entity.getTimestamp() == 0 && entity.getCreatedAt() != null) {
+                                    entity.setTimestamp(parseDateToLong(entity.getCreatedAt()));
+                                }
+                                entities.add(entity);
                             }
                             messageDao.insertAll(entities);
+                            Log.d("ChatActivity", "Synced " + entities.size() + " new messages to DB");
                         });
-
-                        // Update UI
-                        if (adapter == null) {
-                            adapter = new MessageAdapter(ChatActivity.this, currentUserId);
-                            recyclerView.setAdapter(adapter);
-                            adapter.setMessages(newMessages);
-                        } else {
-                            for (Message msg : newMessages) {
-                                adapter.addMessage(msg);
-                            }
-                        }
-                        recyclerView.scrollToPosition(adapter.getItemCount() - 1);
                     }
                 }
             }
@@ -303,13 +263,15 @@ public class ChatActivity extends AppCompatActivity {
     // Convert Message to MessageEntity
     private MessageEntity messageToEntity(Message msg) {
         return new MessageEntity(
-                msg.getId(),
+                msg.getId() == -1 ? null : msg.getId(),
                 msg.getSenderId(),
                 msg.getReceiverId(),
                 msg.getMessage(),
                 msg.getType(),
                 msg.getFilePath(),
-                msg.getCreatedAt());
+                msg.getCreatedAt(),
+                parseDateToLong(msg.getCreatedAt()),
+                msg.getStatus());
     }
 
     // Convert MessageEntity to Message
@@ -320,9 +282,29 @@ public class ChatActivity extends AppCompatActivity {
                 entity.getMessage(),
                 entity.getType(),
                 entity.getCreatedAt());
-        msg.setId(entity.getId());
+        msg.setId(entity.getId() == null ? -1 : entity.getId());
         msg.setFilePath(entity.getFilePath());
+        msg.setStatus(entity.getStatus());
         return msg;
+    }
+
+    private long parseDateToLong(String dateStr) {
+        if (dateStr == null)
+            return System.currentTimeMillis();
+        try {
+            // Laravel uses ISO 8601 or Y-m-d H:i:s
+            java.text.SimpleDateFormat sdf;
+            if (dateStr.contains("T")) {
+                sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", java.util.Locale.getDefault());
+                sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            } else {
+                sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
+            }
+            java.util.Date date = sdf.parse(dateStr);
+            return date != null ? date.getTime() : System.currentTimeMillis();
+        } catch (Exception e) {
+            return System.currentTimeMillis();
+        }
     }
 
     private void sendMessage(String type, File file) {
@@ -330,28 +312,36 @@ public class ChatActivity extends AppCompatActivity {
         if (type.equals("text") && content.isEmpty())
             return;
 
-        // 1. Optimistic Update: Create temporary message and show immediately
-        final Message tempMessage = new Message(
+        // 1. Optimistic Update (Database-First)
+        long now = System.currentTimeMillis();
+        final MessageEntity optimisticEntity = new MessageEntity(
+                null, // No server ID yet - SQLite allows multiple NULLs in UNIQUE index
                 currentUserId,
                 otherUserId,
                 content,
                 type,
+                file != null ? file.getAbsolutePath() : null,
                 new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-                        .format(new java.util.Date()));
+                        .format(new java.util.Date(now)),
+                now,
+                "sending");
 
-        // If file is present, we might want to show a placeholder or wait.
-        // For text, we show immediately.
-        if (type.equals("text")) {
-            editTextMessage.setText(""); // Clear immediately
-            if (adapter != null) {
-                adapter.addMessage(tempMessage);
-                recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-            }
-        }
+        editTextMessage.setText(""); // Clear UI immediately
 
+        executor.execute(() -> {
+            long localId = messageDao.insert(optimisticEntity);
+            optimisticEntity.setLocalId((int) localId);
+
+            // 2. Perform Network Call
+            performSendMessageNetworkCall(optimisticEntity, file);
+        });
+    }
+
+    private void performSendMessageNetworkCall(MessageEntity entity, File file) {
         RequestBody receiverIdPart = RequestBody.create(MediaType.parse("text/plain"), String.valueOf(otherUserId));
-        RequestBody typePart = RequestBody.create(MediaType.parse("text/plain"), type);
-        RequestBody messagePart = RequestBody.create(MediaType.parse("text/plain"), content);
+        RequestBody typePart = RequestBody.create(MediaType.parse("text/plain"), entity.getType());
+        RequestBody messagePart = RequestBody.create(MediaType.parse("text/plain"),
+                entity.getMessage() != null ? entity.getMessage() : "");
 
         Call<Message> call;
         if (file != null) {
@@ -365,55 +355,34 @@ public class ChatActivity extends AppCompatActivity {
         call.enqueue(new Callback<Message>() {
             @Override
             public void onResponse(Call<Message> call, Response<Message> response) {
-                if (response.isSuccessful()) {
-                    Message serverMessage = response.body();
-                    if (adapter != null) {
-                        // 2. Update the temp message with real data (ID, timestamp, etc.)
-                        // For simplicity in this demo, since we already added the temp message,
-                        // and the server returns the same content, we essentially just 'confirm' it.
-                        // In a more complex app, we'd replace the item in the adapter by ID or Ref.
-                        // Here, we can just update the ID of the last item if it matches.
+                if (response.isSuccessful() && response.body() != null) {
+                    Message serverMsg = response.body();
+                    // Update the optimistic entity with server data
+                    entity.setId(serverMsg.getId());
+                    entity.setStatus("sent");
+                    entity.setCreatedAt(serverMsg.getCreatedAt());
+                    entity.setTimestamp(parseDateToLong(serverMsg.getCreatedAt()));
+                    entity.setFilePath(serverMsg.getFilePath()); // Server might have different path
 
-                        // Actually, since we already added 'tempMessage', we should probably just
-                        // update its ID
-                        // so that subsequent interactions work?
-                        // Or, strictly speaking, just do nothing visually because it's already there!
-
-                        // However, to be safe and ensure everything is synced (like proper ID from DB),
-                        // we can iterate and find the one with ID=-1 and replace it.
-                        List<Message> currentList = adapter.getMessages();
-                        for (int i = currentList.size() - 1; i >= 0; i--) {
-                            if (currentList.get(i).getId() == -1 &&
-                                    currentList.get(i).getMessage().equals(serverMessage.getMessage())) {
-                                currentList.set(i, serverMessage);
-                                adapter.notifyItemChanged(i);
-                                break;
-                            }
-                        }
-
-                        // If it wasn't text (e.g. image), we ensure it's added now if we didn't add it
-                        // optimistically
-                        if (!type.equals("text")) {
-                            editTextMessage.setText("");
-                            adapter.addMessage(serverMessage);
-                            recyclerView.scrollToPosition(adapter.getItemCount() - 1);
-                        }
-                    }
+                    executor.execute(() -> {
+                        messageDao.update(entity);
+                        Log.d("ChatActivity", "Message confirmed by server: " + entity.getId());
+                    });
                 } else {
-                    Toast.makeText(ChatActivity.this, "Send Failed: " + response.code(), Toast.LENGTH_SHORT).show();
-                    // Remove temp message if failed
-                    if (type.equals("text") && adapter != null) {
-                        // Logic to remove last message if it was temp
-                    }
+                    updateMessageStatus(entity, "error");
                 }
             }
 
             @Override
             public void onFailure(Call<Message> call, Throwable t) {
-                Toast.makeText(ChatActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                // Remove temp message if failed
+                updateMessageStatus(entity, "error");
             }
         });
+    }
+
+    private void updateMessageStatus(MessageEntity entity, String status) {
+        entity.setStatus(status);
+        executor.execute(() -> messageDao.update(entity));
     }
 
     // Audio & Image Logic

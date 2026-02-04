@@ -48,7 +48,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         this.messages.add(message);
         notifyItemInserted(messages.size() - 1);
     }
-    
+
     public List<Message> getMessages() {
         return messages;
     }
@@ -106,6 +106,19 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         public void bind(Message message) {
             textTimestamp.setText(message.getCreatedAt());
 
+            // Handle Status (Optimistic UI)
+            if ("sending".equals(message.getStatus())) {
+                itemView.setAlpha(0.6f);
+                textTimestamp.setText("Sending...");
+            } else if ("error".equals(message.getStatus())) {
+                itemView.setAlpha(1.0f);
+                textTimestamp.setText("Error");
+                textTimestamp.setTextColor(context.getResources().getColor(android.R.color.holo_red_dark));
+            } else {
+                itemView.setAlpha(1.0f);
+                textTimestamp.setTextColor(context.getResources().getColor(android.R.color.darker_gray));
+            }
+
             if ("text".equals(message.getType())) {
                 textMessage.setVisibility(View.VISIBLE);
                 textMessage.setText(message.getMessage());
@@ -121,7 +134,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
                         .load(imageUrl)
                         .centerCrop()
                         .into(imageMessage);
-                        
+
                 if (message.getMessage() != null && !message.getMessage().isEmpty()) {
                     textMessage.setVisibility(View.VISIBLE);
                     textMessage.setText(message.getMessage());
@@ -135,7 +148,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
                 btnPlayAudio.setOnClickListener(v -> playAudio(message.getFilePath()));
             }
         }
-        
+
         private void playAudio(String path) {
             if (mediaPlayer != null) {
                 mediaPlayer.release();

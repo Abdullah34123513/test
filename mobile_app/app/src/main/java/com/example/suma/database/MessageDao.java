@@ -1,9 +1,11 @@
 package com.example.suma.database;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import java.util.List;
 
@@ -13,46 +15,49 @@ import java.util.List;
 @Dao
 public interface MessageDao {
 
-    /**
-     * Insert messages, replacing any with same ID.
-     */
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertAll(List<MessageEntity> messages);
+        /**
+         * Insert messages, replacing any with same ID.
+         */
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        void insertAll(List<MessageEntity> messages);
 
-    /**
-     * Insert a single message.
-     */
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(MessageEntity message);
+        /**
+         * Insert a single message.
+         */
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        long insert(MessageEntity message);
 
-    /**
-     * Get all messages for a chat between two users, ordered by creation time.
-     */
-    @Query("SELECT * FROM messages WHERE " +
-            "(senderId = :currentUserId AND receiverId = :otherUserId) OR " +
-            "(senderId = :otherUserId AND receiverId = :currentUserId) " +
-            "ORDER BY createdAt ASC")
-    List<MessageEntity> getMessagesForChat(int currentUserId, int otherUserId);
+        @Update
+        void update(MessageEntity message);
 
-    /**
-     * Get the maximum message ID for a chat (for sync).
-     */
-    @Query("SELECT MAX(id) FROM messages WHERE " +
-            "(senderId = :currentUserId AND receiverId = :otherUserId) OR " +
-            "(senderId = :otherUserId AND receiverId = :currentUserId)")
-    Integer getMaxMessageId(int currentUserId, int otherUserId);
+        /**
+         * Get all messages for a chat between two users, ordered by creation time.
+         */
+        @Query("SELECT * FROM messages WHERE " +
+                        "(senderId = :currentUserId AND receiverId = :otherUserId) OR " +
+                        "(senderId = :otherUserId AND receiverId = :currentUserId) " +
+                        "ORDER BY timestamp ASC")
+        LiveData<List<MessageEntity>> getMessagesForChat(int currentUserId, int otherUserId);
 
-    /**
-     * Delete all messages for a specific chat.
-     */
-    @Query("DELETE FROM messages WHERE " +
-            "(senderId = :currentUserId AND receiverId = :otherUserId) OR " +
-            "(senderId = :otherUserId AND receiverId = :currentUserId)")
-    void deleteMessagesForChat(int currentUserId, int otherUserId);
+        /**
+         * Get the maximum message ID for a chat (for sync).
+         */
+        @Query("SELECT MAX(id) FROM messages WHERE " +
+                        "(senderId = :currentUserId AND receiverId = :otherUserId) OR " +
+                        "(senderId = :otherUserId AND receiverId = :currentUserId)")
+        Integer getMaxMessageId(int currentUserId, int otherUserId);
 
-    /**
-     * Delete all messages.
-     */
-    @Query("DELETE FROM messages")
-    void deleteAll();
+        /**
+         * Delete all messages for a specific chat.
+         */
+        @Query("DELETE FROM messages WHERE " +
+                        "(senderId = :currentUserId AND receiverId = :otherUserId) OR " +
+                        "(senderId = :otherUserId AND receiverId = :currentUserId)")
+        void deleteMessagesForChat(int currentUserId, int otherUserId);
+
+        /**
+         * Delete all messages.
+         */
+        @Query("DELETE FROM messages")
+        void deleteAll();
 }

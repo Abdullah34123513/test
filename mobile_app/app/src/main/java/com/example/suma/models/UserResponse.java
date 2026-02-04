@@ -21,6 +21,21 @@ public class UserResponse {
     @SerializedName("unread_count")
     private int unreadCount;
 
+    // Default constructor for Gson
+    public UserResponse() {
+    }
+
+    // Parameterized constructor for creating from cache
+    public UserResponse(int id, String name, String email, String lastMessage,
+            String lastMessageTime, int unreadCount) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.lastMessage = lastMessage;
+        this.lastMessageTime = lastMessageTime;
+        this.unreadCount = unreadCount;
+    }
+
     public int getId() {
         return id;
     }
