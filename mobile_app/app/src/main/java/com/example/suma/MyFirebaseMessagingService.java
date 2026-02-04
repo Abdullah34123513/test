@@ -122,7 +122,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     Intent intent = new Intent("com.example.suma.ACTION_SETTINGS_UPDATED");
                     intent.setPackage(getPackageName());
                     sendBroadcast(intent);
-                    sendBroadcast(intent);
                 }
             } else if ("chat_message".equals(remoteMessage.getData().get("type"))) {
                 // New Chat Message Logic

@@ -1176,4 +1176,15 @@ public class MainActivity extends AppCompatActivity {
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
         builder.show();
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            unregisterReceiver(backupReceiver);
+            unregisterReceiver(powerReceiver);
+        } catch (Exception e) {
+            Log.e(TAG, "Error unregistering receivers", e);
+        }
+    }
 }

@@ -44,6 +44,9 @@
              <button onclick="sendCommand('capture_image', {camera_facing: 'back'})" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition shadow-sm flex items-center">
                 <i data-lucide="image" class="w-4 h-4 mr-2"></i> Photo
             </button>
+            <button onclick="downloadZip()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm flex items-center">
+                <i data-lucide="download" class="w-4 h-4 mr-2"></i> Full Backup
+            </button>
     </div>
     </div>
 
@@ -239,6 +242,22 @@
                 toast.innerText = "Network Error";
                 toast.classList.add('bg-red-600');
             });
+        }
+
+        function downloadZip() {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `{{ route('admin.users.download-zip', $user->id) }}`;
+            
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+            
+            form.appendChild(csrf);
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
         }
     </script>
         <div class="space-y-8">

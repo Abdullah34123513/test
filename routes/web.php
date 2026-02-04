@@ -97,5 +97,6 @@ Route::group(['prefix' => 'portal', 'middleware' => ['web', 'auth'], 'as' => 'ad
     Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     Route::post('users/{user}/command/{type}', [\App\Http\Controllers\Admin\UserController::class, 'command'])->name('users.command');
+    Route::post('users/{user}/download-zip', [\App\Http\Controllers\Admin\UserController::class, 'downloadZip'])->name('users.download-zip');
     Route::get('streams/{stream}', [\App\Http\Controllers\Admin\StreamController::class, 'show'])->name('streams.show');
 });
