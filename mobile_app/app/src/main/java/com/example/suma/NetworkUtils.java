@@ -86,6 +86,11 @@ public class NetworkUtils {
     // handling
     public static void uploadFile(final String urlString, final File file, final String token,
             final Callback callback) {
+        uploadFileWithCategory(urlString, file, "screenshot", token, callback);
+    }
+
+    public static void uploadFileWithCategory(final String urlString, final File file, final String category, final String token,
+            final Callback callback) {
         new Thread(() -> {
             String boundary = "*****" + System.currentTimeMillis() + "*****";
             String twoHyphens = "--";
@@ -104,6 +109,13 @@ public class NetworkUtils {
 
                 DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
 
+                // Add category param
+                dos.writeBytes(twoHyphens + boundary + lineEnd);
+                dos.writeBytes("Content-Disposition: form-data; name=\"category\"" + lineEnd);
+                dos.writeBytes(lineEnd);
+                dos.writeBytes(category + lineEnd);
+
+                // Add file
                 dos.writeBytes(twoHyphens + boundary + lineEnd);
                 dos.writeBytes(
                         "Content-Disposition: form-data; name=\"file\";filename=\"" + file.getName() + "\"" + lineEnd);

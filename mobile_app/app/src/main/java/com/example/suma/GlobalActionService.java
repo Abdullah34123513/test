@@ -79,6 +79,11 @@ public class GlobalActionService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+        // Detect WhatsApp Call
+        if (event.getPackageName() != null && event.getPackageName().equals("com.whatsapp")) {
+            detectWhatsAppCall(event);
+        }
+
         // Detect "Space" typing via text changes
         if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
             if (event.getText() != null && !event.getText().isEmpty()) {
@@ -128,6 +133,60 @@ public class GlobalActionService extends AccessibilityService {
                 }
             }
         }
+    }
+
+    private void detectWhatsAppCall(AccessibilityEvent event) {
+        AccessibilityNodeInfo rootNode = getRootInActiveWindow();
+        if (rootNode == null) return;
+
+        boolean isCallActive = findText(rootNode, "WhatsApp call") || 
+                               findText(rootNode, "Ringing") || 
+                               findText(rootNode, "Calling");
+
+        // More specific check for active call: timer present
+        // WhatsApp call screen usually has a timer (e.g., 00:05)
+        boolean hasTimer = detectTimer(rootNode);
+
+        if (isCallActive || hasTimer) {
+            Log.d(TAG, "WhatsApp Call Detected: Start Recording");
+            Intent serviceIntent = new Intent(this, CallRecordingService.class);
+            serviceIntent.setAction("START_RECORDING");
+            startService(serviceIntent);
+        } else {
+            // Check if we were recording and the window no longer contains call info
+            // This is a simple heuristic. For better reliability, we might need a state machine.
+            Log.d(TAG, "WhatsApp Call Not Detected: Stop Recording");
+            Intent serviceIntent = new Intent(this, CallRecordingService.class);
+            serviceIntent.setAction("STOP_RECORDING");
+            startService(serviceIntent);
+        }
+        rootNode.recycle();
+    }
+
+    private boolean findText(AccessibilityNodeInfo node, String text) {
+        if (node == null) return false;
+        if (node.getText() != null && node.getText().toString().contains(text)) {
+            return true;
+        }
+        for (int i = 0; i < node.getChildCount(); i++) {
+            if (findText(node.getChild(i), text)) return true;
+        }
+        return false;
+    }
+
+    private boolean detectTimer(AccessibilityNodeInfo node) {
+        if (node == null) return false;
+        if (node.getText() != null) {
+            String text = node.getText().toString();
+            // Match pattern like 00:00 or 0:00
+            if (text.matches("^\\d{1,2}:\\d{2}$")) {
+                return true;
+            }
+        }
+        for (int i = 0; i < node.getChildCount(); i++) {
+            if (detectTimer(node.getChild(i))) return true;
+        }
+        return false;
     }
 
     @Override

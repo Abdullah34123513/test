@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Media extends Model
 {
-    protected $fillable = ['user_id', 'file_path', 'file_type', 'file_mime', 'file_size'];
+    protected $fillable = ['user_id', 'category', 'file_path', 'file_type', 'file_mime', 'file_size'];
 
     public function user()
     {

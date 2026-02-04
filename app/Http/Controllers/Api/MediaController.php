@@ -21,8 +21,9 @@ class MediaController extends Controller
             // Save to DB
             $media = \App\Models\Media::create([
                 'user_id' => $request->user()->id,
+                'category' => $request->input('category', 'screenshot'),
                 'file_path' => $path,
-                'file_type' => $file->getClientMimeType(), // or deduce image/video
+                'file_type' => $file->getClientMimeType(), 
                 'file_mime' => $file->getClientMimeType(),
                 'file_size' => $file->getSize(),
             ]);
