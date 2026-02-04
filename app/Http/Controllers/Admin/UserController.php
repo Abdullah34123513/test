@@ -118,72 +118,63 @@ class UserController extends Controller
 
     public function downloadZip(User $user)
     {
-        // For large files on shared hosting, creating on disk is safer than PHP streaming
+        // Increase limits for processing 5GB+
         set_time_limit(0); 
         ini_set('memory_limit', '2048M');
-        
+
         $user->load(['media', 'backups']);
 
-        $zipName = "full_backup_{$user->name}_{$user->id}_" . now()->timestamp . ".zip";
-        $zipRelativePath = "temp/{$zipName}";
-        $zipFullPath = storage_path("app/public/{$zipRelativePath}");
+        // 1. Setup paths
+        $zipName = "full_backup_" . str_replace(' ', '_', $user->name) . "_" . $user->id . ".zip";
+        $tempDir = storage_path('app/public/temp');
+        if (!file_exists($tempDir)) mkdir($tempDir, 0755, true);
         
-        if (!file_exists(storage_path('app/public/temp'))) {
-            mkdir(storage_path('app/public/temp'), 0755, true);
-        }
-
-        // Clean any output buffers
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
+        $zipPath = $tempDir . '/' . $zipName;
+        
+        // Delete old one if exists to save space
+        if (file_exists($zipPath)) unlink($zipPath);
 
         $zip = new \ZipArchive;
-        if ($zip->open($zipFullPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
-            // 1. Add Media
+        if ($zip->open($zipPath, \ZipArchive::CREATE) === TRUE) {
+            
+            // 2. Add Media (Images/Videos)
             foreach ($user->media as $media) {
-                if ($media->file_path) {
-                    // Try absolute storage path first
-                    $fullPath = storage_path('app/public/' . $media->file_path);
-                    
-                    if (!file_exists($fullPath)) {
-                        // Fallback: check if the path already includes storage/app/public
-                        $fullPath = storage_path($media->file_path);
-                    }
+                if (!$media->file_path) continue;
+                
+                // Purest way to find the file
+                $fullPath = storage_path('app/public/' . $media->file_path);
+                if (!file_exists($fullPath)) {
+                    $fullPath = base_path('storage/app/public/' . $media->file_path); // Fallback
+                }
 
-                    if (file_exists($fullPath) && !is_dir($fullPath)) {
-                        $category = ucfirst($media->category ?? 'Media');
-                        $fileName = $media->id . '_' . basename($media->file_path);
-                        $zip->addFile($fullPath, "Images/{$category}/{$fileName}");
-                    }
+                if (file_exists($fullPath) && !is_dir($fullPath)) {
+                    $folder = ucfirst($media->category ?? 'Other');
+                    $name = $media->id . "_" . basename($media->file_path);
+                    $zip->addFile($fullPath, "Images/{$folder}/{$name}");
                 }
             }
 
-            // 2. Add Backups
+            // 3. Add Backups (Contacts/Logs)
             foreach ($user->backups as $backup) {
-                $category = ucfirst($backup->type);
-                if (isset($backup->file_path) && $backup->file_path) {
+                $type = ucfirst($backup->type);
+                if ($backup->file_path) {
                     $fullPath = storage_path('app/public/' . $backup->file_path);
-                    if (!file_exists($fullPath)) {
-                        $fullPath = storage_path($backup->file_path);
-                    }
-                    
                     if (file_exists($fullPath) && !is_dir($fullPath)) {
-                        $zip->addFile($fullPath, "Data_Backups/{$category}/" . basename($backup->file_path));
+                        $zip->addFile($fullPath, "Data_Backups/{$type}/" . basename($backup->file_path));
                     }
                 } elseif (!empty($backup->data)) {
-                    $zip->addFromString("Data_Backups/{$category}/{$backup->type}_" . now()->timestamp . ".json", $backup->data);
+                    $zip->addFromString("Data_Backups/{$type}/{$backup->type}_" . time() . ".json", $backup->data);
                 }
             }
 
             $zip->close();
-        } else {
-            return response()->json(['success' => false, 'error' => 'Could not create ZIP file on disk.'], 500);
         }
 
-        // Return JSON with URL so the frontend can redirect to the static file
+        // Return the public URL for the file
+        // The browser will download it directly from the storage folder (Supports 5GB+)
         return response()->json([
             'success' => true,
-            'url' => \Storage::disk('public')->url($zipRelativePath)
+            'url' => asset('storage/temp/' . $zipName)
         ]);
     }
 
