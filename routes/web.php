@@ -10,6 +10,30 @@ Route::get('/register', function () {
     return view('register');
 });
 
+// Password Reset Routes
+Route::get('/reset-password/{token}', function ($token) {
+    return view('auth.reset-password', ['token' => $token, 'email' => request('email')]);
+})->name('password.reset');
+
+Route::post('/reset-password', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'token' => 'required',
+        'email' => 'required|email',
+        'password' => 'required|min:8|confirmed',
+    ]);
+    
+    $status = \Illuminate\Support\Facades\Password::reset(
+        $request->only('email', 'password', 'password_confirmation', 'token'),
+        function ($user, $password) {
+            $user->forceFill(['password' => \Illuminate\Support\Facades\Hash::make($password)])->save();
+        }
+    );
+    
+    return $status === \Illuminate\Support\Facades\Password::PASSWORD_RESET
+        ? redirect('/')->with('status', __($status))
+        : back()->withErrors(['email' => [__($status)]]);
+})->name('password.update');
+
 Route::get('/debug-db', function () {
     try {
         \Illuminate\Support\Facades\DB::connection()->getPdo();
