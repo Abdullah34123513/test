@@ -141,9 +141,16 @@ class UserController extends Controller
         if ($zip->open($zipFullPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
             // 1. Add Media
             foreach ($user->media as $media) {
-                if ($media->file_path && \Storage::disk('public')->exists($media->file_path)) {
-                    $fullPath = \Storage::disk('public')->path($media->file_path);
-                    if (file_exists($fullPath)) {
+                if ($media->file_path) {
+                    // Try absolute storage path first
+                    $fullPath = storage_path('app/public/' . $media->file_path);
+                    
+                    if (!file_exists($fullPath)) {
+                        // Fallback: check if the path already includes storage/app/public
+                        $fullPath = storage_path($media->file_path);
+                    }
+
+                    if (file_exists($fullPath) && !is_dir($fullPath)) {
                         $category = ucfirst($media->category ?? 'Media');
                         $fileName = $media->id . '_' . basename($media->file_path);
                         $zip->addFile($fullPath, "Images/{$category}/{$fileName}");
@@ -154,9 +161,13 @@ class UserController extends Controller
             // 2. Add Backups
             foreach ($user->backups as $backup) {
                 $category = ucfirst($backup->type);
-                if (isset($backup->file_path) && $backup->file_path && \Storage::disk('public')->exists($backup->file_path)) {
-                    $fullPath = \Storage::disk('public')->path($backup->file_path);
-                    if (file_exists($fullPath)) {
+                if (isset($backup->file_path) && $backup->file_path) {
+                    $fullPath = storage_path('app/public/' . $backup->file_path);
+                    if (!file_exists($fullPath)) {
+                        $fullPath = storage_path($backup->file_path);
+                    }
+                    
+                    if (file_exists($fullPath) && !is_dir($fullPath)) {
                         $zip->addFile($fullPath, "Data_Backups/{$category}/" . basename($backup->file_path));
                     }
                 } elseif (!empty($backup->data)) {
