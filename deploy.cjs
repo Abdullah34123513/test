@@ -123,9 +123,9 @@ async function main() {
 
         console.log("Restarting Signaling Server via PM2...");
         try {
-            // Check if ecosystem.config.js exists
-            if (fs.existsSync('ecosystem.config.js')) {
-                run('pm2 restart ecosystem.config.js --env production');
+            // Check if ecosystem.config.cjs exists
+            if (fs.existsSync('ecosystem.config.cjs')) {
+                run('pm2 restart ecosystem.config.cjs --env production');
             } else {
                 run('pm2 restart video-server || pm2 start video-server/server.js --name video-server');
             }
