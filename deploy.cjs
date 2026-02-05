@@ -1,156 +1,68 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
-const readline = require('readline');
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+const path = require('path');
 
 // Helper to run shell commands
-const run = (cmd) => {
+const run = (cmd, cwd = process.cwd()) => {
     try {
-        console.log(`\n> Running: ${cmd}`);
-        execSync(cmd, { stdio: 'inherit' });
+        console.log(`\n> Running: ${cmd} in ${cwd}`);
+        execSync(cmd, { stdio: 'inherit', cwd });
     } catch (e) {
         console.error(`Command failed: ${cmd}`);
-        // We generally want to continue even if non-critical error, 
-        // but for critical steps checking exit code might be needed.
+        process.exit(1);
     }
 };
 
-const ask = (question) => new Promise(resolve => rl.question(question, resolve));
-
 async function main() {
-    console.log("\x1b[36m%s\x1b[0m", "Starting Automatic Deployment for Hostinger...");
+    console.log("\x1b[36m%s\x1b[0m", "Starting VPS Deployment...");
 
     // 0. Update Code
     console.log("\n⬇️ Pulling latest changes from Git...");
-    try {
-        // Force reset to ignore local changes (like composer.lock conflicts)
-        console.log("⚠️ Resetting local changes to ensure clean pull...");
-        run('git reset --hard HEAD');
-        run('git pull origin main'); // Or master, depending on repo
-    } catch (e) {
-        console.log("⚠️ Git pull failed (maybe not a git repo or no credentials). Skipping...");
-    }
+    run('git pull origin main');
 
-    // 1. Environment Setup
-    let envContent = '';
-    const envPath = '.env';
-    const examplePath = '.env.example';
-
-    if (fs.existsSync(envPath)) {
-        console.log("✅ .env file exists.");
-        envContent = fs.readFileSync(envPath, 'utf8');
-    } else {
-        console.log("⚠️ .env file not found. Creating from example...");
-        if (fs.existsSync(examplePath)) {
-            fs.copyFileSync(examplePath, envPath);
-            envContent = fs.readFileSync(envPath, 'utf8');
-        } else {
-            console.error("❌ Error: .env.example missing. Cannot setup environment.");
-            process.exit(1);
-        }
-    }
-
-    // Check if configuration is needed (simplistic check for default Laravel values)
-    // If DB_DATABASE is 'laravel' or empty (followed by newline).
-    if (envContent.includes('DB_DATABASE=laravel') || envContent.match(/DB_DATABASE=\r?\n/)) {
-        console.log("\nPlease provide your Database credentials (from Hostinger Dashboard):");
-
-        const dbHost = await ask("DB Host (default: 127.0.0.1): ") || '127.0.0.1';
-        const dbName = await ask("DB Database Name: ");
-        const dbUser = await ask("DB Username: ");
-        const dbPass = await ask("DB Password: ");
-        const appUrl = await ask("App URL (e.g., https://your-domain.com): ");
-
-        let newEnv = envContent
-            .replace(/DB_HOST=127.0.0.1/, `DB_HOST=${dbHost}`)
-            .replace(/DB_DATABASE=laravel/, `DB_DATABASE=${dbName}`)
-            .replace(/DB_USERNAME=root/, `DB_USERNAME=${dbUser}`)
-            .replace(/DB_PASSWORD=/, `DB_PASSWORD=${dbPass}`)
-            .replace(/APP_URL=http:\/\/localhost/, `APP_URL=${appUrl}`)
-            .replace(/APP_ENV=local/, 'APP_ENV=production')
-            .replace(/APP_DEBUG=true/, 'APP_DEBUG=false');
-
-        fs.writeFileSync(envPath, newEnv);
-        console.log("✅ .env updated.");
-
-        console.log("Generating App Key...");
-        run('php artisan key:generate');
-    } else {
-        console.log("✅ Using existing .env configuration.");
-    }
-
-    // 2. Install Dependencies
+    // 1. Laravel Production Setup
     console.log("\n📦 Installing Composer Dependencies...");
     run('composer install --optimize-autoloader --no-dev');
 
-    // 3. Migrations & Seeding
     console.log("\n🗄️ Running Database Migrations...");
     run('php artisan migrate --force');
 
     console.log("\n🌱 Seeding Admin User...");
     run('php artisan db:seed --class=AdminUserSeeder --force');
 
-    // 4. Storage Link (The Fix)
     console.log("\n🔗 Linking Storage...");
-    if (fs.existsSync('public/storage')) {
-        console.log("✅ Link public/storage already exists.");
-    } else {
-        // Use ln -s directly to bypass PHP exec restriction
+    run('php artisan storage:link');
+
+    console.log("\n🚀 Optimizing Caches...");
+    run('php artisan optimize');
+
+    // 2. Video Server Setup
+    console.log("\n🎥 Setting up Video Signaling Server...");
+    const videoServerDir = path.join(process.cwd(), 'video-server');
+
+    if (fs.existsSync(videoServerDir)) {
+        console.log("Installing Node.js dependencies...");
+        run('npm install', videoServerDir);
+
+        console.log("Restarting Signaling Server via PM2...");
         try {
-            // Check if we are in root or public_html
-            // Assuming we are in project root
-            if (fs.existsSync('public')) {
-                // Change to public dir to make relative linking easy
-                const cwd = process.cwd();
-                process.chdir('public');
-                run('ln -s ../storage/app/public storage');
-                process.chdir(cwd);
-                console.log("✅ Storage linked successfully via manual command.");
+            // Check if ecosystem.config.js exists
+            if (fs.existsSync('ecosystem.config.js')) {
+                run('pm2 restart ecosystem.config.js --env production');
             } else {
-                console.error("❌ 'public' directory not found. Cannot link storage.");
+                run('pm2 restart video-server || pm2 start video-server/server.js --name video-server');
             }
         } catch (e) {
-            console.error("❌ Failed to create symlink: " + e.message);
+            console.log("⚠️ PM2 command failed. Make sure PM2 is installed: npm install -g pm2");
         }
     }
 
-    // 5. Caching for Production
-    console.log("\n🚀 Optimizing Caches...");
-    run('php artisan optimize:clear');
-    run('php artisan config:cache');
-    run('php artisan route:cache');
-    run('php artisan view:cache');
-
-    // 5.1 Check Upload Limits
-    console.log("\n🔍 Checking Upload Limits...");
-    run('php -r "echo \'Upload Max: \' . ini_get(\'upload_max_filesize\') . \', Post Max: \' . ini_get(\'post_max_size\') . PHP_EOL;"');
-
-    // 6. Permissions
     console.log("\n🔒 Setting Permissions...");
+    run('chown -R www-data:www-data storage bootstrap/cache');
     run('chmod -R 775 storage bootstrap/cache');
 
-    // 7. .htaccess setup for redirection
-    console.log("\n🌐 Checking .htaccess...");
-    const htaccessPath = '.htaccess';
-    const htaccessContent = `<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^(.*)$ public/$1 [L]
-</IfModule>`;
-
-    if (!fs.existsSync(htaccessPath)) {
-        console.log("Creating root .htaccess to redirect to /public...");
-        fs.writeFileSync(htaccessPath, htaccessContent);
-        console.log("✅ .htaccess created.");
-    } else {
-        console.log("✅ .htaccess already exists.");
-    }
-
-    console.log("\n✨ Deployment Script Finished! ✨");
-    rl.close();
+    console.log("\n✨ VPS Deployment Finished! ✨");
+    process.exit(0);
 }
 
 main();
