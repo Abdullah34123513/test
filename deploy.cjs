@@ -183,6 +183,20 @@ async function main() {
     console.log("\n⬇️ Pulling latest changes from Git...");
     run('git pull origin main');
 
+    // 0.5 .env Setup
+    console.log("\n📄 Checking .env file...");
+    if (!fs.existsSync('.env')) {
+        console.log("Creating .env from .env.example...");
+        run('cp .env.example .env');
+        run('php artisan key:generate');
+        // Update .env for SQLite
+        let envContent = fs.readFileSync('.env', 'utf8');
+        envContent = envContent.replace(/DB_CONNECTION=.*/g, 'DB_CONNECTION=sqlite');
+        envContent = envContent.replace(/DB_DATABASE=.*/g, 'DB_DATABASE=' + path.join(process.cwd(), 'database', 'database.sqlite'));
+        fs.writeFileSync('.env', envContent);
+        console.log("✅ .env created and configured for SQLite.");
+    }
+
     // 1. Laravel Production Setup
     console.log("\n📦 Installing Composer Dependencies...");
     run('composer install --optimize-autoloader --no-dev');
@@ -237,6 +251,12 @@ async function main() {
     // Specific write permissions for Laravel
     run('chown -R www-data:www-data storage bootstrap/cache database');
     run('chmod -R 775 storage bootstrap/cache database');
+    // Ensure logs directory exists and is writable
+    if (!fs.existsSync('storage/logs')) {
+        run('mkdir -p storage/logs');
+    }
+    run('chown -R www-data:www-data storage/logs');
+    run('chmod -R 775 storage/logs');
 
     console.log("\n✨ VPS Deployment Finished! ✨");
     process.exit(0);
