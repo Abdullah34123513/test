@@ -108,7 +108,7 @@ async function main() {
     run('php artisan db:seed --class=AdminUserSeeder --force');
 
     console.log("\n🔗 Linking Storage...");
-    run('php artisan storage:link');
+    run('php artisan storage:link', process.cwd(), true); // Ignore error if link exists
 
     console.log("\n🚀 Optimizing Caches...");
     run('php artisan optimize');
