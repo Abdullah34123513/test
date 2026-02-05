@@ -10,6 +10,10 @@ Route::get('/register', function () {
     return view('register');
 });
 
+Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
+Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+
 // Password Reset Routes
 Route::get('/reset-password/{token}', function ($token) {
     return view('auth.reset-password', ['token' => $token, 'email' => request('email')]);

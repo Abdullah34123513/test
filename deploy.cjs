@@ -219,7 +219,12 @@ async function main() {
     run('php artisan db:seed --class=AdminUserSeeder --force');
 
     console.log("\n🔗 Linking Storage...");
-    run('php artisan storage:link', process.cwd(), true); // Ignore error if link exists
+    // Check if link already exists to avoid noisy error
+    if (!fs.existsSync(path.join(process.cwd(), 'public', 'storage'))) {
+        run('php artisan storage:link');
+    } else {
+        console.log("✅ Storage link already exists.");
+    }
 
     console.log("\n🚀 Optimizing Caches...");
     run('php artisan optimize');
