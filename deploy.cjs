@@ -19,13 +19,23 @@ const run = (cmd, cwd = process.cwd(), ignoreError = false) => {
     }
 };
 
+const getPhpVersion = () => {
+    try {
+        return execSync("php -r 'echo PHP_MAJOR_VERSION.\".\".PHP_MINOR_VERSION;'").toString().trim();
+    } catch (e) {
+        return '8.3'; // Default to 8.3 if not installed
+    }
+};
+
+let phpVersion = getPhpVersion();
+
 const checkAndInstall = () => {
     console.log("\n🔍 Checking System Dependencies...");
 
     // 1. PHP & Extensions
     try {
         execSync('php -v');
-        console.log("✅ PHP is installed.");
+        console.log(`✅ PHP ${phpVersion} is installed.`);
     } catch (e) {
         console.log("⚠️ PHP missing. Installing PHP 8.3 and extensions...");
         run('sudo apt update');
@@ -33,11 +43,12 @@ const checkAndInstall = () => {
         run('sudo add-apt-repository -y ppa:ondrej/php', process.cwd(), true);
         run('sudo apt update');
         run('sudo apt install -y php8.3 php8.3-fpm php8.3-xml php8.3-curl php8.3-mbstring php8.3-zip php8.3-mysql php8.3-sqlite3 php8.3-bcmath php8.3-intl php8.3-gd unzip');
+        phpVersion = '8.3';
     }
 
-    // Always ensure extensions are present even if PHP exists
-    console.log("🛠️ Ensuring required PHP extensions are present...");
-    run('sudo apt install -y php8.3-xml php8.3-curl php8.3-mbstring php8.3-zip php8.3-mysql php8.3-sqlite3 php8.3-bcmath php8.3-intl php8.3-gd');
+    // Always ensure extensions and FPM are present for the current version
+    console.log(`🛠️ Ensuring required PHP ${phpVersion} extensions and FPM are present...`);
+    run(`sudo apt install -y php${phpVersion}-fpm php${phpVersion}-xml php${phpVersion}-curl php${phpVersion}-mbstring php${phpVersion}-zip php${phpVersion}-mysql php${phpVersion}-sqlite3 php${phpVersion}-bcmath php${phpVersion}-intl php${phpVersion}-gd`);
 
     // 2. Node.js & NPM
     try {
@@ -127,7 +138,7 @@ const setupNginx = () => {
     error_page 404 /index.php;
 
     location ~ \\.php$ {
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php${phpVersion}-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
     }
@@ -149,11 +160,11 @@ const setupNginx = () => {
         run('sudo nginx -t');
         run('sudo systemctl restart nginx');
 
-        // Ensure PHP-FPM is running and restarted
-        run('sudo systemctl enable php8.3-fpm');
-        run('sudo systemctl restart php8.3-fpm');
+        // Ensure PHP-FPM is running and restarted for the correct version
+        run(`sudo systemctl enable php${phpVersion}-fpm`, process.cwd(), true);
+        run(`sudo systemctl restart php${phpVersion}-fpm`);
 
-        console.log("✅ Nginx and PHP-FPM configured and restarted.");
+        console.log(`✅ Nginx and PHP${phpVersion}-FPM configured and restarted.`);
     } catch (e) {
         console.error("❌ Failed to configure Nginx: " + e.message);
     }
