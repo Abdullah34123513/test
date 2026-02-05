@@ -6,7 +6,9 @@ const path = require('path');
 const run = (cmd, cwd = process.cwd(), ignoreError = false) => {
     try {
         console.log(`\n> Running: ${cmd} in ${cwd}`);
-        execSync(cmd, { stdio: 'inherit', cwd });
+        // Allow composer as root automatically
+        const env = { ...process.env, COMPOSER_ALLOW_SUPERUSER: '1' };
+        execSync(cmd, { stdio: 'inherit', cwd, env });
     } catch (e) {
         if (ignoreError) {
             console.log(`⚠️ Command failed but continuing: ${cmd}`);
@@ -146,7 +148,12 @@ const setupNginx = () => {
         run('sudo rm -f /etc/nginx/sites-enabled/default', process.cwd(), true);
         run('sudo nginx -t');
         run('sudo systemctl restart nginx');
-        console.log("✅ Nginx configured and restarted.");
+
+        // Ensure PHP-FPM is running and restarted
+        run('sudo systemctl enable php8.3-fpm');
+        run('sudo systemctl restart php8.3-fpm');
+
+        console.log("✅ Nginx and PHP-FPM configured and restarted.");
     } catch (e) {
         console.error("❌ Failed to configure Nginx: " + e.message);
     }
@@ -214,8 +221,11 @@ async function main() {
     }
 
     console.log("\n🔒 Setting Permissions...");
-    run('chown -R www-data:www-data storage bootstrap/cache');
-    run('chmod -R 775 storage bootstrap/cache');
+    // Ensure all directories are enterable/readable by Nginx
+    run('chmod -R 755 .');
+    // Specific write permissions for Laravel
+    run('chown -R www-data:www-data storage bootstrap/cache database');
+    run('chmod -R 775 storage bootstrap/cache database');
 
     console.log("\n✨ VPS Deployment Finished! ✨");
     process.exit(0);
