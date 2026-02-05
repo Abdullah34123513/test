@@ -76,11 +76,90 @@ const checkAndInstall = () => {
     }
 };
 
+const setupNginx = () => {
+    console.log("\n🌐 Configuring Nginx Site...");
+    const projectRoot = process.cwd();
+    const domain = "localhost"; // You can change this or detect IP
+
+    // Detect public IP
+    let ip = "127.0.0.1";
+    try {
+        ip = execSync('curl -s http://icanhazip.com').toString().trim();
+        console.log(`Detected public IP: ${ip}`);
+    } catch (e) {
+        console.log("Could not detect public IP, using localhost.");
+    }
+
+    const nginxConfig = `server {
+    listen 80;
+    server_name ${ip} ${domain};
+    root ${projectRoot}/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Proxy for Node.js Signaling Server (Socket.io)
+    location /socket.io/ {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+
+        proxy_pass http://127.0.0.1:3000;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \\.php$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\\.(?!well-known).* {
+        deny all;
+    }
+}
+`;
+
+    const configPath = '/etc/nginx/sites-available/test-project';
+    const enabledPath = '/etc/nginx/sites-enabled/test-project';
+
+    try {
+        fs.writeFileSync('nginx_tmp', nginxConfig);
+        run(`sudo mv nginx_tmp ${configPath}`);
+        run(`sudo ln -sf ${configPath} ${enabledPath}`);
+        run('sudo rm -f /etc/nginx/sites-enabled/default', process.cwd(), true);
+        run('sudo nginx -t');
+        run('sudo systemctl restart nginx');
+        console.log("✅ Nginx configured and restarted.");
+    } catch (e) {
+        console.error("❌ Failed to configure Nginx: " + e.message);
+    }
+};
+
 async function main() {
     console.log("\x1b[36m%s\x1b[0m", "Starting Dynamic VPS Provisioning & Deployment...");
 
     // Step 0: System Check
     checkAndInstall();
+
+    // Step 0.1: Nginx Check/Config
+    setupNginx();
 
     // 0. Update Code
     console.log("\n⬇️ Pulling latest changes from Git...");
