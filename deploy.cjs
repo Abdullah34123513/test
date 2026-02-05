@@ -30,12 +30,12 @@ const checkAndInstall = () => {
         run('sudo apt install -y software-properties-common');
         run('sudo add-apt-repository -y ppa:ondrej/php', process.cwd(), true);
         run('sudo apt update');
-        run('sudo apt install -y php8.3 php8.3-fpm php8.3-xml php8.3-curl php8.3-mbstring php8.3-zip php8.3-mysql php8.3-bcmath php8.3-intl php8.3-gd unzip');
+        run('sudo apt install -y php8.3 php8.3-fpm php8.3-xml php8.3-curl php8.3-mbstring php8.3-zip php8.3-mysql php8.3-sqlite3 php8.3-bcmath php8.3-intl php8.3-gd unzip');
     }
 
     // Always ensure extensions are present even if PHP exists
     console.log("🛠️ Ensuring required PHP extensions are present...");
-    run('sudo apt install -y php8.3-xml php8.3-curl php8.3-mbstring php8.3-zip php8.3-mysql php8.3-bcmath php8.3-intl php8.3-gd');
+    run('sudo apt install -y php8.3-xml php8.3-curl php8.3-mbstring php8.3-zip php8.3-mysql php8.3-sqlite3 php8.3-bcmath php8.3-intl php8.3-gd');
 
     // 2. Node.js & NPM
     try {
@@ -89,6 +89,17 @@ async function main() {
     // 1. Laravel Production Setup
     console.log("\n📦 Installing Composer Dependencies...");
     run('composer install --optimize-autoloader --no-dev');
+
+    // 1.1 SQLite Initialization
+    console.log("\n🗄️ Checking SQLite Database...");
+    const dbPath = path.join(process.cwd(), 'database', 'database.sqlite');
+    if (!fs.existsSync(dbPath)) {
+        console.log("Creating database.sqlite file...");
+        run(`touch ${dbPath}`);
+        // Ensure the directory itself has correct permissions
+        run('chmod -R 775 database');
+        run('chown -R www-data:www-data database');
+    }
 
     console.log("\n🗄️ Running Database Migrations...");
     run('php artisan migrate --force');
