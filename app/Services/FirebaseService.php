@@ -46,7 +46,7 @@ class FirebaseService
                 return false;
             }
 
-            $client = new Client();
+            Log::info("FCM Attempt - Project: {$projectId}, Token: " . substr($token, 0, 10) . "...");
             $response = $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $authToken['access_token'],
@@ -64,8 +64,16 @@ class FirebaseService
                 ],
             ]);
 
-            Log::info('FCM Notification sent successfully to: ' . $token);
-            return true;
+            $statusCode = $response->getStatusCode();
+            $responseBody = $response->getBody()->getContents();
+
+            if ($statusCode >= 200 && $statusCode < 300) {
+                Log::info('FCM Notification sent successfully to: ' . $token);
+                return true;
+            } else {
+                Log::error("FCM Error Response [{$statusCode}]: " . $responseBody);
+                return false;
+            }
 
         } catch (\Exception $e) {
             Log::error('FCM Exception: ' . $e->getMessage());

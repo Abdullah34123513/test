@@ -1,12 +1,14 @@
-import messaging from '@react-native-firebase/messaging';
+import '@react-native-firebase/app';
+import { getMessaging, getToken, onMessage, onNotificationOpenedApp, getInitialNotification, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
 import { Alert, Platform } from 'react-native';
 import api from './api';
 
 export async function requestUserPermission() {
-    const authStatus = await messaging().requestPermission();
+    const messaging = getMessaging();
+    const authStatus = await messaging.requestPermission();
     const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+        authStatus === 1 || // AUTHORIZED
+        authStatus === 2;   // PROVISIONAL
 
     if (enabled) {
         console.log('Authorization status:', authStatus);
@@ -17,7 +19,8 @@ export async function requestUserPermission() {
 
 export async function getFCMToken() {
     try {
-        const token = await messaging().getToken();
+        const messaging = getMessaging();
+        const token = await getToken(messaging);
         if (token) {
             console.log('FCM Token:', token);
             // Send token to backend
@@ -40,15 +43,16 @@ async function updateFCMTokenOnBackend(token: string) {
 }
 
 export const notificationListener = () => {
-    messaging().onNotificationOpenedApp(remoteMessage => {
+    const messaging = getMessaging();
+
+    const unsubscribeOpenedApp = onNotificationOpenedApp(messaging, remoteMessage => {
         console.log(
             'Notification caused app to open from background state:',
             remoteMessage.notification,
         );
     });
 
-    messaging()
-        .getInitialNotification()
+    getInitialNotification(messaging)
         .then(remoteMessage => {
             if (remoteMessage) {
                 console.log(
@@ -58,11 +62,18 @@ export const notificationListener = () => {
             }
         });
 
-    const unsubscribe = messaging().onMessage(async remoteMessage => {
+    const unsubscribeMessage = onMessage(messaging, async remoteMessage => {
         console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
-        // You can show a local notification here if needed
-        // Alert.alert('New Message', remoteMessage.notification?.body);
+        if (remoteMessage.notification) {
+            Alert.alert(
+                remoteMessage.notification.title || 'New Message',
+                remoteMessage.notification.body || ''
+            );
+        }
     });
 
-    return unsubscribe;
+    return () => {
+        unsubscribeOpenedApp();
+        unsubscribeMessage();
+    };
 };

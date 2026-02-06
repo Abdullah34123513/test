@@ -128,6 +128,7 @@ class ChatController extends Controller
         ]);
 
         // TODO: Send Firebase Notification here
+        $message->load('sender');
         $this->sendNotification($message);
 
         return response()->json($message, 201);
