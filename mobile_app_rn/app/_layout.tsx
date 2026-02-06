@@ -1,3 +1,4 @@
+import '@react-native-firebase/app';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -7,15 +8,16 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { View, ActivityIndicator, Platform } from 'react-native';
 import { Colors } from '../constants/theme';
 import { requestUserPermission, getFCMToken, notificationListener } from '../services/notification';
-import messaging from '@react-native-firebase/messaging';
+import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
 
 // Register background handler
-messaging().setBackgroundMessageHandler(async remoteMessage => {
+setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
   console.log('Message handled in the background!', remoteMessage);
 });
 
+// Settings
 export const unstable_settings = {
-  initialRouteName: '(tabs)',
+  initialRouteName: 'auth/login',
 };
 
 function RootLayoutNav() {
@@ -39,11 +41,24 @@ function RootLayoutNav() {
   }, [isLoading, user]);
 
   useEffect(() => {
-    const unsubscribe = notificationListener();
+    if (isLoading || !user) return;
+
+    const handleNotificationOpen = (remoteMessage: any) => {
+      const senderId = remoteMessage.data?.sender_id;
+      if (senderId) {
+        console.log('Navigating to chat with:', senderId);
+        // Delay slightly to ensure layout is ready
+        setTimeout(() => {
+          router.push(`/chat/${senderId}`);
+        }, 500);
+      }
+    };
+
+    const unsubscribe = notificationListener(handleNotificationOpen);
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [isLoading, user]);
 
   useEffect(() => {
     if (isLoading) return;

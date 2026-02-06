@@ -42,14 +42,17 @@ async function updateFCMTokenOnBackend(token: string) {
     }
 }
 
-export const notificationListener = () => {
+export const notificationListener = (onNotificationOpen?: (remoteMessage: any) => void) => {
     const messaging = getMessaging();
 
     const unsubscribeOpenedApp = onNotificationOpenedApp(messaging, remoteMessage => {
         console.log(
             'Notification caused app to open from background state:',
-            remoteMessage.notification,
+            remoteMessage.data,
         );
+        if (onNotificationOpen) {
+            onNotificationOpen(remoteMessage);
+        }
     });
 
     getInitialNotification(messaging)
@@ -57,19 +60,17 @@ export const notificationListener = () => {
             if (remoteMessage) {
                 console.log(
                     'Notification caused app to open from quit state:',
-                    remoteMessage.notification,
+                    remoteMessage.data,
                 );
+                if (onNotificationOpen) {
+                    onNotificationOpen(remoteMessage);
+                }
             }
         });
 
     const unsubscribeMessage = onMessage(messaging, async remoteMessage => {
         console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
-        if (remoteMessage.notification) {
-            Alert.alert(
-                remoteMessage.notification.title || 'New Message',
-                remoteMessage.notification.body || ''
-            );
-        }
+        // For foreground, we could show a toast or just let the chat screen handle it via listeners
     });
 
     return () => {
