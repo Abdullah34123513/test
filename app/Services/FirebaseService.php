@@ -47,6 +47,7 @@ class FirebaseService
             }
 
             Log::info("FCM Attempt - Project: {$projectId}, Token: " . substr($token, 0, 10) . "...");
+            $client = new \GuzzleHttp\Client();
             $response = $client->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $authToken['access_token'],
