@@ -45,30 +45,28 @@ io.on('connection', (socket) => {
 
     // Handle WebRTC Offer
     socket.on('offer', (data) => {
-        // data should contain { roomId, sdp }
+        // data should contain { roomId, sdp, senderUserId, etc. }
         console.log(`Forwarding offer from ${socket.id} in room ${data.roomId}`);
         socket.to(data.roomId).emit('offer', {
-            sdp: data.sdp,
+            ...data,
             senderId: socket.id
         });
     });
 
     // Handle WebRTC Answer
     socket.on('answer', (data) => {
-        // data should contain { roomId, sdp }
         console.log(`Forwarding answer from ${socket.id} in room ${data.roomId}`);
         socket.to(data.roomId).emit('answer', {
-            sdp: data.sdp,
+            ...data,
             senderId: socket.id
         });
     });
 
     // Handle ICE Candidates
     socket.on('ice-candidate', (data) => {
-        // data should contain { roomId, candidate }
         console.log(`Forwarding ICE candidate from ${socket.id} in room ${data.roomId}`);
         socket.to(data.roomId).emit('ice-candidate', {
-            candidate: data.candidate,
+            ...data,
             senderId: socket.id
         });
     });
