@@ -42,6 +42,20 @@ async function updateFCMTokenOnBackend(token: string) {
     }
 }
 
+import * as Notifications from 'expo-notifications';
+import { messageStore } from './messageStore';
+
+// Configure expo-notifications
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+    }),
+});
+
 export const notificationListener = (onNotificationOpen?: (remoteMessage: any) => void) => {
     const messaging = getMessaging();
 
@@ -70,7 +84,33 @@ export const notificationListener = (onNotificationOpen?: (remoteMessage: any) =
 
     const unsubscribeMessage = onMessage(messaging, async remoteMessage => {
         console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
-        // For foreground, we could show a toast or just let the chat screen handle it via listeners
+
+        if (remoteMessage.data) {
+            const messageData = {
+                id: parseInt(remoteMessage.data.message_id as string),
+                sender_id: parseInt(remoteMessage.data.sender_id as string),
+                receiver_id: 0, // Current user id usually, but 0 is safe for local filter
+                message: (remoteMessage.data.body as string) || '',
+                type: (remoteMessage.data.chat_type as any) || 'text',
+                created_at: new Date().toISOString(),
+                is_read: false,
+            };
+
+            // Save to local store
+            await messageStore.saveMessage(messageData as any);
+        }
+
+        // Show foreground notification if desired
+        if (remoteMessage.notification) {
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: remoteMessage.notification.title || 'New Message',
+                    body: remoteMessage.notification.body || '',
+                    data: remoteMessage.data,
+                },
+                trigger: null,
+            });
+        }
     });
 
     return () => {

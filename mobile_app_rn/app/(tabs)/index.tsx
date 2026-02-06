@@ -14,6 +14,8 @@ const TABS = [
   { key: 'status', label: 'Status' },
 ];
 
+import { messageStore } from '../../services/messageStore';
+
 export default function ChatsScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -38,6 +40,12 @@ export default function ChatsScreen() {
   useEffect(() => {
     if (user) {
       fetchChats();
+
+      // Listen for message updates to refresh chat list
+      const unsubscribe = messageStore.addListener(() => {
+        fetchChats(false);
+      });
+      return () => { unsubscribe(); };
     }
   }, [fetchChats, user]);
 

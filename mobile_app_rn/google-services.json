@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "902982989312",
-    "project_id": "food-21f2d",
-    "storage_bucket": "food-21f2d.firebasestorage.app"
+    "project_number": "271154163924",
+    "project_id": "suma-a2987",
+    "storage_bucket": "suma-a2987.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:902982989312:android:5418e6be0e7b8602154ae5",
+        "mobilesdk_app_id": "1:271154163924:android:bba62cb155447d99f6cb41",
         "android_client_info": {
-          "package_name": "com.example.suma"
+          "package_name": "com.abdullah.suma"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD4EPM_OMTgknH_iX6fuZzel_7PU0GFTlc"
+          "current_key": "AIzaSyDroJntxLe9a8r1RHJ2aGCVjKid8nHGdzM"
         }
       ],
       "services": {

@@ -10,10 +10,22 @@ import { Colors } from '../constants/theme';
 import { requestUserPermission, getFCMToken, notificationListener } from '../services/notification';
 import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
 
+import * as Notifications from 'expo-notifications';
+
 // Register background handler
 setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
   console.log('Message handled in the background!', remoteMessage);
 });
+
+// Create notification channel for Android
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('messages', {
+    name: 'Messages',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#FF231F7C',
+  });
+}
 
 // Settings
 export const unstable_settings = {
@@ -55,8 +67,14 @@ function RootLayoutNav() {
     };
 
     const unsubscribe = notificationListener(handleNotificationOpen);
+
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      handleNotificationOpen(response.notification.request.content);
+    });
+
     return () => {
       unsubscribe();
+      subscription.remove();
     };
   }, [isLoading, user]);
 

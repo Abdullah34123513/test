@@ -20,6 +20,8 @@ interface Message {
     created_at: string;
 }
 
+import { messageStore } from '../../services/messageStore';
+
 export default function ChatScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
@@ -30,8 +32,20 @@ export default function ChatScreen() {
 
     const fetchMessages = async () => {
         try {
+            // First load from local store for immediate UI
+            const localMsgs = await messageStore.getMessages(params.id as string);
+            if (localMsgs.length > 0) {
+                setMessages(localMsgs);
+                setIsLoading(false);
+            }
+
             const response = await api.get<Message[]>(`/messages/${params.id}`);
             setMessages(response.data);
+
+            // Sync with local store
+            for (const msg of response.data) {
+                await messageStore.saveMessage(msg);
+            }
         } catch (error) {
             console.error('Error fetching messages:', error);
         } finally {
@@ -45,6 +59,7 @@ export default function ChatScreen() {
 
         fetchMessages();
 
+        // Listen for new messages via Socket
         socket.connect();
         socket.on('message', (newMessage: Message) => {
             const isRelevant =
@@ -52,7 +67,26 @@ export default function ChatScreen() {
                 (newMessage.sender_id === user?.id && newMessage.receiver_id.toString() === params.id);
 
             if (isRelevant) {
-                setMessages((prev) => [...prev, newMessage]);
+                setMessages((prev) => {
+                    if (prev.find(m => m.id === newMessage.id)) return prev;
+                    return [...prev, newMessage];
+                });
+                messageStore.saveMessage(newMessage);
+                setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+            }
+        });
+
+        // Listen for new messages via FCM (MessageStore)
+        const unsubscribeStore = messageStore.addListener((newMessage) => {
+            const isRelevant =
+                (newMessage.sender_id.toString() === params.id && newMessage.receiver_id === user?.id) ||
+                (newMessage.sender_id === user?.id && newMessage.receiver_id.toString() === params.id);
+
+            if (isRelevant) {
+                setMessages((prev) => {
+                    if (prev.find(m => m.id === newMessage.id)) return prev;
+                    return [...prev, newMessage];
+                });
                 setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
             }
         });
@@ -60,6 +94,7 @@ export default function ChatScreen() {
         return () => {
             socket.off('message');
             socket.disconnect();
+            unsubscribeStore();
         };
     }, [params.id, user]);
 
