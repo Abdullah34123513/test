@@ -83,14 +83,14 @@ export const notificationListener = (onNotificationOpen?: (remoteMessage: any) =
         });
 
     const unsubscribeMessage = onMessage(messaging, async remoteMessage => {
-        console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
+        console.log('A new FCM message arrived (Foreground)!', JSON.stringify(remoteMessage, null, 2));
 
         if (remoteMessage.data) {
             const messageData = {
-                id: parseInt(remoteMessage.data.message_id as string),
+                id: parseInt(remoteMessage.data.message_id as string) || Date.now(),
                 sender_id: parseInt(remoteMessage.data.sender_id as string),
-                receiver_id: 0, // Current user id usually, but 0 is safe for local filter
-                message: (remoteMessage.data.body as string) || '',
+                receiver_id: 0,
+                message: (remoteMessage.data.body as string) || (remoteMessage.notification?.body) || '',
                 type: (remoteMessage.data.chat_type as any) || 'text',
                 created_at: new Date().toISOString(),
                 is_read: false,
@@ -101,16 +101,17 @@ export const notificationListener = (onNotificationOpen?: (remoteMessage: any) =
         }
 
         // Show foreground notification if desired
-        if (remoteMessage.notification) {
-            await Notifications.scheduleNotificationAsync({
-                content: {
-                    title: remoteMessage.notification.title || 'New Message',
-                    body: remoteMessage.notification.body || '',
-                    data: remoteMessage.data,
-                },
-                trigger: null,
-            });
-        }
+        const title = (remoteMessage.notification?.title || remoteMessage.data?.title || 'New Message') as string;
+        const body = (remoteMessage.notification?.body || remoteMessage.data?.body || '') as string;
+
+        await Notifications.scheduleNotificationAsync({
+            content: {
+                title,
+                body,
+                data: remoteMessage.data,
+            },
+            trigger: null,
+        });
     });
 
     return () => {

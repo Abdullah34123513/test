@@ -66,6 +66,9 @@ class FirebaseService
                             'notification' => [
                                 'channel_id' => 'messages',
                                 'sound' => 'default',
+                                'notification_priority' => 'PRIORITY_MAX',
+                                'default_sound' => true,
+                                'default_vibrate_timings' => true,
                             ],
                         ],
                         'apns' => [
