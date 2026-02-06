@@ -91,8 +91,6 @@ export default function ChatScreen() {
                 avatarUri={`https://ui-avatars.com/api/?name=User+${params.id}&background=random`}
                 isOnline={true}
                 onBack={() => router.back()}
-                onVideoCall={() => router.push(`/call/${params.id}`)}
-                onVoiceCall={() => console.log('Voice call')}
                 onMore={() => console.log('More options')}
             />
 

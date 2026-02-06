@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { ChevronLeft, Video, Phone, MoreVertical } from 'lucide-react-native';
+import { ChevronLeft, MoreVertical } from 'lucide-react-native';
 import { Avatar } from './Avatar';
 import { Colors, FontSize, FontWeight, Spacing } from '../../constants/theme';
 
@@ -9,8 +9,6 @@ interface ChatHeaderProps {
     avatarUri: string;
     isOnline?: boolean;
     onBack?: () => void;
-    onVideoCall?: () => void;
-    onVoiceCall?: () => void;
     onMore?: () => void;
 }
 
@@ -19,8 +17,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     avatarUri,
     isOnline = false,
     onBack,
-    onVideoCall,
-    onVoiceCall,
     onMore,
 }) => {
     return (
@@ -39,12 +35,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             </View>
 
             <View style={styles.actions}>
-                <TouchableOpacity style={styles.actionButton} onPress={onVideoCall}>
-                    <Video size={22} color={Colors.light.textSecondary} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton} onPress={onVoiceCall}>
-                    <Phone size={20} color={Colors.light.textSecondary} />
-                </TouchableOpacity>
                 <TouchableOpacity style={styles.actionButton} onPress={onMore}>
                     <MoreVertical size={20} color={Colors.light.textSecondary} />
                 </TouchableOpacity>

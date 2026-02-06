@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { Colors, FontSize, FontWeight, Spacing } from '../../constants/theme';
 import { Mail, Lock, LogIn, UserPlus } from 'lucide-react-native';
+import messaging from '@react-native-firebase/messaging';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -21,7 +22,18 @@ export default function LoginScreen() {
 
         setIsLoading(true);
         try {
-            const response = await api.post('/login', { email, password });
+            let fcmToken = null;
+            try {
+                fcmToken = await messaging().getToken();
+            } catch (e) {
+                console.log('FCM token retrieval failed during login', e);
+            }
+
+            const response = await api.post('/login', {
+                email,
+                password,
+                fcm_token: fcmToken
+            });
             const { access_token, user } = response.data;
 
             await login(access_token, user);

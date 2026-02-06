@@ -12,7 +12,6 @@ import { useAuth } from '../../context/AuthContext';
 const TABS = [
   { key: 'chats', label: 'Chats' },
   { key: 'status', label: 'Status' },
-  { key: 'calls', label: 'Calls' },
 ];
 
 export default function ChatsScreen() {
@@ -51,8 +50,6 @@ export default function ChatsScreen() {
     setActiveTab(key);
     if (key === 'status') {
       router.push('/updates');
-    } else if (key === 'calls') {
-      router.push('/calls');
     }
   };
 

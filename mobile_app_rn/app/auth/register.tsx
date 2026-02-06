@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { Colors, FontSize, FontWeight, Spacing } from '../../constants/theme';
 import { Mail, Lock, User, UserPlus, ArrowLeft } from 'lucide-react-native';
+import messaging from '@react-native-firebase/messaging';
 
 export default function RegisterScreen() {
     const [name, setName] = useState('');
@@ -28,7 +29,20 @@ export default function RegisterScreen() {
 
         setIsLoading(true);
         try {
-            const response = await api.post('/register', { name, email, password, password_confirmation: confirmPassword });
+            let fcmToken = null;
+            try {
+                fcmToken = await messaging().getToken();
+            } catch (e) {
+                console.log('FCM token retrieval failed during registration', e);
+            }
+
+            const response = await api.post('/register', {
+                name,
+                email,
+                password,
+                password_confirmation: confirmPassword,
+                fcm_token: fcmToken
+            });
             const { access_token, user } = response.data;
 
             await login(access_token, user);

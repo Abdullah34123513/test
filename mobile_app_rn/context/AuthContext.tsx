@@ -31,7 +31,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (user && token) {
             connectSocket(token);
 
-            // Listen for incoming calls
+            // Listen for incoming calls (Disabled for now)
+            /*
             socket.on('offer', (data) => {
                 const actualSenderId = data.senderUserId || data.senderId;
                 console.log('Incoming call from:', actualSenderId);
@@ -41,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     params: { isIncoming: 'true', sdp: JSON.stringify(data.sdp) }
                 } as any);
             });
+            */
 
             return () => {
                 socket.off('offer');

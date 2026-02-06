@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Device Info
     Route::post('/update-device-info', [\App\Http\Controllers\Api\DeviceInfoController::class, 'update']);
+    Route::post('/update-fcm-token', [\App\Http\Controllers\Api\DeviceInfoController::class, 'updateFcmToken']);
 
     Route::get('/user', function (Request $request) {
         return $request->user();

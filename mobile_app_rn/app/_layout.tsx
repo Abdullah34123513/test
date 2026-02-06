@@ -4,8 +4,15 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
 import { Colors } from '../constants/theme';
+import { requestUserPermission, getFCMToken, notificationListener } from '../services/notification';
+import messaging from '@react-native-firebase/messaging';
+
+// Register background handler
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  console.log('Message handled in the background!', remoteMessage);
+});
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -16,6 +23,27 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (user) {
+      const setupNotifications = async () => {
+        const hasPermission = await requestUserPermission();
+        if (hasPermission) {
+          await getFCMToken();
+        }
+      };
+      setupNotifications();
+    }
+  }, [isLoading, user]);
+
+  useEffect(() => {
+    const unsubscribe = notificationListener();
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { User, MessageSquare, Bell, HardDrive, HelpCircle, ChevronRight, LogOut } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
@@ -28,8 +28,9 @@ export default function ProfileScreen() {
                             style={styles.avatar}
                         />
                     </View>
-                    <Text style={styles.name}>{user?.name || 'Abdullah'}</Text>
-                    <Text style={styles.status}>Available</Text>
+                    <Text style={styles.name}>{user?.name || 'User'}</Text>
+                    <Text style={styles.status}>{user?.email}</Text>
+                    <Text style={styles.userId}>ID: {user?.id}</Text>
                 </View>
 
                 <View style={styles.menuSection}>
@@ -133,6 +134,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: Colors.light.textSecondary,
         marginTop: 4,
+    },
+    userId: {
+        fontSize: 12,
+        color: Colors.light.textMuted,
+        marginTop: 4,
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     },
     menuSection: {
         paddingHorizontal: 20,
